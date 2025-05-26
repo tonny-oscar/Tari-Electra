@@ -2,7 +2,6 @@
 "use server";
 
 import { z } from 'zod';
-// import nodemailer from 'nodemailer'; // Nodemailer removed as per reversal
 
 const ContactFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -42,7 +41,7 @@ export async function sendContactEmailAction(
 
   const { name, email, phone, message } = validatedFields.data;
 
-  // For now, we'll just log the form data to the console
+  // Log the form data to the console
   // and simulate a successful submission for the UI.
   console.log("New Contact Form Submission:");
   console.log("Name:", name);
@@ -51,9 +50,6 @@ export async function sendContactEmailAction(
   console.log("Message:", message);
   
   // Simulate email sending success
-  // In a real app, this is where you'd integrate with an email service
-  // like Nodemailer, SendGrid, Resend, etc.
-
   return {
     message: `Thank you for your inquiry, ${name}! We've received your message and will get back to you shortly.`,
     isError: false,
