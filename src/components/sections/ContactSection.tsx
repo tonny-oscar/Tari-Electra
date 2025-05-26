@@ -1,4 +1,3 @@
-// src/components/sections/ContactSection.tsx
 'use client';
 
 import Image from "next/image";
@@ -51,7 +50,7 @@ export function ContactSection() {
   const [formState, setFormState] = useState<ContactFormState>(initialState);
 
   const handleFormAction = async (formData: FormData) => {
-    const result = await sendContactEmailAction(initialState, formData);
+    const result = await sendContactEmailAction(initialState, formData); // Pass initial state as prevState
     setFormState(result);
   };
 
@@ -64,14 +63,15 @@ export function ContactSection() {
           variant: "default",
         });
         formRef.current?.reset();
-        setFormState(initialState);
-      } else if (formState.isError && !formState.fields) {
+        setFormState(initialState); // Reset form state after successful submission
+      } else if (formState.isError && !formState.fields) { // General errors (not field-specific)
         toast({
           title: "Error",
           description: formState.message,
           variant: "destructive",
         });
       }
+      // Field-specific errors are handled below within the form
     }
   }, [formState, toast]);
 
@@ -141,7 +141,7 @@ export function ContactSection() {
                     width={800}
                     height={500}
                     className="object-cover"
-                    data-ai-hint="map Athi River Kenya"
+                    data-ai-hint="Athi River"
                   />
                 </div>
               </CardContent>

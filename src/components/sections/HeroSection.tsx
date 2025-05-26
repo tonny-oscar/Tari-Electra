@@ -86,7 +86,7 @@ export function HeroSection() {
                 width={1200}
                 height={400}
                 className="object-cover w-full h-full"
-                data-ai-hint="meter installation tenants"
+                data-ai-hint="smart meter"
                 priority
             />
         </div>
