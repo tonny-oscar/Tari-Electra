@@ -1,3 +1,4 @@
+
 // src/components/sections/ContactSection.tsx
 'use client';
 
@@ -8,9 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import React, { useEffect, useRef } from "react";
-import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom'; // Corrected import
+import React, { useEffect, useRef, useState } from "react"; // Added useState
+import { useFormStatus } from 'react-dom';
 import { sendContactEmailAction, type ContactFormState } from '@/app/actions/sendContactEmailAction';
 import { AlertCircle, CheckCircle, Loader2, Send, MapPin, Mail, PhoneIcon, Clock } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -19,6 +19,7 @@ const initialState: ContactFormState = {
   message: "",
   isSuccess: false,
   isError: false,
+  fields: undefined, // Explicitly initialize fields
 };
 
 function SubmitButton() {
@@ -33,27 +34,35 @@ function SubmitButton() {
 
 export function ContactSection() {
   const { toast } = useToast();
-  const [state, formAction] = useActionState(sendContactEmailAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
+  const [formState, setFormState] = useState<ContactFormState>(initialState);
+
+  const handleFormAction = async (formData: FormData) => {
+    // Pass a dummy previous state as sendContactEmailAction expects it.
+    const result = await sendContactEmailAction(initialState, formData);
+    setFormState(result);
+  };
 
   useEffect(() => {
-    if (state.message) {
-      if (state.isSuccess) {
+    if (formState.message) {
+      if (formState.isSuccess) {
         toast({
           title: "Success!",
-          description: state.message,
+          description: formState.message,
           variant: "default",
         });
         formRef.current?.reset();
-      } else if (state.isError && !state.fields) {
+        setFormState(initialState); // Reset local state after success
+      } else if (formState.isError && !formState.fields) { // General error not related to fields
         toast({
           title: "Error",
-          description: state.message,
+          description: formState.message,
           variant: "destructive",
         });
       }
+      // Field-specific errors are handled below directly in the JSX
     }
-  }, [state, toast]);
+  }, [formState, toast]);
 
   return (
     <section id="contact" className="py-16 lg:py-24 bg-secondary">
@@ -119,34 +128,34 @@ export function ContactSection() {
               <CardDescription>Fill out the form below and we'll get back to you.</CardDescription>
             </CardHeader>
             <CardContent>
-              <form action={formAction} ref={formRef} className="space-y-6">
+              <form action={handleFormAction} ref={formRef} className="space-y-6">
                 <div>
                   <Label htmlFor="name">Full Name</Label>
                   <Input id="name" name="name" type="text" placeholder="John Doe" required />
-                  {state.fields?.name && <p className="text-sm text-destructive mt-1">{state.fields.name}</p>}
+                  {formState.fields?.name && <p className="text-sm text-destructive mt-1">{formState.fields.name}</p>}
                 </div>
                 <div>
                   <Label htmlFor="email">Email Address</Label>
                   <Input id="email" name="email" type="email" placeholder="you@example.com" required />
-                  {state.fields?.email && <p className="text-sm text-destructive mt-1">{state.fields.email}</p>}
+                  {formState.fields?.email && <p className="text-sm text-destructive mt-1">{formState.fields.email}</p>}
                 </div>
                 <div>
                   <Label htmlFor="phone">Phone Number</Label>
                   <Input id="phone" name="phone" type="tel" placeholder="e.g. +254 7XX XXX XXX" />
-                  {state.fields?.phone && <p className="text-sm text-destructive mt-1">{state.fields.phone}</p>}
+                  {formState.fields?.phone && <p className="text-sm text-destructive mt-1">{formState.fields.phone}</p>}
                 </div>
                 <div>
                   <Label htmlFor="message">Your Message</Label>
                   <Textarea id="message" name="message" placeholder="How can we help you today?" required rows={4} />
-                  {state.fields?.message && <p className="text-sm text-destructive mt-1">{state.fields.message}</p>}
+                  {formState.fields?.message && <p className="text-sm text-destructive mt-1">{formState.fields.message}</p>}
                 </div>
                 
-                {state.message && !state.isSuccess && state.isError && state.fields && (
+                {formState.isError && formState.fields && formState.message && (
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Form Error</AlertTitle>
                     <AlertDescription>
-                      {state.message} Please correct the highlighted fields.
+                      {formState.message} Please correct the highlighted fields.
                     </AlertDescription>
                   </Alert>
                 )}

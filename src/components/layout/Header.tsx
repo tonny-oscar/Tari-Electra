@@ -9,7 +9,7 @@ const navItems = [
   { href: '/', label: 'Home' },
   { href: '/#products', label: 'Products' },
   { href: '/#about', label: 'About' },
-  // { href: '/#contact', label: 'Contact' }, // Removed
+  { href: '/#contact', label: 'Contact' }, // Re-added Contact link
   { href: '/blog', label: 'Blog' },
 ];
 
@@ -28,11 +28,11 @@ export function Header() {
               {item.label}
             </Link>
           ))}
-          {/* <Button asChild size="sm">
+          <Button asChild size="sm">
             <Link href="/#contact">
                Get a Free Estimate
             </Link>
-          </Button> */} {/* CTA Button Removed */}
+          </Button> {/* CTA Button Re-added */}
           <ThemeToggle />
         </nav>
         <div className="md:hidden flex items-center">
@@ -55,11 +55,11 @@ export function Header() {
                     {item.label}
                   </Link>
                 ))}
-                {/* <Button asChild className="mt-4">
+                <Button asChild className="mt-4">
                   <Link href="/#contact">
                      Get a Free Estimate
                   </Link>
-                </Button> */} {/* CTA Button Removed from mobile menu */}
+                </Button> {/* CTA Button Re-added to mobile menu */}
               </nav>
             </SheetContent>
           </Sheet>

@@ -66,7 +66,6 @@ export function HeroSection() {
           ))}
         </motion.div>
 
-        {/* Request Free Estimate Button Removed as it pointed to the contact section 
         <motion.div 
           className="mt-10"
           variants={itemVariants}
@@ -77,7 +76,6 @@ export function HeroSection() {
             </Link>
           </Button>
         </motion.div>
-        */}
       </motion.div>
       <div className="mt-12 md:mt-16 lg:mt-20 relative z-0">
         <div className="aspect-[16/9] sm:aspect-[2/1] lg:aspect-[3/1] max-w-5xl mx-auto overflow-hidden rounded-xl shadow-2xl">

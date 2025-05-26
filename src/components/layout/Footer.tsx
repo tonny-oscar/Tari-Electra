@@ -21,7 +21,7 @@ export function Footer() {
               <li><Link href="/" className="hover:text-primary transition-colors">Home</Link></li>
               <li><Link href="/#products" className="hover:text-primary transition-colors">Products</Link></li>
               <li><Link href="/#about" className="hover:text-primary transition-colors">About</Link></li>
-              {/* <li><Link href="/#contact" className="hover:text-primary transition-colors">Contact</Link></li> */} {/* Removed */}
+              <li><Link href="/#contact" className="hover:text-primary transition-colors">Contact</Link></li> {/* Re-added */}
               <li><Link href="/blog" className="hover:text-primary transition-colors">Blog</Link></li>
             </ul>
           </div>
@@ -38,7 +38,7 @@ export function Footer() {
               </li>
             </ul>
             <div className="mt-4 flex space-x-3">
-              <Link href="#" aria-label="Facebook page for Tari Electra" className="text-muted-foreground hover:text-primary">
+              <Link href="https://www.facebook.com/tari.africa" aria-label="Facebook page for Tari Electra" className="text-muted-foreground hover:text-primary" target="_blank" rel="noopener noreferrer">
                 <Facebook className="h-6 w-6" />
               </Link>
               {/* Add other social links here */}
@@ -46,8 +46,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-10 border-t pt-8 text-center text-sm">
-          <p>&copy; {new Date().getFullYear() + 1} Tari Electra. All rights reserved.</p>
-          {/* Year set to 2025 as per spec */}
+          <p>&copy; {new Date().getFullYear()} Tari Electra. All rights reserved.</p> {/* Corrected to current year */}
           <p className="mt-1">Powered by Tari Africa Platforms Limited</p>
         </div>
       </div>

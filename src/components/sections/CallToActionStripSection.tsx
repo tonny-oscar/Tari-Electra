@@ -21,9 +21,9 @@ export function CallToActionStripSection() {
             variant="outline" 
             className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 hover:text-primary w-full sm:w-auto flex-shrink-0"
           >
-            <a href="mailto:hello@tari.africa"> {/* Changed to mailto link */}
+            <Link href="/#contact"> {/* Changed to link to contact section */}
               <Zap className="mr-2 h-5 w-5" /> Talk to Our Team Now
-            </a>
+            </Link>
           </Button>
         </div>
       </div>
