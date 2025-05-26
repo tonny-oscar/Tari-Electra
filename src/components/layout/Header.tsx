@@ -2,15 +2,15 @@ import Link from 'next/link';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
+import { Menu, Phone } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const navItems = [
-  { href: '/#services', label: 'Services' },
-  { href: '/#advisor', label: 'Advisor' },
-  { href: '/#estimator', label: 'Estimator' },
-  { href: '/#faq', label: 'FAQ' },
-  { href: '/blog', label: 'Blog' },
+  { href: '/', label: 'Home' },
+  { href: '/#products', label: 'Products' },
+  { href: '/#about', label: 'About' },
   { href: '/#contact', label: 'Contact' },
+  { href: '/blog', label: 'Blog' }, // Assuming blog still exists as a separate page
 ];
 
 export function Header() {
@@ -18,7 +18,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Logo />
-        <nav className="hidden md:flex items-center space-x-6">
+        <nav className="hidden md:flex items-center space-x-4">
           {navItems.map((item) => (
             <Link
               key={item.label}
@@ -28,11 +28,18 @@ export function Header() {
               {item.label}
             </Link>
           ))}
+          <Button asChild size="sm">
+            <Link href="/#contact">
+               Get a Free Estimate
+            </Link>
+          </Button>
+          <ThemeToggle />
         </nav>
-        <div className="md:hidden">
+        <div className="md:hidden flex items-center">
+          <ThemeToggle />
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="ml-2">
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
@@ -48,6 +55,11 @@ export function Header() {
                     {item.label}
                   </Link>
                 ))}
+                <Button asChild className="mt-4">
+                  <Link href="/#contact">
+                     Get a Free Estimate
+                  </Link>
+                </Button>
               </nav>
             </SheetContent>
           </Sheet>

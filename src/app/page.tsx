@@ -1,23 +1,19 @@
 import { HeroSection } from "@/components/sections/HeroSection";
-import { ServiceMapSection } from "@/components/sections/ServiceMapSection";
+import { ServiceHighlightsSection } from "@/components/sections/ServiceHighlightsSection"; // Repurposed for "Why Choose Us"
+import { ProductsSection } from "@/components/sections/ProductsSection";
 import { TestimonialSection } from "@/components/sections/TestimonialSection";
-import { SmartSolutionAdvisorSection } from "@/components/sections/SmartSolutionAdvisorSection";
-import { SavingsEstimatorSection } from "@/components/sections/SavingsEstimatorSection";
-import { FaqSection } from "@/components/sections/FaqSection";
-import { BlogSummarySection } from "@/components/sections/BlogSummarySection";
-import { ServiceHighlightsSection } from "@/components/sections/ServiceHighlightsSection";
+import { CallToActionStripSection } from "@/components/sections/CallToActionStripSection";
+import { ContactSection } from "@/components/sections/ContactSection"; // Renamed from ServiceMapSection
 
 export default function HomePage() {
   return (
     <>
       <HeroSection />
-      <ServiceHighlightsSection />
-      <SmartSolutionAdvisorSection />
-      <SavingsEstimatorSection />
+      <ServiceHighlightsSection /> {/* This is now "Why Choose Us / About" */}
+      <ProductsSection /> {/* This is "Our Services / Products" */}
       <TestimonialSection />
-      <FaqSection />
-      <BlogSummarySection />
-      <ServiceMapSection /> {/* Contact form is here */}
+      <CallToActionStripSection />
+      <ContactSection />
     </>
   );
 }

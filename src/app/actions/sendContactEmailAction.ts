@@ -2,12 +2,12 @@
 "use server";
 
 import { z } from 'zod';
-import nodemailer from 'nodemailer';
+// import nodemailer from 'nodemailer'; // Nodemailer removed as per reversal
 
 const ContactFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  propertyType: z.string().optional(),
+  phone: z.string().min(10, "Phone number must be at least 10 characters").optional().or(z.literal('')), // Allow empty string or valid phone
   message: z.string().min(10, "Message must be at least 10 characters"),
 });
 
@@ -25,7 +25,7 @@ export async function sendContactEmailAction(
   const rawFormData = {
     name: formData.get('name'),
     email: formData.get('email'),
-    propertyType: formData.get('propertyType'),
+    phone: formData.get('phone'),
     message: formData.get('message'),
   };
 
@@ -40,71 +40,23 @@ export async function sendContactEmailAction(
     };
   }
 
-  const { name, email, propertyType, message } = validatedFields.data;
-  const recipientEmail = "betttonny26@gmail.com"; // Your email address
+  const { name, email, phone, message } = validatedFields.data;
 
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+  // For now, we'll just log the form data to the console
+  // and simulate a successful submission for the UI.
+  console.log("New Contact Form Submission:");
+  console.log("Name:", name);
+  console.log("Email:", email);
+  console.log("Phone:", phone || "Not provided");
+  console.log("Message:", message);
+  
+  // Simulate email sending success
+  // In a real app, this is where you'd integrate with an email service
+  // like Nodemailer, SendGrid, Resend, etc.
 
-  const senderEmail = process.env.SMTP_SENDER_EMAIL || process.env.SMTP_USER;
-
-  try {
-    // Email to you
-    await transporter.sendMail({
-      from: `"${name} (Tari Contact Form)" <${senderEmail}>`,
-      to: recipientEmail,
-      replyTo: email,
-      subject: `New Contact Inquiry from ${name}`,
-      html: `
-        <p>You have a new contact form submission:</p>
-        <ul>
-          <li><strong>Name:</strong> ${name}</li>
-          <li><strong>Email:</strong> ${email}</li>
-          <li><strong>Property Type:</strong> ${propertyType || 'Not specified'}</li>
-        </ul>
-        <p><strong>Message:</strong></p>
-        <p>${message.replace(/\n/g, '<br>')}</p>
-      `,
-    });
-
-    // Confirmation email to the sender
-    await transporter.sendMail({
-        from: `"Tari Smart Power" <${senderEmail}>`,
-        to: email,
-        subject: "Thank you for your inquiry!",
-        html: `
-            <p>Dear ${name},</p>
-            <p>Thank you for contacting Tari Smart Power. We have received your message and will get back to you as soon as possible.</p>
-            <p>Here's a copy of your message:</p>
-            <blockquote>
-                <p><strong>Property Type:</strong> ${propertyType || 'Not specified'}</p>
-                <p><strong>Message:</strong></p>
-                <p>${message.replace(/\n/g, '<br>')}</p>
-            </blockquote>
-            <p>Best regards,<br>The Tari Smart Power Team</p>
-            <p><a href="${process.env.NEXT_PUBLIC_APP_URL || '#'}">${process.env.NEXT_PUBLIC_APP_URL || 'Visit our website'}</a></p>
-        `,
-    });
-
-
-    return {
-      message: "Your inquiry has been sent successfully! We'll also send you a confirmation email.",
-      isError: false,
-      isSuccess: true,
-    };
-  } catch (error) {
-    console.error("Failed to send email:", error);
-    return {
-      message: "Failed to send your message. Please try again later or contact us directly.",
-      isError: true,
-      isSuccess: false,
-    };
-  }
+  return {
+    message: `Thank you for your inquiry, ${name}! We've received your message and will get back to you shortly.`,
+    isError: false,
+    isSuccess: true,
+  };
 }

@@ -1,3 +1,5 @@
+// This file is no longer used on the main landing page as per the new structure.
+// It can be kept for potential future use or if a dedicated FAQ page is desired.
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -15,7 +17,7 @@ export function FaqSection() {
       faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
       faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [searchTerm]);
+  }, [searchTerm, allFaqs]);
 
   return (
     <section id="faq" className="py-16 lg:py-24 bg-secondary">

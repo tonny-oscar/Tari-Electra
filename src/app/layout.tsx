@@ -1,10 +1,11 @@
 import type {Metadata} from 'next';
-import { Inter as FontSans } from 'next/font/google'; // Using Inter as a clean, modern font. Geist is fine too.
+import { Inter as FontSans } from 'next/font/google';
 import './globals.css';
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -12,8 +13,8 @@ const fontSans = FontSans({
 })
 
 export const metadata: Metadata = {
-  title: 'Tari Smart Power - Smart Sub-Metering Solutions',
-  description: 'Innovative sub-metering solutions for landlords to manage utility costs efficiently.',
+  title: 'Tari Electra - Empowering Your Property',
+  description: 'Meter separation and prepaid sub-metering solutions for landlords and property owners.',
 };
 
 export default function RootLayout({
@@ -24,12 +25,19 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
-        <div className="relative flex min-h-dvh flex-col bg-background">
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
-        <Toaster />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className="relative flex min-h-dvh flex-col bg-background">
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

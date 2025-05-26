@@ -1,8 +1,9 @@
+// This file is no longer used on the main landing page as per the new structure.
+// It can be kept for potential future use or if a dedicated page is desired.
 "use client";
 
 import React, { useEffect } from 'react';
-import { useActionState } from 'react'; // Changed from 'react-dom'
-import { useFormStatus } from 'react-dom';
+import { useActionState, useFormStatus } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,11 +30,11 @@ function SubmitButton() {
 }
 
 export function SmartSolutionAdvisorSection() {
-  const [state, formAction] = useActionState(getSmartSolutionAction, initialState); // Changed from useFormState
+  const [state, formAction] = useActionState(getSmartSolutionAction, initialState);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (state.message && !state.fields) { // Show toast only for general messages, not field validation errors
+    if (state.message && !state.fields) { 
       toast({
         title: state.isError ? "Error" : "Success",
         description: state.message,

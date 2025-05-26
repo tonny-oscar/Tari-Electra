@@ -1,3 +1,5 @@
+// This file is no longer used on the main landing page as per the new structure.
+// It can be kept for potential future use or if a dedicated page is desired.
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -6,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
-import { TrendingUp, DollarSign, Loader2 } from "lucide-react"; // Added Loader2 import
+import { TrendingUp, DollarSign, Loader2 } from "lucide-react";
 
 const AVERAGE_SAVINGS_PERCENTAGE = 0.15; // Assume 15% average savings
 
@@ -15,7 +17,6 @@ export function SavingsEstimatorSection() {
   const [numberOfUnits, setNumberOfUnits] = useState<number>(10);
   const [estimatedSavings, setEstimatedSavings] = useState<number>(0);
   
-  // Client-side check for window object
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
     setIsClient(true);
