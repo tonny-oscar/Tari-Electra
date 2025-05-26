@@ -6,6 +6,10 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+html {
+  scroll-padding-top: 4rem; /* Corresponds to h-16 of the sticky header */
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%; /* White background */
