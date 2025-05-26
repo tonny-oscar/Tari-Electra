@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from "next/image";
@@ -10,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import React, { useEffect, useRef, useState } from "react";
 import { useFormStatus } from 'react-dom';
 import { sendContactEmailAction, type ContactFormState } from '@/app/actions/sendContactEmailAction';
-import { AlertCircle, CheckCircle, Loader2, Send, MapPin, Mail, PhoneIcon, Clock } from "lucide-react";
+import { AlertCircle, Loader2, Send, MapPin, Mail, PhoneIcon, Clock } from "lucide-react"; // Removed CheckCircle as it's not used
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { motion } from "framer-motion";
 
@@ -50,7 +51,7 @@ export function ContactSection() {
   const [formState, setFormState] = useState<ContactFormState>(initialState);
 
   const handleFormAction = async (formData: FormData) => {
-    const result = await sendContactEmailAction(initialState, formData); // Pass initial state as prevState
+    const result = await sendContactEmailAction(initialState, formData);
     setFormState(result);
   };
 
@@ -63,21 +64,20 @@ export function ContactSection() {
           variant: "default",
         });
         formRef.current?.reset();
-        setFormState(initialState); // Reset form state after successful submission
-      } else if (formState.isError && !formState.fields) { // General errors (not field-specific)
+        setFormState(initialState); 
+      } else if (formState.isError && !formState.fields) { 
         toast({
           title: "Error",
           description: formState.message,
           variant: "destructive",
         });
       }
-      // Field-specific errors are handled below within the form
     }
   }, [formState, toast]);
 
   return (
+    // Removed id="contact" as it's now a dedicated page
     <motion.section
-      id="contact"
       className="py-16 lg:py-24 bg-secondary"
       initial="hidden"
       whileInView="visible"

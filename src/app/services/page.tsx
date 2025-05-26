@@ -1,12 +1,11 @@
-// This page is not directly linked in the new single-page landing structure.
-// The "Products" section on the homepage now serves this purpose.
-// This file can be removed or kept if a dedicated services page is desired later.
+// This file can be deleted or kept if a different "/services" page is intended in the future.
+// For now, products/services are handled by /products page.
 import { ProductsSection } from "@/components/sections/ProductsSection";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Our Services - Tari Electra',
-  description: 'Explore the sub-metering services offered by Tari Electra.',
+  title: 'Services Overview - Tari Electra',
+  description: 'Explore the sub-metering services offered by Tari Electra. This page is an alternative to /products.',
 };
 
 export default function ServicesPage() {

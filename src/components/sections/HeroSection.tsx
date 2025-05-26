@@ -28,7 +28,7 @@ const bulletPoints = [
 
 export function HeroSection() {
   return (
-    <section id="home" className="relative bg-secondary py-20 md:py-28 lg:py-32 overflow-hidden">
+    <section className="relative bg-secondary py-20 md:py-28 lg:py-32 overflow-hidden">
       <div className="absolute inset-0 opacity-5">
         {/* Optional subtle background pattern or image */}
       </div>
@@ -74,7 +74,7 @@ export function HeroSection() {
               variants={itemVariants}
             >
               <Button asChild size="lg" className="w-full sm:w-auto">
-                <Link href="/#contact">
+                <Link href="/contact">
                   Request Free Estimate
                 </Link>
               </Button>
@@ -91,10 +91,10 @@ export function HeroSection() {
           >
             <Image
               src="https://placehold.co/800x800.png"
-              alt="Modern sub-metering solutions for properties"
+              alt="Smart meter solutions for modern buildings"
               fill
               className="object-cover rounded-xl shadow-2xl"
-              data-ai-hint="modern building energy"
+              data-ai-hint="smart meter"
               priority
             />
           </motion.div>

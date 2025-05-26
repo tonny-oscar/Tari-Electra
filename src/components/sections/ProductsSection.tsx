@@ -1,7 +1,8 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Gauge, SplitSquareHorizontal, CheckCircle } from "lucide-react";
+import { Gauge, SplitSquareHorizontal, CheckCircle } from "lucide-react"; // Using CircleCheckBig consistently
 import { motion } from "framer-motion";
 
 const services = [
@@ -42,8 +43,8 @@ const itemVariants = {
 
 export function ProductsSection() {
   return (
+    // Removed id="products" as it's now a dedicated page
     <motion.section
-      id="products"
       className="py-16 lg:py-24 bg-secondary"
       initial="hidden"
       whileInView="visible"

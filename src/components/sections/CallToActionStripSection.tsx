@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -48,7 +49,7 @@ export function CallToActionStripSection() {
               variant="outline"
               className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 hover:text-primary w-full sm:w-auto flex-shrink-0"
             >
-              <Link href="/#contact">
+              <Link href="/contact">
                 <Zap className="mr-2 h-5 w-5" /> Talk to Our Team Now
               </Link>
             </Button>

@@ -1,7 +1,8 @@
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Headset, Users, Clock, Zap } from "lucide-react";
+import { DollarSign, Headset, Users, Zap } from "lucide-react"; // Changed Clock to Zap for Fast Installation
 import { motion } from "framer-motion";
 
 const highlights = [
@@ -21,7 +22,7 @@ const highlights = [
     description: "Trusted technicians with verified experience.",
   },
   {
-    icon: <Zap className="h-10 w-10 text-primary" />, // Using Zap as a general "fast" icon
+    icon: <Zap className="h-10 w-10 text-primary" />, 
     title: "Fast Installation",
     description: "Same-day service in selected areas.",
   },
@@ -42,7 +43,8 @@ const itemVariants = {
 
 export function ServiceHighlightsSection() {
   return (
-    <section id="about" className="py-16 lg:py-24 bg-background">
+    // Removed id="about" as it's now a dedicated page
+    <section className="py-16 lg:py-24 bg-background"> 
       <motion.div 
         className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
         initial="hidden"

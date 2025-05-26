@@ -7,9 +7,9 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 
 const navItems = [
   { href: '/', label: 'Home' },
-  { href: '/#products', label: 'Products' },
-  { href: '/#about', label: 'About' },
-  { href: '/#contact', label: 'Contact' }, // Re-added Contact link
+  { href: '/products', label: 'Products' },
+  { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
   { href: '/blog', label: 'Blog' },
 ];
 
@@ -29,10 +29,10 @@ export function Header() {
             </Link>
           ))}
           <Button asChild size="sm">
-            <Link href="/#contact">
+            <Link href="/contact">
                Get a Free Estimate
             </Link>
-          </Button> {/* CTA Button Re-added */}
+          </Button>
           <ThemeToggle />
         </nav>
         <div className="md:hidden flex items-center">
@@ -56,10 +56,10 @@ export function Header() {
                   </Link>
                 ))}
                 <Button asChild className="mt-4">
-                  <Link href="/#contact">
+                  <Link href="/contact">
                      Get a Free Estimate
                   </Link>
-                </Button> {/* CTA Button Re-added to mobile menu */}
+                </Button>
               </nav>
             </SheetContent>
           </Sheet>

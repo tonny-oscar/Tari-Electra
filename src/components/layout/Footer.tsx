@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Facebook, Mail, Phone } from 'lucide-react'; // Added Mail and Phone
+import { Facebook, Mail, Phone } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -19,9 +19,9 @@ export function Footer() {
             <h3 className="text-lg font-semibold text-foreground mb-4">Quick Links</h3>
             <ul className="space-y-2 text-sm">
               <li><Link href="/" className="hover:text-primary transition-colors">Home</Link></li>
-              <li><Link href="/#products" className="hover:text-primary transition-colors">Products</Link></li>
-              <li><Link href="/#about" className="hover:text-primary transition-colors">About</Link></li>
-              <li><Link href="/#contact" className="hover:text-primary transition-colors">Contact</Link></li> {/* Re-added */}
+              <li><Link href="/products" className="hover:text-primary transition-colors">Products</Link></li>
+              <li><Link href="/about" className="hover:text-primary transition-colors">About</Link></li>
+              <li><Link href="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
               <li><Link href="/blog" className="hover:text-primary transition-colors">Blog</Link></li>
             </ul>
           </div>
@@ -46,7 +46,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-10 border-t pt-8 text-center text-sm">
-          <p>&copy; {new Date().getFullYear()} Tari Electra. All rights reserved.</p> {/* Corrected to current year */}
+          <p>&copy; {new Date().getFullYear()} Tari Electra. All rights reserved.</p>
           <p className="mt-1">Powered by Tari Africa Platforms Limited</p>
         </div>
       </div>
