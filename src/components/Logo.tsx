@@ -1,4 +1,4 @@
-import { Zap } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 type LogoProps = {
@@ -7,9 +7,14 @@ type LogoProps = {
 
 export function Logo({ className }: LogoProps) {
   return (
-    <Link href="/" className={`flex items-center space-x-2 text-2xl font-bold ${className}`}>
-      <Zap className="h-8 w-8 text-primary" />
-      <span className="text-foreground">Tari Electra</span>
+    <Link href="/" className={`flex items-center ${className || ''}`.trim()}>
+      <Image
+        src="/tari-logo.png"
+        alt="Tari Electra Logo"
+        width={130} // Aspect ratio preserved (original 195x42)
+        height={28}
+        priority // Consider logo as LCP element
+      />
     </Link>
   );
 }
