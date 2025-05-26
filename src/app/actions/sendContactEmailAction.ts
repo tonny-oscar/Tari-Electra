@@ -47,7 +47,7 @@ export async function sendContactEmailAction(
     const { name, email, phone, message } = validatedFields.data;
 
     // Log the form data to the console
-    console.log("[sendContactEmailAction] New Contact Form Submission:");
+    console.log("[sendContactEmailAction] New Inquiry Submission:");
     console.log("Name:", name);
     console.log("Email:", email);
     console.log("Phone:", phone || "Not provided");
