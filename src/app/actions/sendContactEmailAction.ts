@@ -21,38 +21,51 @@ export async function sendContactEmailAction(
   prevState: ContactFormState,
   formData: FormData
 ): Promise<ContactFormState> {
-  const rawFormData = {
-    name: formData.get('name'),
-    email: formData.get('email'),
-    phone: formData.get('phone'),
-    message: formData.get('message'),
-  };
+  console.log("[sendContactEmailAction] Action invoked.");
+  try {
+    const rawFormData = {
+      name: formData.get('name'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+      message: formData.get('message'),
+    };
+    console.log("[sendContactEmailAction] Raw form data:", rawFormData);
 
-  const validatedFields = ContactFormSchema.safeParse(rawFormData);
+    const validatedFields = ContactFormSchema.safeParse(rawFormData);
 
-  if (!validatedFields.success) {
+    if (!validatedFields.success) {
+      console.error("[sendContactEmailAction] Validation failed:", validatedFields.error.flatten().fieldErrors);
+      return {
+        message: "Invalid form data. Please check your inputs.",
+        fields: validatedFields.error.flatten().fieldErrors as Record<string, string>,
+        isError: true,
+        isSuccess: false,
+      };
+    }
+    console.log("[sendContactEmailAction] Validation successful.");
+
+    const { name, email, phone, message } = validatedFields.data;
+
+    // Log the form data to the console
+    console.log("[sendContactEmailAction] New Contact Form Submission:");
+    console.log("Name:", name);
+    console.log("Email:", email);
+    console.log("Phone:", phone || "Not provided");
+    console.log("Message:", message);
+    
+    // Simulate email sending success
     return {
-      message: "Invalid form data. Please check your inputs.",
-      fields: validatedFields.error.flatten().fieldErrors as Record<string, string>,
+      message: `Thank you for your inquiry, ${name}! We've received your message and will get back to you shortly.`,
+      isError: false,
+      isSuccess: true,
+    };
+  } catch (error) {
+    console.error("[sendContactEmailAction] Error during action execution:", error);
+    const errorMessage = error instanceof Error ? error.message : "An unknown server error occurred.";
+    return {
+      message: `Server error: ${errorMessage}. Please try again.`,
       isError: true,
       isSuccess: false,
     };
   }
-
-  const { name, email, phone, message } = validatedFields.data;
-
-  // Log the form data to the console
-  // and simulate a successful submission for the UI.
-  console.log("New Contact Form Submission:");
-  console.log("Name:", name);
-  console.log("Email:", email);
-  console.log("Phone:", phone || "Not provided");
-  console.log("Message:", message);
-  
-  // Simulate email sending success
-  return {
-    message: `Thank you for your inquiry, ${name}! We've received your message and will get back to you shortly.`,
-    isError: false,
-    isSuccess: true,
-  };
 }
