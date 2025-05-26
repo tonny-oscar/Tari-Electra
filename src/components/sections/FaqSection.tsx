@@ -19,6 +19,7 @@ export function FaqSection() {
     );
   }, [searchTerm, allFaqs]);
 
+  
   return (
     <section id="faq" className="py-16 lg:py-24 bg-secondary">
       <div className="container mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
