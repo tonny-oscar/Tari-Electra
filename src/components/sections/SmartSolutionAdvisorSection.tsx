@@ -3,7 +3,8 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { useActionState, useFormStatus } from 'react';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom'; // Corrected import
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

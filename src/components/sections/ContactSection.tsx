@@ -1,3 +1,4 @@
+// src/components/sections/ContactSection.tsx
 'use client';
 
 import Image from "next/image";
@@ -8,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import React, { useEffect, useRef } from "react";
-import { useActionState, useFormStatus } from 'react';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom'; // Corrected import
 import { sendContactEmailAction, type ContactFormState } from '@/app/actions/sendContactEmailAction';
 import { AlertCircle, CheckCircle, Loader2, Send, MapPin, Mail, PhoneIcon, Clock } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
