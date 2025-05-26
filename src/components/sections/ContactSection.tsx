@@ -8,10 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react"; // Added useState
 import { useFormStatus } from 'react-dom';
 import { sendContactEmailAction, type ContactFormState } from '@/app/actions/sendContactEmailAction';
-import { AlertCircle, Loader2, Send, MapPin, Mail, PhoneIcon, Clock } from "lucide-react"; // Removed CheckCircle as it's not used
+import { AlertCircle, Loader2, Send, MapPin, Mail, PhoneIcon, Clock } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { motion } from "framer-motion";
 
@@ -48,9 +48,11 @@ const itemVariants = {
 export function ContactSection() {
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
+  // Use local state instead of useActionState
   const [formState, setFormState] = useState<ContactFormState>(initialState);
 
-  const handleFormAction = async (formData: FormData) => {
+  // Manual handler for form submission
+  const handleFormSubmit = async (formData: FormData) => {
     const result = await sendContactEmailAction(initialState, formData);
     setFormState(result);
   };
@@ -76,8 +78,8 @@ export function ContactSection() {
   }, [formState, toast]);
 
   return (
-    // Removed id="contact" as it's now a dedicated page
     <motion.section
+      id="contact"
       className="py-16 lg:py-24 bg-secondary"
       initial="hidden"
       whileInView="visible"
@@ -155,7 +157,8 @@ export function ContactSection() {
                 <CardDescription>Fill out the form below and we'll get back to you.</CardDescription>
               </CardHeader>
               <CardContent>
-                <form action={handleFormAction} ref={formRef} className="space-y-6">
+                {/* Pass the manual handler to the form's action */}
+                <form action={handleFormSubmit} ref={formRef} className="space-y-6">
                   <div>
                     <Label htmlFor="name">Full Name</Label>
                     <Input id="name" name="name" type="text" placeholder="John Doe" required />
@@ -196,3 +199,4 @@ export function ContactSection() {
     </motion.section>
   );
 }
+
