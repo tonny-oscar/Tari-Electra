@@ -2,15 +2,15 @@ import Link from 'next/link';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Phone } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 const navItems = [
   { href: '/', label: 'Home' },
   { href: '/#products', label: 'Products' },
   { href: '/#about', label: 'About' },
-  { href: '/#contact', label: 'Contact' },
-  { href: '/blog', label: 'Blog' }, // Assuming blog still exists as a separate page
+  // { href: '/#contact', label: 'Contact' }, // Removed
+  { href: '/blog', label: 'Blog' },
 ];
 
 export function Header() {
@@ -28,11 +28,11 @@ export function Header() {
               {item.label}
             </Link>
           ))}
-          <Button asChild size="sm">
+          {/* <Button asChild size="sm">
             <Link href="/#contact">
                Get a Free Estimate
             </Link>
-          </Button>
+          </Button> */} {/* CTA Button Removed */}
           <ThemeToggle />
         </nav>
         <div className="md:hidden flex items-center">
@@ -55,11 +55,11 @@ export function Header() {
                     {item.label}
                   </Link>
                 ))}
-                <Button asChild className="mt-4">
+                {/* <Button asChild className="mt-4">
                   <Link href="/#contact">
                      Get a Free Estimate
                   </Link>
-                </Button>
+                </Button> */} {/* CTA Button Removed from mobile menu */}
               </nav>
             </SheetContent>
           </Sheet>

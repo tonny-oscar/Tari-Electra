@@ -3,7 +3,7 @@ import { ServiceHighlightsSection } from "@/components/sections/ServiceHighlight
 import { ProductsSection } from "@/components/sections/ProductsSection";
 import { TestimonialSection } from "@/components/sections/TestimonialSection";
 import { CallToActionStripSection } from "@/components/sections/CallToActionStripSection";
-import { ContactSection } from "@/components/sections/ContactSection"; // Renamed from ServiceMapSection
+// import { ContactSection } from "@/components/sections/ContactSection"; // Renamed from ServiceMapSection - Removed
 
 export default function HomePage() {
   return (
@@ -13,7 +13,7 @@ export default function HomePage() {
       <ProductsSection /> {/* This is "Our Services / Products" */}
       <TestimonialSection />
       <CallToActionStripSection />
-      <ContactSection />
+      {/* <ContactSection /> */} {/* ContactSection removed */}
     </>
   );
 }

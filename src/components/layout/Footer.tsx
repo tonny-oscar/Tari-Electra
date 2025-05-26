@@ -21,7 +21,7 @@ export function Footer() {
               <li><Link href="/" className="hover:text-primary transition-colors">Home</Link></li>
               <li><Link href="/#products" className="hover:text-primary transition-colors">Products</Link></li>
               <li><Link href="/#about" className="hover:text-primary transition-colors">About</Link></li>
-              <li><Link href="/#contact" className="hover:text-primary transition-colors">Contact</Link></li>
+              {/* <li><Link href="/#contact" className="hover:text-primary transition-colors">Contact</Link></li> */} {/* Removed */}
               <li><Link href="/blog" className="hover:text-primary transition-colors">Blog</Link></li>
             </ul>
           </div>
@@ -46,7 +46,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-10 border-t pt-8 text-center text-sm">
-          <p>&copy; {new Date().getFullYear() + 1} Tari Electra. All rights reserved.</p> 
+          <p>&copy; {new Date().getFullYear() + 1} Tari Electra. All rights reserved.</p>
           {/* Year set to 2025 as per spec */}
           <p className="mt-1">Powered by Tari Africa Platforms Limited</p>
         </div>
