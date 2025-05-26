@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react'; // Changed from 'react-dom'
+import { useFormStatus } from 'react-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +29,7 @@ function SubmitButton() {
 }
 
 export function SmartSolutionAdvisorSection() {
-  const [state, formAction] = useFormState(getSmartSolutionAction, initialState);
+  const [state, formAction] = useActionState(getSmartSolutionAction, initialState); // Changed from useFormState
   const { toast } = useToast();
 
   useEffect(() => {

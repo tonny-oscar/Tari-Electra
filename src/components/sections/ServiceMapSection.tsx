@@ -1,3 +1,4 @@
+// src/components/sections/ServiceMapSection.tsx
 "use client";
 
 import Image from "next/image";
@@ -7,23 +8,52 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import React from "react";
+import React, { useEffect, useRef } from "react";
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
+import { sendContactEmailAction, type ContactFormState } from '@/app/actions/sendContactEmailAction';
+import { AlertCircle, CheckCircle, Loader2, Send } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+const initialState: ContactFormState = {
+  message: "",
+  isSuccess: false,
+  isError: false,
+};
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" className="w-full" disabled={pending}>
+      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+      Send Inquiry
+    </Button>
+  );
+}
 
 export function ServiceMapSection() {
   const { toast } = useToast();
+  const [state, formAction, isPending] = useActionState(sendContactEmailAction, initialState);
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    // Basic form handling, in a real app this would submit to a backend
-    const formData = new FormData(event.currentTarget);
-    const name = formData.get("name");
-    console.log("Form submitted with data:", Object.fromEntries(formData));
-    toast({
-      title: "Inquiry Sent!",
-      description: `Thanks, ${name}! We'll be in touch shortly.`,
-    });
-    event.currentTarget.reset();
-  };
+  useEffect(() => {
+    if (state.message) {
+      if (state.isSuccess) {
+        toast({
+          title: "Success!",
+          description: state.message,
+          variant: "default",
+        });
+        formRef.current?.reset(); // Reset form on success
+      } else if (state.isError && !state.fields) { // Only show general errors as toast
+        toast({
+          title: "Error",
+          description: state.message,
+          variant: "destructive",
+        });
+      }
+    }
+  }, [state, toast]);
 
   return (
     <section id="contact" className="py-16 lg:py-24 bg-secondary">
@@ -65,14 +95,16 @@ export function ServiceMapSection() {
               <CardDescription>Have questions or need a quote? Fill out the form below.</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form action={formAction} ref={formRef} className="space-y-6">
                 <div>
                   <Label htmlFor="name">Full Name</Label>
                   <Input id="name" name="name" type="text" placeholder="John Doe" required />
+                  {state.fields?.name && <p className="text-sm text-destructive mt-1">{state.fields.name}</p>}
                 </div>
                 <div>
                   <Label htmlFor="email">Email Address</Label>
                   <Input id="email" name="email" type="email" placeholder="you@example.com" required />
+                  {state.fields?.email && <p className="text-sm text-destructive mt-1">{state.fields.email}</p>}
                 </div>
                 <div>
                   <Label htmlFor="propertyType">Property Type (optional)</Label>
@@ -81,8 +113,20 @@ export function ServiceMapSection() {
                 <div>
                   <Label htmlFor="message">Your Message</Label>
                   <Textarea id="message" name="message" placeholder="How can we help you today?" required rows={4} />
+                  {state.fields?.message && <p className="text-sm text-destructive mt-1">{state.fields.message}</p>}
                 </div>
-                <Button type="submit" className="w-full">Send Inquiry</Button>
+                
+                {state.message && !state.isSuccess && state.isError && state.fields && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Form Error</AlertTitle>
+                    <AlertDescription>
+                      {state.message} Please correct the highlighted fields.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <SubmitButton />
               </form>
             </CardContent>
           </Card>
