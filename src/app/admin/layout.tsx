@@ -15,7 +15,7 @@ import {
   Settings,
   ShoppingBag,
   Users,
-  MessageSquare, // Added for Messages
+  MessageSquare,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
@@ -33,14 +33,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Loader2 } from 'lucide-react'; // For loading state
-import { NotificationBell } from '@/components/admin/NotificationBell'; // Import NotificationBell
-
-// Metadata can still be defined for client components, Next.js handles it
-// export const metadata: Metadata = { // This will be static for the layout
-//   title: 'Admin Dashboard - Tari Electra',
-//   description: 'Manage Tari Electra website content.',
-// };
+import { Loader2 } from 'lucide-react';
+import { NotificationBell } from '@/components/admin/NotificationBell';
+import { useToast } from '@/hooks/use-toast';
 
 const navLinks = [
   { href: '/admin', label: 'Dashboard', icon: Home },
@@ -56,26 +51,62 @@ export default function AdminLayout({
 }) {
   const { user, loading, logOut } = useAuth();
   const router = useRouter();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminRouteAllowed, setIsAdminRouteAllowed] = useState(false); // Default to false
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login?redirect=/admin');
-    } else if (user) {
-      // Check if the logged-in user is the designated admin
-      const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-      if (user.email === adminEmail) {
-        setIsAdmin(true);
-      } else {
-        // If not admin, redirect to home and show a message
-        router.push('/');
-        // Consider adding a toast message here for better UX
-        console.warn("Access to admin area denied for user:", user.email);
-      }
-    }
-  }, [user, loading, router]);
+    console.log(`[AdminLayout] Auth State Change: loading=${loading}, user=${user ? user.email : 'null'}`);
 
-  if (loading || (!user && !isAdmin)) { 
+    if (loading) {
+      console.log('[AdminLayout] Still loading authentication state.');
+      return; // Wait until loading is false
+    }
+
+    if (!user) {
+      console.log('[AdminLayout] No user authenticated. Redirecting to login.');
+      router.push('/login?redirect=/admin');
+      return;
+    }
+
+    // User is authenticated, now check for admin privileges
+    const adminEmailEnv = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
+    if (!adminEmailEnv || adminEmailEnv.trim() === "") {
+      console.error('[AdminLayout] CRITICAL: NEXT_PUBLIC_ADMIN_EMAIL environment variable is not set or is empty. Admin access denied.');
+      setIsAdminRouteAllowed(false);
+      router.push('/');
+      toast({ title: 'Configuration Error', description: 'Admin email not configured. Please contact support.', variant: 'destructive', duration: 10000 });
+      return;
+    }
+
+    const loggedInUserEmail = user.email?.trim().toLowerCase();
+    const configuredAdminEmail = adminEmailEnv.trim().toLowerCase();
+
+    console.log(`[AdminLayout] Admin Check:`);
+    console.log(`  - User Email (from auth): "${user.email}" (length: ${user.email?.length})`);
+    console.log(`  - Processed User Email:   "${loggedInUserEmail}" (length: ${loggedInUserEmail?.length})`);
+    console.log(`  - Admin Email (from env): "${adminEmailEnv}" (length: ${adminEmailEnv?.length})`);
+    console.log(`  - Processed Admin Email:  "${configuredAdminEmail}" (length: ${configuredAdminEmail?.length})`);
+
+
+    if (loggedInUserEmail && loggedInUserEmail === configuredAdminEmail) {
+      console.log('[AdminLayout] Admin access GRANTED.');
+      setIsAdminRouteAllowed(true);
+    } else {
+      console.log('[AdminLayout] Admin access DENIED. User is not the configured admin.');
+      setIsAdminRouteAllowed(false);
+      router.push('/');
+      toast({ title: 'Access Denied', description: 'You do not have permission to access the admin area.', variant: 'destructive', duration: 7000 });
+    }
+  }, [user, loading, router, toast]);
+
+  const handleLogout = async () => {
+    await logOut();
+    // router.push('/') is handled by logOut in AuthContext
+  };
+
+  if (loading) {
+    console.log('[AdminLayout] Render: Auth is loading...');
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -83,20 +114,33 @@ export default function AdminLayout({
       </div>
     );
   }
-  
-  if (user && !isAdmin) {
+
+  if (!user) {
+    // This state should ideally be brief as useEffect should redirect.
+    console.log('[AdminLayout] Render: No user object. Redirecting to login should be in progress.');
     return (
-        <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
-            <p className="text-muted-foreground">Access Denied. Redirecting...</p>
-        </div>
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Authenticating...</p>
+      </div>
     );
   }
 
+  // User is loaded. Now check if they are allowed to see admin content.
+  // isAdminRouteAllowed will be false initially, and also if access is denied.
+  if (!isAdminRouteAllowed) {
+     console.log('[AdminLayout] Render: Access not allowed or still verifying. Redirect should be in progress if denied.');
+    // This screen will show while access is being verified or if access was denied and redirect is happening.
+    return (
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Verifying access or redirecting...</p>
+      </div>
+    );
+  }
 
-  const handleLogout = async () => {
-    await logOut();
-  };
-
+  // If we reach here, user is authenticated and isAdminRouteAllowed is true
+  console.log('[AdminLayout] Render: Admin access GRANTED, rendering admin content.');
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-muted/40 md:block">
@@ -201,3 +245,4 @@ export default function AdminLayout({
     </div>
   );
 }
+    
