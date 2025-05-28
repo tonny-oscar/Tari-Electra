@@ -8,12 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CardContent, CardFooter } from '@/components/ui/card';
-import { AlertCircle, Loader2, Save, Edit3 } from 'lucide-react'; // Removed CheckCircle, ShoppingBag
+import { AlertCircle, Loader2, Save, Edit3, PackagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { ProductFormState, Product } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { createProductAction } from '@/app/actions/createProductAction';
 import { updateProductAction } from '@/app/actions/updateProductAction';
+import { useRouter } from 'next/navigation';
 
 type CreateProductFormProps = {
   initialData?: Partial<Product>;
@@ -40,16 +41,13 @@ function SubmitButton({ mode }: { mode: 'create' | 'edit' }) {
 
 export function CreateProductForm({ initialData, currentId, mode = 'create' }: CreateProductFormProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [formState, setFormState] = useState<ProductFormState>(initialFormState);
   const formRef = useRef<HTMLFormElement>(null);
 
   const handleFormAction = async (formData: FormData) => {
     console.log('[CreateProductForm] handleFormAction called. Mode:', mode);
-    // Log formData entries
-    // @ts-ignore
-    for (let pair of formData.entries()) {
-      console.log(`[CreateProductForm] FormData: ${pair[0]}= ${pair[1]}`);
-    }
+    setFormState(prev => ({ ...prev, isError: false, isSuccess: false, message: '', fields: undefined })); // Reset previous errors
 
     let result: ProductFormState;
     if (mode === 'edit' && currentId) {
@@ -62,7 +60,6 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
   };
 
   useEffect(() => {
-    console.log('[CreateProductForm] useEffect triggered. FormState:', formState);
     if (formState.isSuccess && formState.message) {
       toast({
         title: 'Success!',
@@ -72,28 +69,33 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
       });
       if (mode === 'create' && formRef.current) {
         formRef.current.reset();
+        // Reset form state after successful creation and toast
+        setFormState(initialFormState); 
+      } else if (mode === 'edit' && formState.updatedProduct) {
+        // Optionally, you could redirect or refresh data here
+        // For now, just reset the success message part of the state
+        // router.push('/admin/products'); // Example redirect
+        setFormState(prev => ({ ...prev, isSuccess: false, message: '' })); // Clear success message after showing
       }
-      // Reset form state after showing toast to prevent re-triggering
-      setFormState(initialFormState); 
-    } else if (formState.isError && formState.message) { // Simplified condition for error toast
+    } else if (formState.isError && formState.message) { 
       toast({
         title: 'Error',
         description: formState.message,
         variant: 'destructive',
         duration: 5000,
       });
-       // Reset form state after showing toast
-       setFormState(initialFormState);
+       // Keep error messages and fields, but clear general error flag if needed
+       setFormState(prev => ({ ...prev, isError: false, message: '' })); // Clear general error message after showing toast if it's not field-specific
     }
-  }, [formState, toast, mode]);
+  }, [formState, toast, mode, router]);
 
   return (
     <form action={handleFormAction} ref={formRef}>
       <CardContent className="space-y-6 p-0 md:p-6">
         {mode === 'edit' && initialData?.id && (
           <div className="space-y-2">
-            <Label htmlFor="id">Product ID</Label>
-            <Input id="id" name="id" defaultValue={initialData.id} readOnly className="bg-muted/50 cursor-not-allowed" />
+            <Label htmlFor="id-display">Product ID</Label>
+            <Input id="id-display" name="id-display" defaultValue={initialData.id} readOnly className="bg-muted/50 cursor-not-allowed" />
             <p className="text-xs text-muted-foreground">Product ID cannot be changed.</p>
           </div>
         )}
@@ -137,7 +139,7 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
           {formState.fields?.features && <p className="text-sm text-destructive mt-1">{formState.fields.features.join(', ')}</p>}
         </div>
 
-        {formState.isError && formState.fields && formState.message && (
+        {formState.isError && formState.message && formState.fields && (
            <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Form Error</AlertTitle>

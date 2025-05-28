@@ -19,11 +19,6 @@ export async function createProductAction(
   formData: FormData
 ): Promise<ProductFormState> {
   console.log('[createProductAction] Action invoked.');
-  // @ts-ignore
-  for (let pair of formData.entries()) {
-    console.log(`[createProductAction] Raw FormData: ${pair[0]}= ${pair[1]}`);
-  }
-
   const rawFormData = {
     name: formData.get('name'),
     description: formData.get('description'),
@@ -31,7 +26,7 @@ export async function createProductAction(
     category: formData.get('category'),
     features: formData.get('features'),
   };
-  console.log('[createProductAction] Parsed raw form data:', rawFormData);
+  console.log('[createProductAction] Raw form data:', rawFormData);
 
   const validatedFields = CreateProductSchema.safeParse(rawFormData);
 
@@ -49,32 +44,21 @@ export async function createProductAction(
 
   try {
     const { features, ...restOfData } = validatedFields.data;
-    const featuresString = features || ''; // Default to empty string if undefined or null
+    const featuresString = features || ''; 
     const featuresArray = featuresString.split(',').map(f => f.trim()).filter(f => f.length > 0);
     
-    const newProductDataForStorage = {
+    const productToAdd: Omit<Product, 'id' | 'imageUrl' | 'imageHint'> = {
       ...restOfData,
       features: featuresArray,
     };
-    console.log('[createProductAction] Data for addProduct:', newProductDataForStorage);
     
-    // Pass the correct structure to addProduct.
-    // The addProduct function expects an object where price is already a number and features is an array of strings.
-    // The Omit type helps ensure we're not passing unwanted properties like id, imageUrl, imageHint.
-    const productToAdd: Omit<Product, 'id' | 'imageUrl' | 'imageHint'> = {
-      name: newProductDataForStorage.name,
-      description: newProductDataForStorage.description,
-      price: newProductDataForStorage.price, // Already coerced to number by Zod
-      category: newProductDataForStorage.category,
-      features: newProductDataForStorage.features,
-    };
-    
+    console.log('[createProductAction] Data for addProduct:', productToAdd);
     const createdProduct = addProduct(productToAdd);
 
     console.log('[createProductAction] New Product Created (In-Memory):', createdProduct);
     
     revalidatePath('/admin/products');
-    revalidatePath('/products'); 
+    revalidatePath('/products'); // Revalidate public products page
 
     return {
       message: `Product "${createdProduct.name}" created successfully (in-memory).`,

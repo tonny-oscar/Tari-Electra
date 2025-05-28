@@ -29,7 +29,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
   const productToEdit = findProduct(params.id);
 
   if (!productToEdit) {
-    notFound();
+    notFound(); // This will render the nearest not-found.js or a default Next.js 404 page
   }
 
   return (

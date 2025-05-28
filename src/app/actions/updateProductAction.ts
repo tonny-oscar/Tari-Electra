@@ -20,10 +20,6 @@ export async function updateProductAction(
   formData: FormData
 ): Promise<ProductFormState> {
   console.log('[updateProductAction] Action invoked for ID:', currentId);
-  // @ts-ignore
-  for (let pair of formData.entries()) {
-    console.log(`[updateProductAction] Raw FormData: ${pair[0]}= ${pair[1]}`);
-  }
 
   const rawFormData = {
     name: formData.get('name'),
@@ -84,7 +80,7 @@ export async function updateProductAction(
     
     revalidatePath('/admin/products');
     revalidatePath(`/admin/products/edit/${currentId}`);
-    revalidatePath('/products');
+    revalidatePath('/products'); // Revalidate public products page
 
     return {
       message: `Product "${updatedProduct.name}" updated successfully (in-memory).`,

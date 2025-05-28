@@ -50,12 +50,13 @@ export type Product = {
 
 export type ProductFormState = {
   message: string;
-  fields?: Record<string, string[] | undefined>;
+  fields?: Record<string, string[] | undefined>; // For field-specific validation errors
   isError?: boolean;
   isSuccess?: boolean;
   updatedProduct?: Partial<Product>;
   createdProduct?: Partial<Product>;
 };
+
 
 export type ContactMessage = {
   id: string;

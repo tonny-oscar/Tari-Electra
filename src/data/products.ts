@@ -1,5 +1,6 @@
 
 import type { Product } from '@/lib/types';
+import { v4 as uuidv4 } from 'uuid';
 
 // Initial set of products
 const initialProducts: Product[] = [
@@ -54,60 +55,53 @@ const initialProducts: Product[] = [
 let mutableProducts: Product[] = JSON.parse(JSON.stringify(initialProducts));
 
 export function getProducts(): Product[] {
+  // Return a deep copy to prevent direct mutation of the internal array from outside
   return JSON.parse(JSON.stringify(mutableProducts));
 }
 
 export function findProduct(id: string): Product | undefined {
   const product = mutableProducts.find(p => p.id === id);
-  return product ? { ...product } : undefined;
+  return product ? JSON.parse(JSON.stringify(product)) : undefined; // Return a deep copy
 }
 
-// Function to generate a simple unique ID (for prototype purposes)
-function generateProductId(name: string): string {
-  const slugPart = name.toLowerCase().replace(/\s+/g, '-').slice(0, 20);
-  const timestamp = Date.now().toString().slice(-5);
-  return `${slugPart}-${timestamp}`;
-}
-
-
-export function addProduct(productData: Omit<Product, 'id' | 'imageUrl' | 'imageHint' | 'features'> & { price: number | string }): Product {
-  // Check if a product with a very similar name already exists to prevent accidental duplicates if IDs are name-based
-  // For robust ID generation, a UUID library or database sequence would be better.
-  const newId = generateProductId(productData.name);
-  if (mutableProducts.some(p => p.id === newId)) {
-    throw new Error(`Product with generated ID "${newId}" might conflict. Try a slightly different name.`);
-  }
-
+export function addProduct(productData: Omit<Product, 'id' | 'imageUrl' | 'imageHint'>): Product {
   const newProduct: Product = {
     ...productData,
-    id: newId,
-    price: Number(productData.price), // Ensure price is a number
-    imageUrl: productData.imageUrl || 'https://placehold.co/600x400.png',
-    imageHint: productData.imageHint || 'product placeholder',
-    features: productData.features || [],
+    id: uuidv4(), // Use UUID for more robust unique IDs
+    imageUrl: 'https://placehold.co/600x400.png', // Default placeholder
+    imageHint: productData.name.split(' ').slice(0,2).join(' ').toLowerCase() || 'product placeholder',
   };
-  mutableProducts.unshift(newProduct);
-  return { ...newProduct };
+  mutableProducts.unshift(newProduct); // Add to the beginning
+  console.log('[addProduct - In-Memory] New product added:', newProduct);
+  return JSON.parse(JSON.stringify(newProduct)); // Return a deep copy
 }
 
-export function updateProduct(id: string, updatedProductData: Partial<Omit<Product, 'id'>> & { price?: number | string }): Product | null {
+export function updateProduct(id: string, updatedProductData: Partial<Omit<Product, 'id'>>): Product | null {
   const productIndex = mutableProducts.findIndex(p => p.id === id);
   if (productIndex > -1) {
-    const existingProduct = mutableProducts[productIndex];
-    const newProductData = { ...existingProduct, ...updatedProductData };
-
-    if (updatedProductData.price !== undefined) {
-      newProductData.price = Number(updatedProductData.price);
-    }
-    
-    mutableProducts[productIndex] = newProductData;
-    return { ...mutableProducts[productIndex] };
+    // Ensure ID is not changed
+    const { id: _, ...dataToUpdate } = updatedProductData;
+    mutableProducts[productIndex] = {
+      ...mutableProducts[productIndex],
+      ...dataToUpdate,
+      // Ensure price is a number if it's being updated
+      price: dataToUpdate.price !== undefined ? Number(dataToUpdate.price) : mutableProducts[productIndex].price,
+    };
+    console.log('[updateProduct - In-Memory] Product updated:', mutableProducts[productIndex]);
+    return JSON.parse(JSON.stringify(mutableProducts[productIndex])); // Return a deep copy
   }
+  console.warn('[updateProduct - In-Memory] Product not found for ID:', id);
   return null;
 }
 
 export function deleteProduct(id: string): boolean {
   const initialLength = mutableProducts.length;
   mutableProducts = mutableProducts.filter(p => p.id !== id);
-  return mutableProducts.length < initialLength;
+  const success = mutableProducts.length < initialLength;
+  if (success) {
+    console.log('[deleteProduct - In-Memory] Product deleted:', id);
+  } else {
+    console.warn('[deleteProduct - In-Memory] Product not found for deletion, ID:', id);
+  }
+  return success;
 }
