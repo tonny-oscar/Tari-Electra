@@ -1,8 +1,7 @@
 
 'use client';
 
-import React, { useEffect, useRef } from 'react';
-import { useActionState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,12 +17,14 @@ import { updateProductAction } from '@/app/actions/updateProductAction';
 
 type CreateProductFormProps = {
   initialData?: Partial<Product>;
-  currentId?: string; // Used for identifying the product to update
+  currentId?: string;
   mode?: 'create' | 'edit';
 };
 
 const initialFormState: ProductFormState = {
   message: '',
+  isError: false,
+  isSuccess: false,
 };
 
 function SubmitButton({ mode }: { mode: 'create' | 'edit' }) {
@@ -39,39 +40,47 @@ function SubmitButton({ mode }: { mode: 'create' | 'edit' }) {
 
 export function CreateProductForm({ initialData, currentId, mode = 'create' }: CreateProductFormProps) {
   const { toast } = useToast();
-  
-  const actionToUse = mode === 'edit' && currentId 
-    ? updateProductAction.bind(null, currentId)
-    : createProductAction;
-
-  const [state, formAction] = useActionState(actionToUse, initialFormState);
+  const [formState, setFormState] = useState<ProductFormState>(initialFormState);
   const formRef = useRef<HTMLFormElement>(null);
 
+  const handleFormAction = async (formData: FormData) => {
+    let result: ProductFormState;
+    if (mode === 'edit' && currentId) {
+      result = await updateProductAction(currentId, initialFormState, formData);
+    } else {
+      result = await createProductAction(initialFormState, formData);
+    }
+    setFormState(result);
+  };
+
   useEffect(() => {
-    if (state.isSuccess && state.message) {
+    if (formState.isSuccess && formState.message) {
       toast({
         title: 'Success!',
-        description: state.message,
+        description: formState.message,
         variant: 'default',
         duration: 5000,
       });
-      if (mode === 'create') {
-        formRef.current?.reset();
+      if (mode === 'create' && formRef.current) {
+        formRef.current.reset();
       }
-    } else if (state.isError && state.message && !state.fields) {
+      // Reset form state after showing toast to prevent re-triggering
+      setFormState(initialFormState);
+    } else if (formState.isError && formState.message && !formState.fields) {
       toast({
         title: 'Error',
-        description: state.message,
+        description: formState.message,
         variant: 'destructive',
         duration: 5000,
       });
+       // Reset form state after showing toast
+       setFormState(initialFormState);
     }
-  }, [state, toast, mode]);
+  }, [formState, toast, mode]);
 
   return (
-    <form action={formAction} ref={formRef}>
+    <form action={handleFormAction} ref={formRef}>
       <CardContent className="space-y-6 p-0 md:p-6">
-        {/* Product ID (read-only if editing) */}
         {mode === 'edit' && initialData?.id && (
           <div className="space-y-2">
             <Label htmlFor="id">Product ID</Label>
@@ -83,26 +92,26 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
         <div className="space-y-2">
           <Label htmlFor="name">Product Name</Label>
           <Input id="name" name="name" placeholder="e.g., Tari Standard Meter" defaultValue={initialData?.name} />
-          {state.fields?.name && <p className="text-sm text-destructive mt-1">{state.fields.name.join(', ')}</p>}
+          {formState.fields?.name && <p className="text-sm text-destructive mt-1">{formState.fields.name.join(', ')}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>
           <Textarea id="description" name="description" placeholder="Detailed description of the product..." rows={4} defaultValue={initialData?.description} />
-          {state.fields?.description && <p className="text-sm text-destructive mt-1">{state.fields.description.join(', ')}</p>}
+          {formState.fields?.description && <p className="text-sm text-destructive mt-1">{formState.fields.description.join(', ')}</p>}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label htmlFor="price">Price (KES)</Label>
             <Input id="price" name="price" type="number" placeholder="e.g., 2500.00" defaultValue={initialData?.price?.toString()} step="0.01" />
-            {state.fields?.price && <p className="text-sm text-destructive mt-1">{state.fields.price.join(', ')}</p>}
+            {formState.fields?.price && <p className="text-sm text-destructive mt-1">{formState.fields.price.join(', ')}</p>}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
             <Input id="category" name="category" placeholder="e.g., Prepaid Meters, Services" defaultValue={initialData?.category} />
-            {state.fields?.category && <p className="text-sm text-destructive mt-1">{state.fields.category.join(', ')}</p>}
+            {formState.fields?.category && <p className="text-sm text-destructive mt-1">{formState.fields.category.join(', ')}</p>}
           </div>
         </div>
         
@@ -116,19 +125,15 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
             defaultValue={initialData?.features?.join(', ')} 
           />
            <p className="text-xs text-muted-foreground">Enter features separated by commas.</p>
-          {state.fields?.features && <p className="text-sm text-destructive mt-1">{state.fields.features.join(', ')}</p>}
+          {formState.fields?.features && <p className="text-sm text-destructive mt-1">{formState.fields.features.join(', ')}</p>}
         </div>
 
-        {/* Image URL and Hint are not directly editable in this form for simplicity,
-            they are handled by the addProduct/updateProduct logic with placeholders.
-            A real app would have image upload capabilities. */}
-
-        {state.isError && state.message && state.fields && (
+        {formState.isError && formState.message && formState.fields && (
            <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Form Error</AlertTitle>
             <AlertDescription>
-              {state.message} Please correct the highlighted fields.
+              {formState.message} Please correct the highlighted fields.
             </AlertDescription>
           </Alert>
         )}

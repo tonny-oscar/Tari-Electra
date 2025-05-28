@@ -16,7 +16,7 @@ const UpdateProductSchema = z.object({
 
 export async function updateProductAction(
   currentId: string,
-  prevState: ProductFormState,
+  prevState: ProductFormState, // prevState is not directly used with the new manual state handling but kept for signature consistency.
   formData: FormData
 ): Promise<ProductFormState> {
   console.log('[updateProductAction] Action invoked for ID:', currentId);
@@ -55,15 +55,17 @@ export async function updateProductAction(
     }
     
     const { features, ...restOfData } = validatedFields.data;
-    const featuresArray = features ? features.split(',').map(f => f.trim()).filter(f => f) : productToUpdate.features;
-
+    const featuresString = features || ''; // Default to empty string if undefined
+    const featuresArray = featuresString.split(',').map(f => f.trim()).filter(f => f.length > 0);
 
     const dataToUpdate = {
-        ...restOfData,
+        ...restOfData, // name, description, price (already number), category
         features: featuresArray,
     };
     
-    const updatedProduct = updateProduct(currentId, dataToUpdate as Partial<Omit<Product, 'id'>> & { price?: number | string });
+    // updateProduct in data/products.ts expects Partial<Omit<Product, 'id'>>
+    // and will handle type conversion for price if necessary.
+    const updatedProduct = updateProduct(currentId, dataToUpdate);
 
     if (!updatedProduct) {
         return {
@@ -77,8 +79,7 @@ export async function updateProductAction(
     
     revalidatePath('/admin/products');
     revalidatePath(`/admin/products/edit/${currentId}`);
-    revalidatePath('/products'); // Revalidate public products page
-    // If you have individual public product pages: revalidatePath(`/products/${currentId}`);
+    revalidatePath('/products');
 
     return {
       message: `Product "${updatedProduct.name}" updated successfully (in-memory).`,

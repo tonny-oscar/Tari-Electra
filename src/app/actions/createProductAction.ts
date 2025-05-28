@@ -11,12 +11,11 @@ const CreateProductSchema = z.object({
   description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
   category: z.string().min(2, { message: 'Category must be at least 2 characters.' }),
-  // features will be handled as a comma-separated string for simplicity in form
   features: z.string().optional(), 
 });
 
 export async function createProductAction(
-  prevState: ProductFormState,
+  prevState: ProductFormState, // prevState is not directly used with the new manual state handling but kept for signature consistency if other patterns are used.
   formData: FormData
 ): Promise<ProductFormState> {
   console.log('[createProductAction] Action invoked.');
@@ -45,21 +44,23 @@ export async function createProductAction(
   console.log('[createProductAction] Validation successful.');
 
   try {
+    // Ensure features is handled correctly: string from form, array for Product type
     const { features, ...restOfData } = validatedFields.data;
     const featuresArray = features ? features.split(',').map(f => f.trim()).filter(f => f) : [];
     
-    const newProductData = {
-      ...restOfData,
+    // Prepare data for addProduct, ensuring correct types.
+    // addProduct in data/products.ts expects price as number and features as string[]
+    const newProductDataForStorage = {
+      ...restOfData, // name, description, price (already number), category
       features: featuresArray,
     };
     
-    // The addProduct function in data/products.ts will handle ID generation and image placeholders
-    const createdProduct = addProduct(newProductData as Omit<Product, 'id' | 'imageUrl' | 'imageHint'> & { price: number | string });
+    const createdProduct = addProduct(newProductDataForStorage as Omit<Product, 'id' | 'imageUrl' | 'imageHint'>);
 
     console.log('[createProductAction] New Product Data (In-Memory):', createdProduct);
     
     revalidatePath('/admin/products');
-    revalidatePath('/products'); // Revalidate public products page
+    revalidatePath('/products'); 
 
     return {
       message: `Product "${createdProduct.name}" created successfully (in-memory).`,
