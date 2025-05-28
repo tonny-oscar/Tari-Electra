@@ -1,7 +1,6 @@
 
 'use client';
 
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,17 +10,14 @@ import {
   LayoutDashboard,
   Menu,
   Newspaper,
-  Package,
+  MessageSquare, // Added for messages
+  ShoppingBag, // Added for products
   Settings,
-  ShoppingBag,
-  Users,
-  MessageSquare,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   DropdownMenu,
@@ -31,10 +27,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Loader2 } from 'lucide-react'; // For loading state
-import { NotificationBell } from '@/components/admin/NotificationBell'; // Import NotificationBell
+import { NotificationBell } from '@/components/admin/NotificationBell';
 import { useToast } from '@/hooks/use-toast';
 
 const navLinks = [
@@ -69,36 +64,47 @@ export default function AdminLayout({
     }
 
     // User is authenticated, now check for admin privileges
-    let adminEmailEnv = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-    const defaultAdminEmailForDev = "admin@example.com"; // Fallback
+    const configuredAdminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
-    if (!adminEmailEnv || adminEmailEnv.trim() === "") {
-      console.warn(
-        `[AdminLayout] WARNING: NEXT_PUBLIC_ADMIN_EMAIL environment variable is not set or is empty. 
-        Falling back to default admin email "${defaultAdminEmailForDev}" for development. 
-        This is INSECURE for production. Please set NEXT_PUBLIC_ADMIN_EMAIL in your .env.local file and restart your server.`
+    if (!configuredAdminEmail || configuredAdminEmail.trim() === "") {
+      console.error(
+        `[AdminLayout] CRITICAL: NEXT_PUBLIC_ADMIN_EMAIL environment variable is not set or is empty. 
+        This is required for admin access. Please set it in your .env.local file and restart your server.`
       );
-      adminEmailEnv = defaultAdminEmailForDev;
+      setIsAdminRouteAllowed(false);
+      router.push('/'); // Redirect to home page or a general error page
+      toast({ 
+        title: 'Admin Configuration Error', 
+        description: 'The admin email is not configured. Please contact support.', 
+        variant: 'destructive', 
+        duration: 10000 
+      });
+      return;
     }
 
     const loggedInUserEmail = user.email?.trim().toLowerCase();
-    const configuredAdminEmail = adminEmailEnv.trim().toLowerCase(); // Use the potentially defaulted adminEmailEnv
+    const adminEmailLower = configuredAdminEmail.trim().toLowerCase();
 
     console.log(`[AdminLayout] Admin Check:`);
     console.log(`  - User Email (from auth): "${user.email}" (length: ${user.email?.length})`);
     console.log(`  - Processed User Email:   "${loggedInUserEmail}" (length: ${loggedInUserEmail?.length})`);
-    console.log(`  - Admin Email (from env/default): "${adminEmailEnv}" (length: ${adminEmailEnv?.length})`);
-    console.log(`  - Processed Admin Email:  "${configuredAdminEmail}" (length: ${configuredAdminEmail?.length})`);
+    console.log(`  - Admin Email (from env): "${configuredAdminEmail}" (length: ${configuredAdminEmail?.length})`);
+    console.log(`  - Processed Admin Email:  "${adminEmailLower}" (length: ${adminEmailLower?.length})`);
 
 
-    if (loggedInUserEmail && loggedInUserEmail === configuredAdminEmail) {
+    if (loggedInUserEmail && loggedInUserEmail === adminEmailLower) {
       console.log('[AdminLayout] Admin access GRANTED.');
       setIsAdminRouteAllowed(true);
     } else {
       console.log('[AdminLayout] Admin access DENIED. User is not the configured admin.');
       setIsAdminRouteAllowed(false);
       router.push('/');
-      toast({ title: 'Access Denied', description: 'You do not have permission to access the admin area.', variant: 'destructive', duration: 7000 });
+      toast({ 
+        title: 'Access Denied', 
+        description: 'You do not have permission to access the admin area.', 
+        variant: 'destructive', 
+        duration: 7000 
+      });
     }
   }, [user, loading, router, toast]);
 
