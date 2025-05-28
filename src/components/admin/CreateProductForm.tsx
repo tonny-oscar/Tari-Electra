@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CardContent, CardFooter } from '@/components/ui/card';
-import { AlertCircle, CheckCircle, Loader2, Save, Edit3, ShoppingBag } from 'lucide-react';
+import { AlertCircle, Loader2, Save, Edit3 } from 'lucide-react'; // Removed CheckCircle, ShoppingBag
 import { useToast } from '@/hooks/use-toast';
 import type { ProductFormState, Product } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -44,16 +44,25 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
   const formRef = useRef<HTMLFormElement>(null);
 
   const handleFormAction = async (formData: FormData) => {
+    console.log('[CreateProductForm] handleFormAction called. Mode:', mode);
+    // Log formData entries
+    // @ts-ignore
+    for (let pair of formData.entries()) {
+      console.log(`[CreateProductForm] FormData: ${pair[0]}= ${pair[1]}`);
+    }
+
     let result: ProductFormState;
     if (mode === 'edit' && currentId) {
       result = await updateProductAction(currentId, initialFormState, formData);
     } else {
       result = await createProductAction(initialFormState, formData);
     }
+    console.log('[CreateProductForm] Server action result:', result);
     setFormState(result);
   };
 
   useEffect(() => {
+    console.log('[CreateProductForm] useEffect triggered. FormState:', formState);
     if (formState.isSuccess && formState.message) {
       toast({
         title: 'Success!',
@@ -65,8 +74,8 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
         formRef.current.reset();
       }
       // Reset form state after showing toast to prevent re-triggering
-      setFormState(initialFormState);
-    } else if (formState.isError && formState.message && !formState.fields) {
+      setFormState(initialFormState); 
+    } else if (formState.isError && formState.message) { // Simplified condition for error toast
       toast({
         title: 'Error',
         description: formState.message,
@@ -128,7 +137,7 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
           {formState.fields?.features && <p className="text-sm text-destructive mt-1">{formState.fields.features.join(', ')}</p>}
         </div>
 
-        {formState.isError && formState.message && formState.fields && (
+        {formState.isError && formState.fields && formState.message && (
            <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Form Error</AlertTitle>

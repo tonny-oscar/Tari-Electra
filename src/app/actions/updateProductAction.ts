@@ -16,10 +16,14 @@ const UpdateProductSchema = z.object({
 
 export async function updateProductAction(
   currentId: string,
-  prevState: ProductFormState, // prevState is not directly used with the new manual state handling but kept for signature consistency.
+  prevState: ProductFormState,
   formData: FormData
 ): Promise<ProductFormState> {
   console.log('[updateProductAction] Action invoked for ID:', currentId);
+  // @ts-ignore
+  for (let pair of formData.entries()) {
+    console.log(`[updateProductAction] Raw FormData: ${pair[0]}= ${pair[1]}`);
+  }
 
   const rawFormData = {
     name: formData.get('name'),
@@ -28,7 +32,7 @@ export async function updateProductAction(
     category: formData.get('category'),
     features: formData.get('features'),
   };
-  console.log('[updateProductAction] Raw form data:', rawFormData);
+  console.log('[updateProductAction] Parsed raw form data:', rawFormData);
 
   const validatedFields = UpdateProductSchema.safeParse(rawFormData);
 
@@ -42,11 +46,12 @@ export async function updateProductAction(
       isSuccess: false,
     };
   }
-  console.log('[updateProductAction] Validation successful.');
+  console.log('[updateProductAction] Validation successful. Validated data:', validatedFields.data);
 
   try {
     const productToUpdate = findProduct(currentId);
     if (!productToUpdate) {
+      console.error('[updateProductAction] Product not found with ID:', currentId);
       return {
         message: `Error: Product with ID "${currentId}" not found.`,
         isError: true,
@@ -55,19 +60,19 @@ export async function updateProductAction(
     }
     
     const { features, ...restOfData } = validatedFields.data;
-    const featuresString = features || ''; // Default to empty string if undefined
+    const featuresString = features || ''; 
     const featuresArray = featuresString.split(',').map(f => f.trim()).filter(f => f.length > 0);
 
-    const dataToUpdate = {
-        ...restOfData, // name, description, price (already number), category
+    const dataToUpdate: Partial<Omit<Product, 'id'>> = {
+        ...restOfData, 
         features: featuresArray,
     };
-    
-    // updateProduct in data/products.ts expects Partial<Omit<Product, 'id'>>
-    // and will handle type conversion for price if necessary.
+    console.log('[updateProductAction] Data for updateProduct:', dataToUpdate);
+        
     const updatedProduct = updateProduct(currentId, dataToUpdate);
 
     if (!updatedProduct) {
+        console.error('[updateProductAction] updateProduct returned null for ID:', currentId);
         return {
             message: `Failed to update product "${currentId}". Product not found or update failed.`,
             isError: true,

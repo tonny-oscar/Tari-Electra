@@ -15,10 +15,14 @@ const CreateProductSchema = z.object({
 });
 
 export async function createProductAction(
-  prevState: ProductFormState, // prevState is not directly used with the new manual state handling but kept for signature consistency if other patterns are used.
+  prevState: ProductFormState,
   formData: FormData
 ): Promise<ProductFormState> {
   console.log('[createProductAction] Action invoked.');
+  // @ts-ignore
+  for (let pair of formData.entries()) {
+    console.log(`[createProductAction] Raw FormData: ${pair[0]}= ${pair[1]}`);
+  }
 
   const rawFormData = {
     name: formData.get('name'),
@@ -27,7 +31,7 @@ export async function createProductAction(
     category: formData.get('category'),
     features: formData.get('features'),
   };
-  console.log('[createProductAction] Raw form data:', rawFormData);
+  console.log('[createProductAction] Parsed raw form data:', rawFormData);
 
   const validatedFields = CreateProductSchema.safeParse(rawFormData);
 
@@ -41,23 +45,33 @@ export async function createProductAction(
       isSuccess: false,
     };
   }
-  console.log('[createProductAction] Validation successful.');
+  console.log('[createProductAction] Validation successful. Validated data:', validatedFields.data);
 
   try {
-    // Ensure features is handled correctly: string from form, array for Product type
     const { features, ...restOfData } = validatedFields.data;
-    const featuresArray = features ? features.split(',').map(f => f.trim()).filter(f => f) : [];
+    const featuresString = features || ''; // Default to empty string if undefined or null
+    const featuresArray = featuresString.split(',').map(f => f.trim()).filter(f => f.length > 0);
     
-    // Prepare data for addProduct, ensuring correct types.
-    // addProduct in data/products.ts expects price as number and features as string[]
     const newProductDataForStorage = {
-      ...restOfData, // name, description, price (already number), category
+      ...restOfData,
       features: featuresArray,
     };
+    console.log('[createProductAction] Data for addProduct:', newProductDataForStorage);
     
-    const createdProduct = addProduct(newProductDataForStorage as Omit<Product, 'id' | 'imageUrl' | 'imageHint'>);
+    // Pass the correct structure to addProduct.
+    // The addProduct function expects an object where price is already a number and features is an array of strings.
+    // The Omit type helps ensure we're not passing unwanted properties like id, imageUrl, imageHint.
+    const productToAdd: Omit<Product, 'id' | 'imageUrl' | 'imageHint'> = {
+      name: newProductDataForStorage.name,
+      description: newProductDataForStorage.description,
+      price: newProductDataForStorage.price, // Already coerced to number by Zod
+      category: newProductDataForStorage.category,
+      features: newProductDataForStorage.features,
+    };
+    
+    const createdProduct = addProduct(productToAdd);
 
-    console.log('[createProductAction] New Product Data (In-Memory):', createdProduct);
+    console.log('[createProductAction] New Product Created (In-Memory):', createdProduct);
     
     revalidatePath('/admin/products');
     revalidatePath('/products'); 
