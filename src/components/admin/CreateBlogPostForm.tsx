@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState, useFormStatus } from 'react'; // Changed from react-dom for useActionState
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,7 +29,7 @@ function SubmitButton() {
 
 export function CreateBlogPostForm() {
   const { toast } = useToast();
-  const [state, formAction] = useFormState(createBlogAction, initialState);
+  const [state, formAction] = useActionState(createBlogAction, initialState); // Changed to useActionState
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
