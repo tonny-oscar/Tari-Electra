@@ -68,8 +68,6 @@ export default function AdminLayout({
         setIsAdmin(true);
       } else {
         // If not admin, redirect to home and show a message
-        // This check is primarily for direct navigation to /admin by non-admins
-        // The header links for /admin should ideally not even render for non-admins
         router.push('/');
         // Consider adding a toast message here for better UX
         console.warn("Access to admin area denied for user:", user.email);
@@ -77,7 +75,7 @@ export default function AdminLayout({
     }
   }, [user, loading, router]);
 
-  if (loading || (!user && !isAdmin)) { // Show loader if loading or if user is not set and not determined to be admin yet
+  if (loading || (!user && !isAdmin)) { 
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -86,7 +84,6 @@ export default function AdminLayout({
     );
   }
   
-  // If user is loaded, but is not the admin (this check is a fallback, useEffect should handle redirect)
   if (user && !isAdmin) {
     return (
         <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
@@ -98,7 +95,6 @@ export default function AdminLayout({
 
   const handleLogout = async () => {
     await logOut();
-    // AuthProvider's logOut already handles redirecting to '/'
   };
 
   return (
@@ -175,7 +171,7 @@ export default function AdminLayout({
           <div className="w-full flex-1">
             {/* Optional Search Form can go here */}
           </div>
-          <NotificationBell /> {/* <--- Added NotificationBell here */}
+          <NotificationBell />
           <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -194,9 +190,6 @@ export default function AdminLayout({
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {/* <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
-              <DropdownMenuSeparator /> */}
               <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
