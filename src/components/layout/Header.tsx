@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { LogOut, Menu, UserCircle, ShoppingBag, NewspaperIcon, Settings, HomeIcon, LogIn, UserPlus } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ContactSection } from '@/components/sections/ContactSection';
-import { useAuth } from '@/hooks/useAuth'; // Import useAuth
+import { useAuth } from '@/hooks/useAuth';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,13 +21,13 @@ import {
 const mainNavItems = [
   { href: '/', label: 'Home', icon: HomeIcon },
   { href: '/products', label: 'Products', icon: ShoppingBag },
-  { href: '/about', label: 'About', icon: NewspaperIcon }, // Using Newspaper for About
-  { href: '/contact', label: 'Contact', icon: UserCircle }, // Using UserCircle for Contact
+  { href: '/about', label: 'About', icon: NewspaperIcon },
+  { href: '/contact', label: 'Contact', icon: UserCircle }, 
   { href: '/blog', label: 'Blog', icon: NewspaperIcon },
 ];
 
 export function Header() {
-  const { user, loading, logOut } = useAuth(); // Use the auth hook
+  const { user, loading, logOut } = useAuth();
 
   const handleLogout = async () => {
     await logOut();
@@ -47,7 +47,7 @@ export function Header() {
             </Button>
           ))}
 
-          {!loading && user && (
+          {!loading && user && ( // Show Admin link if any user is logged in
             <Button variant="ghost" asChild className="text-muted-foreground hover:text-primary hover:bg-primary/10 px-2 lg:px-3">
               <Link href="/admin">
                 <Settings className="h-4 w-4 mr-1 lg:mr-2" />
@@ -181,3 +181,5 @@ export function Header() {
     </header>
   );
 }
+
+    
