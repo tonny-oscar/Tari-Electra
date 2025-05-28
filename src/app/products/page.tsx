@@ -1,5 +1,8 @@
+
 import { ProductsSection } from "@/components/sections/ProductsSection";
+import { getProducts } from "@/data/products"; // Import getProducts
 import type { Metadata } from 'next';
+import type { Product } from '@/lib/types';
 
 export const metadata: Metadata = {
   title: 'Our Products & Services - Tari Electra',
@@ -7,5 +10,6 @@ export const metadata: Metadata = {
 };
 
 export default function ProductsPage() {
-  return <ProductsSection />;
+  const products: Product[] = getProducts(); // Fetch products here
+  return <ProductsSection products={products} />; {/* Pass products as a prop */}
 }
