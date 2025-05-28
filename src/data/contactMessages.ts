@@ -43,6 +43,7 @@ export function addContactMessage(
     isRead: false,
   };
   mutableMessages.unshift(newMessage); // Add to the beginning for most recent first
+  console.log('[addContactMessage] New message added to in-memory store:', newMessage);
   return { ...newMessage };
 }
 
@@ -55,13 +56,27 @@ export function markMessageAsRead(id: string, isRead: boolean): ContactMessage |
   const messageIndex = mutableMessages.findIndex(m => m.id === id);
   if (messageIndex > -1) {
     mutableMessages[messageIndex].isRead = isRead;
+    console.log(`[markMessageAsRead] Message ${id} marked as ${isRead ? 'read' : 'unread'}.`);
     return { ...mutableMessages[messageIndex] };
   }
+  console.warn(`[markMessageAsRead] Message ${id} not found.`);
   return null;
 }
 
 export function deleteContactMessage(id: string): boolean {
   const initialLength = mutableMessages.length;
   mutableMessages = mutableMessages.filter(m => m.id !== id);
-  return mutableMessages.length < initialLength;
+  const success = mutableMessages.length < initialLength;
+  if (success) {
+    console.log(`[deleteContactMessage] Message ${id} deleted.`);
+  } else {
+    console.warn(`[deleteContactMessage] Message ${id} not found for deletion.`);
+  }
+  return success;
+}
+
+export function getUnreadMessagesCount(): number {
+  const count = mutableMessages.filter(msg => !msg.isRead).length;
+  // console.log('[getUnreadMessagesCount] Unread count from data source:', count); // Optional: for debugging
+  return count;
 }
