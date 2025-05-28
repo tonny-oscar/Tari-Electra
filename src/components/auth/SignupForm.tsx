@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, KeyRound } from 'lucide-react'; // Added KeyRound for invite code
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client';
 import { useRouter } from 'next/navigation';
@@ -20,10 +20,11 @@ const signupSchema = z
     email: z.string().email({ message: 'Invalid email address' }),
     password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
     confirmPassword: z.string(),
+    inviteCode: z.string().min(1, { message: 'Signup invite code is required' }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
-    path: ['confirmPassword'], // path of error
+    path: ['confirmPassword'],
   });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
@@ -45,14 +46,33 @@ export function SignupForm() {
   const onSubmit = async (data: SignupFormValues) => {
     setIsLoading(true);
     setError(null);
+
+    // Client-side check for the invite code
+    if (data.inviteCode !== process.env.NEXT_PUBLIC_SIGNUP_INVITE_CODE) {
+      setError('Invalid signup invite code.');
+      toast({
+        title: 'Signup Failed',
+        description: 'Invalid signup invite code. Please try again.',
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       await createUserWithEmailAndPassword(auth, data.email, data.password);
       toast({ title: 'Account Created!', description: 'Redirecting to login...' });
       router.push('/login');
     } catch (err: any) {
       console.error('Signup error:', err);
-      setError(err.message || 'Failed to create account. Please try again.');
-      toast({ title: 'Signup Failed', description: err.message || 'An error occurred.', variant: 'destructive' });
+      let errorMessage = 'Failed to create account. Please try again.';
+      if (err.code === 'auth/email-already-in-use') {
+        errorMessage = 'This email address is already in use. Please try a different one or log in.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
+      toast({ title: 'Signup Failed', description: errorMessage, variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -83,6 +103,14 @@ export function SignupForm() {
         {errors.confirmPassword && (
           <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
         )}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="inviteCode">Signup Invite Code</Label>
+        <div className="relative">
+            <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input id="inviteCode" type="text" placeholder="Enter invite code" {...register('inviteCode')} className="pl-10" />
+        </div>
+        {errors.inviteCode && <p className="text-sm text-destructive">{errors.inviteCode.message}</p>}
       </div>
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Create Account'}
