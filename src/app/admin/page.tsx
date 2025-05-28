@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Newspaper, LayoutDashboard } from "lucide-react";
+import { Newspaper, LayoutDashboard, ShoppingBag } from "lucide-react"; // Added ShoppingBag
 
 export default function AdminDashboardPage() {
   return (
@@ -17,7 +17,7 @@ export default function AdminDashboardPage() {
         </CardHeader>
         <CardContent>
           <p className="mb-6 text-muted-foreground">
-            This is the central hub for managing various aspects of your website. 
+            This is the central hub for managing various aspects of your website.
             Use the navigation above or the quick links below to get started.
           </p>
           <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
@@ -37,8 +37,24 @@ export default function AdminDashboardPage() {
                 </Button>
               </CardContent>
             </Card>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <ShoppingBag className="h-5 w-5 text-primary" />
+                  Product Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Create, view, and manage all your products.
+                </p>
+                <Button asChild>
+                  <Link href="/admin/products">Go to Products</Link>
+                </Button>
+              </CardContent>
+            </Card>
             {/* Example of another potential admin card */}
-            {/* 
+            {/*
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">

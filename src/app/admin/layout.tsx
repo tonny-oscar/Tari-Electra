@@ -2,8 +2,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home, Newspaper, Settings } from 'lucide-react';
-import { ThemeToggle } from '@/components/ThemeToggle'; // Added ThemeToggle import
+import { Home, Newspaper, Settings, ShoppingBag } from 'lucide-react'; // Added ShoppingBag
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard - Tari Electra',
@@ -40,10 +40,17 @@ export default function AdminLayout({
             <Newspaper className="h-4 w-4 mr-1 inline-block" />
             Blog Management
           </Link>
+          <Link
+            href="/admin/products"
+            className="text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ShoppingBag className="h-4 w-4 mr-1 inline-block" />
+            Product Management
+          </Link>
         </nav>
         <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
           <div className="ml-auto flex items-center gap-2">
-            <ThemeToggle /> 
+            <ThemeToggle />
             <Button asChild variant="outline" size="sm">
               <Link href="/">View Public Site</Link>
             </Button>
