@@ -10,8 +10,8 @@ import {
   LayoutDashboard,
   Menu,
   Newspaper,
-  MessageSquare, // Added for messages
-  ShoppingBag, // Added for products
+  MessageSquare,
+  ShoppingBag,
   Settings,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -28,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Loader2 } from 'lucide-react'; // For loading state
+import { Loader2 } from 'lucide-react'; 
 import { NotificationBell } from '@/components/admin/NotificationBell';
 import { useToast } from '@/hooks/use-toast';
 
@@ -63,49 +63,12 @@ export default function AdminLayout({
       return;
     }
 
-    // User is authenticated, now check for admin privileges
-    const configuredAdminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+    // If user is authenticated, allow access to admin routes
+    // The visibility of the "Admin" link in the public header is controlled separately
+    // based on NEXT_PUBLIC_ADMIN_EMAIL, but direct access here is granted to any logged-in user.
+    console.log('[AdminLayout] User authenticated. Granting access to admin routes.');
+    setIsAdminRouteAllowed(true);
 
-    if (!configuredAdminEmail || configuredAdminEmail.trim() === "") {
-      console.error(
-        `[AdminLayout] CRITICAL: NEXT_PUBLIC_ADMIN_EMAIL environment variable is not set or is empty. 
-        This is required for admin access. Please set it in your .env.local file and restart your server.`
-      );
-      setIsAdminRouteAllowed(false);
-      router.push('/'); // Redirect to home page or a general error page
-      toast({ 
-        title: 'Admin Configuration Error', 
-        description: 'The admin email is not configured. Please contact support.', 
-        variant: 'destructive', 
-        duration: 10000 
-      });
-      return;
-    }
-
-    const loggedInUserEmail = user.email?.trim().toLowerCase();
-    const adminEmailLower = configuredAdminEmail.trim().toLowerCase();
-
-    console.log(`[AdminLayout] Admin Check:`);
-    console.log(`  - User Email (from auth): "${user.email}" (length: ${user.email?.length})`);
-    console.log(`  - Processed User Email:   "${loggedInUserEmail}" (length: ${loggedInUserEmail?.length})`);
-    console.log(`  - Admin Email (from env): "${configuredAdminEmail}" (length: ${configuredAdminEmail?.length})`);
-    console.log(`  - Processed Admin Email:  "${adminEmailLower}" (length: ${adminEmailLower?.length})`);
-
-
-    if (loggedInUserEmail && loggedInUserEmail === adminEmailLower) {
-      console.log('[AdminLayout] Admin access GRANTED.');
-      setIsAdminRouteAllowed(true);
-    } else {
-      console.log('[AdminLayout] Admin access DENIED. User is not the configured admin.');
-      setIsAdminRouteAllowed(false);
-      router.push('/');
-      toast({ 
-        title: 'Access Denied', 
-        description: 'You do not have permission to access the admin area.', 
-        variant: 'destructive', 
-        duration: 7000 
-      });
-    }
   }, [user, loading, router, toast]);
 
   const handleLogout = async () => {
@@ -125,6 +88,7 @@ export default function AdminLayout({
 
   if (!user) {
     console.log('[AdminLayout] Render: No user object. Redirecting to login should be in progress.');
+    // This state is usually brief as the useEffect hook should have redirected.
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -135,10 +99,11 @@ export default function AdminLayout({
 
   if (!isAdminRouteAllowed) {
      console.log('[AdminLayout] Render: Access not allowed or still verifying. Redirect should be in progress if denied.');
+    // This state is usually brief as the useEffect hook should have handled redirection or granted access.
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground">Verifying access or redirecting...</p>
+        <p className="mt-4 text-muted-foreground">Verifying access...</p>
       </div>
     );
   }
@@ -230,7 +195,7 @@ export default function AdminLayout({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Admin User</p>
+                    <p className="text-sm font-medium leading-none">User</p> {/* Changed from Admin User */}
                     <p className="text-xs leading-none text-muted-foreground">
                     {user?.email}
                     </p>
@@ -248,4 +213,3 @@ export default function AdminLayout({
     </div>
   );
 }
-    
