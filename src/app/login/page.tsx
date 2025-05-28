@@ -1,13 +1,15 @@
 
+"use client";
+
 import { LoginForm } from '@/components/auth/LoginForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Login - Tari Electra',
-  description: 'Login to your Tari Electra account.',
-};
+// export const metadata: Metadata = {
+// title: 'Login - Tari Electra',
+// description: 'Login to your Tari Electra account.',
+// };
 
 export default function LoginPage() {
   return (
