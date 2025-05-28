@@ -1,8 +1,10 @@
 
 'use server';
 
-import type { BlogPost } from '@/lib/types';
+import type { BlogPost, BlogFormState } from '@/lib/types';
+import { addBlogPost } from '@/data/blogPosts';
 import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
 
 const CreateBlogPostSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters.' }),
@@ -14,18 +16,10 @@ const CreateBlogPostSchema = z.object({
   content: z.string().min(50, { message: 'Content must be at least 50 characters.' }),
 });
 
-export type CreateBlogFormState = {
-  message: string;
-  fields?: Record<string, string[] | undefined>; // Adjusted to match Zod error structure
-  isError?: boolean;
-  isSuccess?: boolean;
-  createdPost?: Partial<BlogPost>; // For potential future use
-};
-
 export async function createBlogAction(
-  prevState: CreateBlogFormState,
+  prevState: BlogFormState,
   formData: FormData
-): Promise<CreateBlogFormState> {
+): Promise<BlogFormState> {
   console.log('[createBlogAction] Action invoked.');
 
   const rawFormData = {
@@ -52,24 +46,29 @@ export async function createBlogAction(
   }
   console.log('[createBlogAction] Validation successful.');
 
-  const newPostData: Omit<BlogPost, 'date' | 'imageUrl' | 'imageHint'> = validatedFields.data;
+  try {
+    const newPostData: Omit<BlogPost, 'date' | 'imageUrl' | 'imageHint'> = validatedFields.data;
+    const createdPost = addBlogPost(newPostData); // This now adds to the in-memory array
 
-  // For this prototype, we'll just log the data.
-  // In a real application, you would save this to a database or file.
-  const blogPostToLog: BlogPost = {
-    ...newPostData,
-    date: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD
-    imageUrl: 'https://placehold.co/600x400.png', // Placeholder
-    imageHint: 'new article', // Placeholder
-  };
+    console.log('[createBlogAction] New Blog Post Data (In-Memory):', createdPost);
+    
+    revalidatePath('/admin/blog');
+    revalidatePath('/blog');
+    revalidatePath(`/blog/${createdPost.slug}`);
 
-  console.log('[createBlogAction] New Blog Post Data (Prototype - Logged Only):', blogPostToLog);
-  
-  // Simulate successful creation
-  return {
-    message: `Blog post "${blogPostToLog.title}" submitted successfully (logged to console).`,
-    isError: false,
-    isSuccess: true,
-    createdPost: blogPostToLog,
-  };
+    return {
+      message: `Blog post "${createdPost.title}" created successfully (in-memory).`,
+      isError: false,
+      isSuccess: true,
+      createdPost: createdPost,
+    };
+  } catch (error) {
+    console.error('[createBlogAction] Error creating post:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return {
+      message: `Error creating post: ${errorMessage}`,
+      isError: true,
+      isSuccess: false,
+    };
+  }
 }

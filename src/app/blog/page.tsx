@@ -1,35 +1,38 @@
+
 import Link from "next/link";
 import Image from "next/image";
-import { blogPosts } from "@/data/blogPosts";
+import { getBlogPosts } from "@/data/blogPosts"; // Updated import
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, CalendarDays, UserCircle, Tag } from "lucide-react";
 
 export const metadata = {
-  title: "Blog - Tari Smart Power",
+  title: "Blog - Tari Electra",
   description: "Articles and insights on energy saving, sub-metering, and landlord advice.",
 };
 
 export default function BlogPage() {
+  const posts = getBlogPosts(); // Fetch posts using the new function
+
   return (
     <div className="bg-secondary">
       <div className="container mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-            Tari Smart Power Blog
+            Tari Electra Blog
           </h1>
           <p className="mt-6 text-xl text-muted-foreground max-w-2xl mx-auto">
             Stay informed with our latest articles, tips, and news on smart sub-metering and energy management.
           </p>
         </div>
 
-        {blogPosts.length === 0 ? (
+        {posts.length === 0 ? (
           <div className="text-center py-10">
             <p className="text-xl text-muted-foreground">No blog posts yet. Check back soon!</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3">
-            {blogPosts.map((post) => (
+            {posts.map((post) => (
               <Card key={post.slug} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 bg-background">
                  <Link href={`/blog/${post.slug}`} className="block">
                   <div className="aspect-video w-full relative">
@@ -80,4 +83,17 @@ export default function BlogPage() {
       </div>
     </div>
   );
+}
+
+// Function to generate static params for individual blog post pages
+// This ensures Next.js knows which blog post slugs to pre-render at build time.
+// We need to use getBlogPosts here as well if this is to reflect dynamic data during build.
+// However, for a purely dynamic in-memory store, generateStaticParams might pre-render
+// based on the initial state of blogPosts.ts at build time.
+// For full dynamic behavior with an in-memory store changed at runtime, pages would effectively be server-rendered on demand.
+export async function generateStaticParams() {
+  const posts = getBlogPosts();
+  return posts.map((post) => ({
+    slug: post.slug,
+  }));
 }

@@ -2,35 +2,49 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { useActionState } from 'react';
+import { useActionState } from 'react'; // Corrected from useFormState
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardFooter } from '@/components/ui/card'; // Removed unused CardHeader, CardTitle, CardDescription
-import { AlertCircle, CheckCircle, Loader2, Save } from 'lucide-react';
+import { CardContent, CardFooter } from '@/components/ui/card';
+import { AlertCircle, CheckCircle, Loader2, Save, Edit3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { createBlogAction, type CreateBlogFormState } from '@/app/actions/createBlogAction';
+import type { BlogFormState, BlogPost } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { createBlogAction } from '@/app/actions/createBlogAction';
+import { updateBlogAction } from '@/app/actions/updateBlogAction';
 
-const initialState: CreateBlogFormState = {
+type CreateBlogPostFormProps = {
+  initialData?: Partial<BlogPost>;
+  currentSlug?: string; // Used for identifying the post to update
+  mode?: 'create' | 'edit';
+};
+
+const initialFormState: BlogFormState = {
   message: '',
 };
 
-function SubmitButton() {
+function SubmitButton({ mode }: { mode: 'create' | 'edit' }) {
   const { pending } = useFormStatus();
+  const isEditing = mode === 'edit';
   return (
     <Button type="submit" disabled={pending} size="lg" className="w-full md:w-auto">
-      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-      Create Post
+      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (isEditing ? <Edit3 className="mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />)}
+      {isEditing ? 'Update Post' : 'Create Post'}
     </Button>
   );
 }
 
-export function CreateBlogPostForm() {
+export function CreateBlogPostForm({ initialData, currentSlug, mode = 'create' }: CreateBlogPostFormProps) {
   const { toast } = useToast();
-  const [state, formAction] = useActionState(createBlogAction, initialState);
+  
+  const actionToUse = mode === 'edit' && currentSlug 
+    ? updateBlogAction.bind(null, currentSlug) // Bind currentSlug for update action
+    : createBlogAction;
+
+  const [state, formAction] = useActionState(actionToUse, initialFormState);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -38,10 +52,14 @@ export function CreateBlogPostForm() {
       toast({
         title: 'Success!',
         description: state.message,
-        variant: 'default', // Or use a success variant if you have one
+        variant: 'default',
         duration: 5000,
       });
-      formRef.current?.reset();
+      if (mode === 'create') {
+        formRef.current?.reset();
+      }
+      // Optionally, redirect after successful update if needed
+      // e.g., router.push('/admin/blog')
     } else if (state.isError && state.message && !state.fields) {
       toast({
         title: 'Error',
@@ -50,23 +68,32 @@ export function CreateBlogPostForm() {
         duration: 5000,
       });
     }
-  }, [state, toast]);
+  }, [state, toast, mode]);
 
   return (
-    // The wrapping Card element is now in the page.tsx for better layout control
     <form action={formAction} ref={formRef}>
-      <CardContent className="space-y-6 p-0 md:p-6"> {/* Adjusted padding for consistency */}
+      <CardContent className="space-y-6 p-0 md:p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
-            <Input id="title" name="title" placeholder="Your Awesome Blog Post Title" />
+            <Input id="title" name="title" placeholder="Your Awesome Blog Post Title" defaultValue={initialData?.title} />
             {state.fields?.title && <p className="text-sm text-destructive mt-1">{state.fields.title.join(', ')}</p>}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="slug">Slug</Label>
-            <Input id="slug" name="slug" placeholder="your-awesome-blog-post-title" />
-            <p className="text-xs text-muted-foreground mt-1">Lowercase alphanumeric & hyphens (e.g., my-first-post).</p>
+            <Input 
+              id="slug" 
+              name="slug" 
+              placeholder="your-awesome-blog-post-title" 
+              defaultValue={initialData?.slug}
+              readOnly={mode === 'edit'} // Slug should not be editable once created
+              className={mode === 'edit' ? 'bg-muted/50 cursor-not-allowed' : ''}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Lowercase alphanumeric & hyphens (e.g., my-first-post).
+              {mode === 'edit' && <span className="font-semibold"> Cannot be changed after creation.</span>}
+            </p>
             {state.fields?.slug && <p className="text-sm text-destructive mt-1">{state.fields.slug.join(', ')}</p>}
           </div>
         </div>
@@ -74,26 +101,32 @@ export function CreateBlogPostForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label htmlFor="author">Author</Label>
-            <Input id="author" name="author" placeholder="John Doe" />
+            <Input id="author" name="author" placeholder="John Doe" defaultValue={initialData?.author} />
             {state.fields?.author && <p className="text-sm text-destructive mt-1">{state.fields.author.join(', ')}</p>}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <Input id="category" name="category" placeholder="e.g., Technology, News" />
+            <Input id="category" name="category" placeholder="e.g., Technology, News" defaultValue={initialData?.category} />
             {state.fields?.category && <p className="text-sm text-destructive mt-1">{state.fields.category.join(', ')}</p>}
           </div>
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="excerpt">Excerpt</Label>
-          <Textarea id="excerpt" name="excerpt" placeholder="A short summary of your blog post..." rows={3} />
+          <Textarea id="excerpt" name="excerpt" placeholder="A short summary of your blog post..." rows={3} defaultValue={initialData?.excerpt} />
           {state.fields?.excerpt && <p className="text-sm text-destructive mt-1">{state.fields.excerpt.join(', ')}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="content">Content (Plain Text)</Label>
-          <Textarea id="content" name="content" placeholder="Write your full blog post content here. Basic text for now." rows={10} />
+          <Label htmlFor="content">Content (HTML or Text)</Label>
+          <Textarea 
+            id="content" 
+            name="content" 
+            placeholder="Write your full blog post content here. You can use HTML for formatting." 
+            rows={10} 
+            defaultValue={initialData?.content} 
+          />
           {state.fields?.content && <p className="text-sm text-destructive mt-1">{state.fields.content.join(', ')}</p>}
         </div>
 
@@ -106,10 +139,9 @@ export function CreateBlogPostForm() {
             </AlertDescription>
           </Alert>
         )}
-
       </CardContent>
       <CardFooter className="pt-6 flex justify-end">
-        <SubmitButton />
+        <SubmitButton mode={mode} />
       </CardFooter>
     </form>
   );

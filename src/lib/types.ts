@@ -1,3 +1,4 @@
+
 export type Testimonial = {
   id: string;
   name: string;
@@ -23,5 +24,15 @@ export type BlogPost = {
   imageHint: string;
   author: string;
   category: string;
-  content: string; // Potentially Markdown string
+  content: string; // Potentially HTML string
+};
+
+// For form state in create/edit actions
+export type BlogFormState = {
+  message: string;
+  fields?: Record<string, string[] | undefined>;
+  isError?: boolean;
+  isSuccess?: boolean;
+  updatedPost?: Partial<BlogPost>;
+  createdPost?: Partial<BlogPost>;
 };

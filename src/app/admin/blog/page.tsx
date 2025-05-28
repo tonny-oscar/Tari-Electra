@@ -2,11 +2,14 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { blogPosts } from '@/data/blogPosts';
-import { PlusCircle, Edit, Trash2, ExternalLink, Newspaper } from 'lucide-react';
+import { getBlogPosts } from '@/data/blogPosts'; // Use the new data access function
+import { PlusCircle, ExternalLink, Newspaper } from 'lucide-react';
 import Image from 'next/image';
+import { BlogActionsCell } from '@/components/admin/BlogActionsCell'; // New component for actions
 
 export default function AdminBlogListPage() {
+  const posts = getBlogPosts(); // Fetch posts using the new function
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -14,7 +17,7 @@ export default function AdminBlogListPage() {
           <Newspaper className="h-7 w-7 text-primary" />
           <div>
             <h1 className="text-2xl font-semibold">Blog Posts</h1>
-            <p className="text-muted-foreground">Manage your articles here.</p>
+            <p className="text-muted-foreground">Manage your articles here. Edits are in-memory for this prototype.</p>
           </div>
         </div>
         <Button asChild>
@@ -24,7 +27,7 @@ export default function AdminBlogListPage() {
         </Button>
       </div>
 
-      {blogPosts.length === 0 ? (
+      {posts.length === 0 ? (
         <Card className="shadow-md">
           <CardContent className="py-10 text-center">
             <p className="text-muted-foreground">No blog posts yet. Start by creating one!</p>
@@ -32,10 +35,10 @@ export default function AdminBlogListPage() {
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {blogPosts.map((post) => (
+          {posts.map((post) => (
             <Card key={post.slug} className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
               {post.imageUrl && (
-                 <div className="aspect-[16/9] w-full relative"> {/* common aspect ratio */}
+                 <div className="aspect-[16/9] w-full relative">
                     <Image
                       src={post.imageUrl}
                       alt={post.title}
@@ -55,14 +58,9 @@ export default function AdminBlogListPage() {
                 <p className="text-sm text-muted-foreground line-clamp-3">{post.excerpt}</p>
                  <p className="text-xs text-muted-foreground mt-2">By {post.author}</p>
               </CardContent>
-              <CardFooter className="gap-2 pt-3">
-                <Button variant="outline" size="sm" disabled className="flex-1"> {/* Disabled for prototype */}
-                  <Edit className="mr-2 h-4 w-4" /> Edit
-                </Button>
-                <Button variant="outline" size="sm" disabled className="text-destructive hover:text-destructive-foreground hover:bg-destructive/90 border-destructive/50 flex-1"> {/* Disabled for prototype */}
-                  <Trash2 className="mr-2 h-4 w-4" /> Delete
-                </Button>
-                <Button variant="ghost" size="icon" asChild className="shrink-0">
+              <CardFooter className="gap-2 pt-3 items-center">
+                <BlogActionsCell slug={post.slug} title={post.title} />
+                <Button variant="ghost" size="icon" asChild className="shrink-0 ml-auto">
                   <Link href={`/blog/${post.slug}`} target="_blank" aria-label="View post">
                      <ExternalLink className="h-4 w-4" />
                   </Link>

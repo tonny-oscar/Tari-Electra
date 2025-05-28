@@ -1,37 +1,33 @@
+
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { blogPosts } from '@/data/blogPosts';
+import { findBlogPost } from '@/data/blogPosts'; // Updated import
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, CalendarDays, UserCircle, Tag } from 'lucide-react';
 import type { Metadata } from 'next';
+// Removed generateStaticParams from here, it's better placed in the blog index page.
 
 type Props = {
   params: { slug: string };
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const post = blogPosts.find((p) => p.slug === params.slug);
+  const post = findBlogPost(params.slug); // Use new data access function
   if (!post) {
     return {
       title: 'Post Not Found',
     };
   }
   return {
-    title: `${post.title} - Tari Smart Power Blog`,
+    title: `${post.title} - Tari Electra Blog`,
     description: post.excerpt,
   };
 }
 
-export async function generateStaticParams() {
-  return blogPosts.map((post) => ({
-    slug: post.slug,
-  }));
-}
-
 export default function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = blogPosts.find((p) => p.slug === params.slug);
+  const post = findBlogPost(params.slug); // Use new data access function
 
   if (!post) {
     notFound();
@@ -71,16 +67,18 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
             </div>
           </div>
 
-          <div className="aspect-video w-full relative overflow-hidden rounded-lg mb-8 shadow-md">
-            <Image
-              src={post.imageUrl}
-              alt={post.title}
-              fill
-              className="object-cover"
-              data-ai-hint={post.imageHint}
-              priority
-            />
-          </div>
+          {post.imageUrl && (
+            <div className="aspect-video w-full relative overflow-hidden rounded-lg mb-8 shadow-md">
+                <Image
+                src={post.imageUrl}
+                alt={post.title}
+                fill
+                className="object-cover"
+                data-ai-hint={post.imageHint}
+                priority
+                />
+            </div>
+          )}
           
           <Separator className="my-8" />
 

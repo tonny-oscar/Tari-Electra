@@ -1,6 +1,8 @@
+
 import type { BlogPost } from '@/lib/types';
 
-export const blogPosts: BlogPost[] = [
+// Initial set of blog posts
+const initialBlogPosts: BlogPost[] = [
   {
     slug: 'understanding-submetering-laws',
     title: 'Navigating Sub-Metering Laws: A Landlord\'s Guide',
@@ -19,7 +21,7 @@ export const blogPosts: BlogPost[] = [
         <li><strong>Approved Equipment:</strong> Some areas may have standards for the types of sub-meters that can be installed.</li>
         <li><strong>Dispute Resolution:</strong> Understand the processes for handling billing disputes.</li>
       </ul>
-      <p class="mt-4">Failing to comply can lead to fines and legal issues. We recommend consulting with legal counsel or a sub-metering expert like Tari Smart Power to ensure your practices are fully compliant. Our team stays updated on the latest regulations to help you navigate this complex area.</p>
+      <p class="mt-4">Failing to comply can lead to fines and legal issues. We recommend consulting with legal counsel or a sub-metering expert like Tari Electra to ensure your practices are fully compliant. Our team stays updated on the latest regulations to help you navigate this complex area.</p>
     `,
   },
   {
@@ -38,7 +40,7 @@ export const blogPosts: BlogPost[] = [
         <li><strong>Upgrade to LED Lighting:</strong> LEDs consume significantly less energy and last much longer than traditional bulbs.</li>
         <li><strong>Promote Water Conservation:</strong> Install low-flow fixtures and educate tenants on water-saving habits, as water heating is a major energy consumer.</li>
         <li><strong>Improve Insulation and Weather Stripping:</strong> Reduce drafts and heat loss, making HVAC systems more efficient.</li>
-        <li><strong>Implement Sub-Metering:</strong> When tenants are responsible for their own usage, they are more likely to conserve energy. Tari Smart Power can help!</li>
+        <li><strong>Implement Sub-Metering:</strong> When tenants are responsible for their own usage, they are more likely to conserve energy. Tari Electra can help!</li>
       </ol>
       <p class="mt-4">By adopting these measures, you can create more sustainable and cost-effective properties, benefiting both landlords and tenants.</p>
     `,
@@ -62,7 +64,57 @@ export const blogPosts: BlogPost[] = [
         <li><strong>Sustainability Credentials:</strong> Demonstrating a commitment to energy conservation can improve your property's image and appeal to environmentally conscious tenants.</li>
         <li><strong>Data-Driven Insights:</strong> Smart meters provide valuable data that can be used to identify leaks, inefficiencies, and opportunities for further optimization.</li>
       </ul>
-      <p class="mt-4">Investing in a smart sub-metering solution from Tari Smart Power is an investment in the future of your property, yielding benefits for years to come.</p>
+      <p class="mt-4">Investing in a smart sub-metering solution from Tari Electra is an investment in the future of your property, yielding benefits for years to come.</p>
     `,
   },
 ];
+
+// Mutable array for in-memory operations.
+// Deep copy initialBlogPosts to ensure modifications don't affect the const.
+let mutableBlogPosts: BlogPost[] = JSON.parse(JSON.stringify(initialBlogPosts));
+
+export function getBlogPosts(): BlogPost[] {
+  // Return a copy to prevent direct mutation of the internal array from outside
+  return JSON.parse(JSON.stringify(mutableBlogPosts));
+}
+
+export function findBlogPost(slug: string): BlogPost | undefined {
+  const post = mutableBlogPosts.find(p => p.slug === slug);
+  return post ? { ...post } : undefined; // Return a copy
+}
+
+export function addBlogPost(postData: Omit<BlogPost, 'date' | 'imageUrl' | 'imageHint'>): BlogPost {
+  if (mutableBlogPosts.some(p => p.slug === postData.slug)) {
+    // For this prototype, we'll throw an error if slug exists to simplify.
+    // A real app might generate a unique slug or allow updates via a different mechanism.
+    throw new Error(`Blog post with slug "${postData.slug}" already exists.`);
+  }
+  const newPost: BlogPost = {
+    ...postData,
+    date: new Date().toISOString().split('T')[0], // Current date
+    imageUrl: 'https://placehold.co/600x400.png', // Default placeholder
+    imageHint: 'article placeholder', // Default hint
+  };
+  mutableBlogPosts.unshift(newPost); // Add to the beginning
+  return { ...newPost }; // Return a copy
+}
+
+export function updateBlogPost(slug: string, updatedPostData: Partial<Omit<BlogPost, 'slug'>>): BlogPost | null {
+  const postIndex = mutableBlogPosts.findIndex(p => p.slug === slug);
+  if (postIndex > -1) {
+    // Ensure slug is not changed through this function
+    const { slug: _, ...dataToUpdate } = updatedPostData;
+    mutableBlogPosts[postIndex] = {
+      ...mutableBlogPosts[postIndex],
+      ...dataToUpdate,
+    };
+    return { ...mutableBlogPosts[postIndex] }; // Return a copy
+  }
+  return null;
+}
+
+export function deleteBlogPost(slug: string): boolean {
+  const initialLength = mutableBlogPosts.length;
+  mutableBlogPosts = mutableBlogPosts.filter(p => p.slug !== slug);
+  return mutableBlogPosts.length < initialLength;
+}
