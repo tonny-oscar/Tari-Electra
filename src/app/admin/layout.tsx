@@ -18,7 +18,6 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,24 +49,54 @@ export default function AdminLayout({
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log(`[AdminLayout] Auth State Change: loading=${loading}, user=${user ? user.email : 'null'}`);
+    console.log(`[AdminLayout] Auth State: loading=${loading}, user=${user ? user.email : 'null'}`);
 
     if (loading) {
-      console.log('[AdminLayout] Still loading authentication state.');
+      console.log('[AdminLayout] Auth is loading. Waiting...');
+      setIsAdminRouteAllowed(false); // Ensure access is false while loading
       return;
     }
 
     if (!user) {
       console.log('[AdminLayout] No user authenticated. Redirecting to login.');
       router.push('/login?redirect=/admin');
+      setIsAdminRouteAllowed(false);
       return;
     }
 
-    // If user is authenticated, allow access to admin routes
-    // The visibility of the "Admin" link in the public header is controlled separately
-    // based on NEXT_PUBLIC_ADMIN_EMAIL, but direct access here is granted to any logged-in user.
-    console.log('[AdminLayout] User authenticated. Granting access to admin routes.');
-    setIsAdminRouteAllowed(true);
+    // User is authenticated, now check if they are the designated admin
+    const adminEmailEnv = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+    console.log(`[AdminLayout] Checking admin access. User Email: ${user.email}, Configured Admin Email (from env): ${adminEmailEnv}`);
+
+    if (!adminEmailEnv || adminEmailEnv.trim() === "") {
+      console.error('[AdminLayout] CRITICAL: NEXT_PUBLIC_ADMIN_EMAIL environment variable is not set or is empty. Admin access denied.');
+      toast({
+        title: 'Configuration Error',
+        description: 'Admin email not configured. Please contact support to resolve this issue.',
+        variant: 'destructive',
+        duration: 10000,
+      });
+      router.push('/'); // Redirect to homepage or a generic error page
+      setIsAdminRouteAllowed(false);
+      return;
+    }
+
+    const isUserAdmin = user.email?.toLowerCase() === adminEmailEnv.toLowerCase();
+    
+    if (isUserAdmin) {
+      console.log(`[AdminLayout] Admin access GRANTED for ${user.email}.`);
+      setIsAdminRouteAllowed(true);
+    } else {
+      console.warn(`[AdminLayout] Admin access DENIED for ${user.email}. Redirecting to homepage.`);
+      toast({
+        title: 'Access Denied',
+        description: 'You do not have permission to access the admin dashboard.',
+        variant: 'destructive',
+        duration: 7000,
+      });
+      router.push('/'); // Redirect non-admin users to the homepage
+      setIsAdminRouteAllowed(false);
+    }
 
   }, [user, loading, router, toast]);
 
@@ -87,8 +116,7 @@ export default function AdminLayout({
   }
 
   if (!user) {
-    console.log('[AdminLayout] Render: No user object. Redirecting to login should be in progress.');
-    // This state is usually brief as the useEffect hook should have redirected.
+    console.log('[AdminLayout] Render: No user object. Login redirection should be in progress.');
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -96,10 +124,9 @@ export default function AdminLayout({
       </div>
     );
   }
-
+  
   if (!isAdminRouteAllowed) {
-     console.log('[AdminLayout] Render: Access not allowed or still verifying. Redirect should be in progress if denied.');
-    // This state is usually brief as the useEffect hook should have handled redirection or granted access.
+     console.log('[AdminLayout] Render: Access not allowed or still verifying. Redirection should be in progress if denied.');
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -108,7 +135,7 @@ export default function AdminLayout({
     );
   }
 
-  console.log('[AdminLayout] Render: Admin access GRANTED, rendering admin content.');
+  console.log('[AdminLayout] Render: Admin access VERIFIED, rendering admin content for', user.email);
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-muted/40 md:block">
@@ -195,7 +222,7 @@ export default function AdminLayout({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">User</p> {/* Changed from Admin User */}
+                    <p className="text-sm font-medium leading-none">Admin User</p> 
                     <p className="text-xs leading-none text-muted-foreground">
                     {user?.email}
                     </p>
