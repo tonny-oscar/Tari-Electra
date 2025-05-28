@@ -3,7 +3,7 @@
 
 import type { User } from 'firebase/auth';
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
-import type { ReactNode }_ from 'react';
+import type { ReactNode } from 'react';
 import React, { createContext, useEffect, useState } from 'react';
 import { auth } from '@/lib/firebase/client';
 import { useRouter } from 'next/navigation';
