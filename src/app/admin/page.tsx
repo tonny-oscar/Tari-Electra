@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Newspaper, LayoutDashboard, ShoppingBag } from "lucide-react"; // Added ShoppingBag
+import { Newspaper, LayoutDashboard, ShoppingBag, MessageSquare } from "lucide-react"; // Added MessageSquare
 
 export default function AdminDashboardPage() {
   return (
@@ -53,23 +53,22 @@ export default function AdminDashboardPage() {
                 </Button>
               </CardContent>
             </Card>
-            {/* Example of another potential admin card */}
-            {/*
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
-                  <Users className="h-5 w-5 text-primary" />
-                  User Management
+                  <MessageSquare className="h-5 w-5 text-primary" />
+                  Contact Messages
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  View and manage user accounts and roles (feature to be implemented).
+                  View and manage inquiries submitted through the contact form.
                 </p>
-                <Button disabled>Go to Users (Coming Soon)</Button>
+                <Button asChild>
+                  <Link href="/admin/messages">View Messages</Link>
+                </Button>
               </CardContent>
             </Card>
-            */}
           </div>
         </CardContent>
       </Card>

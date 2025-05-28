@@ -4,7 +4,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home, Newspaper, Settings, ShoppingBag, Loader2 } from 'lucide-react';
+import { Home, Newspaper, Settings, ShoppingBag, Loader2, MessageSquare } from 'lucide-react'; // Added MessageSquare
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
@@ -87,6 +87,13 @@ export default function AdminLayout({
           >
             <ShoppingBag className="h-4 w-4 mr-1 inline-block" />
             Product Management
+          </Link>
+          <Link
+            href="/admin/messages"
+            className="text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <MessageSquare className="h-4 w-4 mr-1 inline-block" />
+            Messages
           </Link>
         </nav>
         <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">

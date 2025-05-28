@@ -1,7 +1,9 @@
-// src/app/actions/sendContactEmailAction.ts
+
 "use server";
 
 import { z } from 'zod';
+import { addContactMessage } from '@/data/contactMessages'; // Import the new function
+import type { ContactFormState } from '@/lib/types'; // Using the more general form state
 
 const ContactFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -10,18 +12,12 @@ const ContactFormSchema = z.object({
   message: z.string().min(10, "Message must be at least 10 characters"),
 });
 
-export type ContactFormState = {
-  message: string;
-  fields?: Record<string, string>;
-  isError?: boolean;
-  isSuccess?: boolean;
-};
-
 export async function sendContactEmailAction(
   prevState: ContactFormState,
   formData: FormData
 ): Promise<ContactFormState> {
   console.log("[sendContactEmailAction] Action invoked.");
+
   try {
     const rawFormData = {
       name: formData.get('name'),
@@ -46,16 +42,12 @@ export async function sendContactEmailAction(
 
     const { name, email, phone, message } = validatedFields.data;
 
-    // Log the form data to the console
-    console.log("[sendContactEmailAction] New Inquiry Submission:");
-    console.log("Name:", name);
-    console.log("Email:", email);
-    console.log("Phone:", phone || "Not provided");
-    console.log("Message:", message);
+    // Store the message in-memory
+    const storedMessage = addContactMessage({ name, email, phone: phone || undefined, message });
+    console.log("[sendContactEmailAction] New Inquiry Stored (In-Memory):", storedMessage);
     
-    // Simulate email sending success
     return {
-      message: `Thank you for your inquiry, ${name}! We've received your message and will get back to you shortly.`,
+      message: `Thank you for your inquiry, ${name}! We've received your message and will get back to you shortly. (Message stored in memory).`,
       isError: false,
       isSuccess: true,
     };
