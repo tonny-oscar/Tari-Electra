@@ -1,14 +1,40 @@
 
-'use client'; // AdminLayout must be a client component for auth checks
+'use client';
 
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home, Newspaper, Settings, ShoppingBag, Loader2, MessageSquare } from 'lucide-react'; // Added MessageSquare
+import {
+  Bell,
+  CircleUser,
+  Home,
+  LayoutDashboard,
+  Menu,
+  Newspaper,
+  Package,
+  Settings,
+  ShoppingBag,
+  Users,
+  MessageSquare, // Added for Messages
+} from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Loader2 } from 'lucide-react'; // For loading state
+import { NotificationBell } from '@/components/admin/NotificationBell'; // Import NotificationBell
 
 // Metadata can still be defined for client components, Next.js handles it
 // export const metadata: Metadata = { // This will be static for the layout
@@ -16,6 +42,12 @@ import React, { useEffect } from 'react';
 //   description: 'Manage Tari Electra website content.',
 // };
 
+const navLinks = [
+  { href: '/admin', label: 'Dashboard', icon: Home },
+  { href: '/admin/blog', label: 'Blog Management', icon: Newspaper },
+  { href: '/admin/products', label: 'Product Management', icon: ShoppingBag },
+  { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
+];
 
 export default function AdminLayout({
   children,
@@ -24,14 +56,28 @@ export default function AdminLayout({
 }) {
   const { user, loading, logOut } = useAuth();
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login?redirect=/admin');
+    } else if (user) {
+      // Check if the logged-in user is the designated admin
+      const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+      if (user.email === adminEmail) {
+        setIsAdmin(true);
+      } else {
+        // If not admin, redirect to home and show a message
+        // This check is primarily for direct navigation to /admin by non-admins
+        // The header links for /admin should ideally not even render for non-admins
+        router.push('/');
+        // Consider adding a toast message here for better UX
+        console.warn("Access to admin area denied for user:", user.email);
+      }
     }
   }, [user, loading, router]);
 
-  if (loading) {
+  if (loading || (!user && !isAdmin)) { // Show loader if loading or if user is not set and not determined to be admin yet
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -39,81 +85,126 @@ export default function AdminLayout({
       </div>
     );
   }
-
-  if (!user) {
-    // This case should ideally be handled by the redirect in useEffect,
-    // but as a fallback or if JS is disabled momentarily.
+  
+  // If user is loaded, but is not the admin (this check is a fallback, useEffect should handle redirect)
+  if (user && !isAdmin) {
     return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
-        <p className="text-muted-foreground">Redirecting to login...</p>
-      </div>
+        <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
+            <p className="text-muted-foreground">Access Denied. Redirecting...</p>
+        </div>
     );
   }
+
 
   const handleLogout = async () => {
     await logOut();
     // AuthProvider's logOut already handles redirecting to '/'
   };
 
-
   return (
-    <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
-        <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-          <Link
-            href="/admin"
-            className="flex items-center gap-2 text-lg font-semibold md:text-base text-primary"
-          >
-            <Settings className="h-6 w-6" />
-            <span>Tari Electra Admin</span>
-          </Link>
-          <Link
-            href="/admin"
-            className="text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Home className="h-4 w-4 mr-1 inline-block" />
-            Dashboard
-          </Link>
-          <Link
-            href="/admin/blog"
-            className="text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Newspaper className="h-4 w-4 mr-1 inline-block" />
-            Blog Management
-          </Link>
-          <Link
-            href="/admin/products"
-            className="text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ShoppingBag className="h-4 w-4 mr-1 inline-block" />
-            Product Management
-          </Link>
-          <Link
-            href="/admin/messages"
-            className="text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <MessageSquare className="h-4 w-4 mr-1 inline-block" />
-            Messages
-          </Link>
-        </nav>
-        <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-          <div className="ml-auto flex items-center gap-x-3">
-            <span className="text-sm text-muted-foreground hidden sm:inline">
-              {user.email}
-            </span>
-            <ThemeToggle />
-            <Button onClick={handleLogout} variant="outline" size="sm">
-              Logout
-            </Button>
-            <Button asChild variant="outline" size="sm" className="hidden sm:flex">
-              <Link href="/">View Public Site</Link>
+    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+      <div className="hidden border-r bg-muted/40 md:block">
+        <div className="flex h-full max-h-screen flex-col gap-2">
+          <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+            <Link href="/admin" className="flex items-center gap-2 font-semibold text-primary">
+              <Settings className="h-6 w-6" />
+              <span>Tari Electra Admin</span>
+            </Link>
+          </div>
+          <div className="flex-1">
+            <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+              {navLinks.map(link => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                >
+                  <link.icon className="h-4 w-4" />
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+          <div className="mt-auto p-4">
+            <Button size="sm" className="w-full" asChild variant="outline">
+               <Link href="/">View Public Site</Link>
             </Button>
           </div>
         </div>
-      </header>
-      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        {children}
-      </main>
+      </div>
+      <div className="flex flex-col">
+        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0 md:hidden"
+              >
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle navigation menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="flex flex-col">
+              <nav className="grid gap-2 text-lg font-medium">
+                <Link
+                  href="/admin"
+                  className="flex items-center gap-2 text-lg font-semibold text-primary mb-4"
+                >
+                  <Settings className="h-6 w-6" />
+                  <span>Tari Electra Admin</span>
+                </Link>
+                {navLinks.map(link => (
+                    <Link
+                        key={link.label}
+                        href={link.href}
+                        className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                    >
+                        <link.icon className="h-5 w-5" />
+                        {link.label}
+                    </Link>
+                ))}
+              </nav>
+              <div className="mt-auto">
+                <Button size="sm" className="w-full" asChild variant="outline">
+                    <Link href="/">View Public Site</Link>
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+          <div className="w-full flex-1">
+            {/* Optional Search Form can go here */}
+          </div>
+          <NotificationBell /> {/* <--- Added NotificationBell here */}
+          <ThemeToggle />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" size="icon" className="rounded-full">
+                <CircleUser className="h-5 w-5" />
+                <span className="sr-only">Toggle user menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">Admin User</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email}
+                    </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {/* <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem>Support</DropdownMenuItem>
+              <DropdownMenuSeparator /> */}
+              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </header>
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
