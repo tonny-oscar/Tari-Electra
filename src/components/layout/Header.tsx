@@ -1,9 +1,13 @@
+
+'use client';
+
 import Link from 'next/link';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { ContactSection } from '@/components/sections/ContactSection';
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -11,6 +15,7 @@ const navItems = [
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
   { href: '/blog', label: 'Blog' },
+  { href: '/admin', label: 'Admin' }, // Added Admin link
 ];
 
 export function Header() {
@@ -28,11 +33,20 @@ export function Header() {
               {item.label}
             </Link>
           ))}
-          <Button asChild size="sm">
-            <Link href="/contact">
-               Get a Free Estimate
-            </Link>
-          </Button>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size="sm">Get a Free Estimate</Button>
+            </SheetTrigger>
+            <SheetContent className="sm:max-w-lg w-[90vw] overflow-y-auto">
+              <SheetHeader className="mb-4">
+                <SheetTitle>Request a Free Estimate</SheetTitle>
+                <SheetDescription>
+                  Fill out the form below and we&apos;ll get back to you as soon as possible.
+                </SheetDescription>
+              </SheetHeader>
+              <ContactSection />
+            </SheetContent>
+          </Sheet>
           <ThemeToggle />
         </nav>
         <div className="md:hidden flex items-center">
@@ -55,6 +69,7 @@ export function Header() {
                     {item.label}
                   </Link>
                 ))}
+                {/* Mobile "Get a Free Estimate" now links to contact page, or could also trigger a sheet */}
                 <Button asChild className="mt-4">
                   <Link href="/contact">
                      Get a Free Estimate
