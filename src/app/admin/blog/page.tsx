@@ -2,13 +2,13 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { getBlogPosts } from '@/data/blogPosts'; // Use the new data access function
+import { getBlogPosts } from '@/data/blogPosts';
 import { PlusCircle, ExternalLink, Newspaper } from 'lucide-react';
 import Image from 'next/image';
-import { BlogActionsCell } from '@/components/admin/BlogActionsCell'; // New component for actions
+import { BlogActionsCell } from '@/components/admin/BlogActionsCell';
 
 export default function AdminBlogListPage() {
-  const posts = getBlogPosts(); // Fetch posts using the new function
+  const posts = getBlogPosts(); 
 
   return (
     <div className="space-y-6">
@@ -17,7 +17,7 @@ export default function AdminBlogListPage() {
           <Newspaper className="h-7 w-7 text-primary" />
           <div>
             <h1 className="text-2xl font-semibold">Blog Posts</h1>
-            <p className="text-muted-foreground">Manage your articles here. Edits are in-memory for this prototype.</p>
+            <p className="text-muted-foreground">Manage your articles here. Data saved to JSON.</p>
           </div>
         </div>
         <Button asChild>
@@ -37,17 +37,15 @@ export default function AdminBlogListPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {posts.map((post) => (
             <Card key={post.slug} className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
-              {post.imageUrl && (
-                 <div className="aspect-[16/9] w-full relative">
-                    <Image
-                      src={post.imageUrl}
-                      alt={post.title}
-                      fill
-                      className="object-cover rounded-t-lg"
-                      data-ai-hint={post.imageHint || 'article image'}
-                    />
-                  </div>
-              )}
+              <div className="aspect-[16/9] w-full relative bg-muted rounded-t-lg overflow-hidden">
+                <Image
+                  src={post.imageUrl || 'https://placehold.co/600x400.png'}
+                  alt={post.title}
+                  fill
+                  className="object-cover"
+                  data-ai-hint={post.imageHint || post.title.split(' ').slice(0,2).join(' ').toLowerCase() || 'article image'}
+                />
+              </div>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-semibold line-clamp-2 leading-tight">{post.title}</CardTitle>
                 <CardDescription className="text-xs text-muted-foreground pt-1">

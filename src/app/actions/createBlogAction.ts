@@ -14,6 +14,8 @@ const CreateBlogPostSchema = z.object({
   author: z.string().min(2, { message: 'Author name must be at least 2 characters.' }),
   category: z.string().min(2, { message: 'Category must be at least 2 characters.' }),
   content: z.string().min(50, { message: 'Content must be at least 50 characters.' }),
+  imageUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  imageHint: z.string().optional(),
 });
 
 export async function createBlogAction(
@@ -29,6 +31,8 @@ export async function createBlogAction(
     author: formData.get('author'),
     category: formData.get('category'),
     content: formData.get('content'),
+    imageUrl: formData.get('imageUrl'),
+    imageHint: formData.get('imageHint'),
   };
   console.log('[createBlogAction] Raw form data:', rawFormData);
 
@@ -47,17 +51,23 @@ export async function createBlogAction(
   console.log('[createBlogAction] Validation successful.');
 
   try {
-    const newPostData: Omit<BlogPost, 'date' | 'imageUrl' | 'imageHint'> = validatedFields.data;
-    const createdPost = addBlogPost(newPostData); // This now adds to the in-memory array
+    const { imageUrl, imageHint, ...restOfData } = validatedFields.data;
+    const newPostData: Omit<BlogPost, 'date'> = { // Date is auto-generated in addBlogPost
+        ...restOfData,
+        imageUrl: imageUrl || undefined, // Store as undefined if empty string
+        imageHint: imageHint || undefined,
+    };
 
-    console.log('[createBlogAction] New Blog Post Data (In-Memory):', createdPost);
+    const createdPost = addBlogPost(newPostData); 
+
+    console.log('[createBlogAction] New Blog Post Data (JSON):', createdPost);
     
     revalidatePath('/admin/blog');
     revalidatePath('/blog');
     revalidatePath(`/blog/${createdPost.slug}`);
 
     return {
-      message: `Blog post "${createdPost.title}" created successfully (in-memory).`,
+      message: `Blog post "${createdPost.title}" created successfully (saved to JSON).`,
       isError: false,
       isSuccess: true,
       createdPost: createdPost,

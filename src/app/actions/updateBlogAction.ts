@@ -6,18 +6,18 @@ import { updateBlogPost, findBlogPost } from '@/data/blogPosts';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
-// Schema for updating a blog post, slug is not part of formData here but passed separately
 const UpdateBlogPostSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters.' }),
-  // Slug is handled separately, not from form data for update usually, or read-only
   excerpt: z.string().min(10, { message: 'Excerpt must be at least 10 characters.' }),
   author: z.string().min(2, { message: 'Author name must be at least 2 characters.' }),
   category: z.string().min(2, { message: 'Category must be at least 2 characters.' }),
   content: z.string().min(50, { message: 'Content must be at least 50 characters.' }),
+  imageUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  imageHint: z.string().optional(),
 });
 
 export async function updateBlogAction(
-  currentSlug: string, // The original slug of the post being edited
+  currentSlug: string, 
   prevState: BlogFormState,
   formData: FormData
 ): Promise<BlogFormState> {
@@ -29,6 +29,8 @@ export async function updateBlogAction(
     author: formData.get('author'),
     category: formData.get('category'),
     content: formData.get('content'),
+    imageUrl: formData.get('imageUrl'),
+    imageHint: formData.get('imageHint'),
   };
   console.log('[updateBlogAction] Raw form data:', rawFormData);
 
@@ -56,13 +58,16 @@ export async function updateBlogAction(
       };
     }
 
-    // Omit slug from validated data as it's not being changed here
-    const { ...dataToUpdate } = validatedFields.data;
+    const { imageUrl, imageHint, ...restOfData } = validatedFields.data;
+    const dataToUpdate: Partial<Omit<BlogPost, 'slug' | 'date'>> = {
+        ...restOfData,
+        imageUrl: imageUrl || undefined,
+        imageHint: imageHint || undefined,
+    };
     
     const updatedPost = updateBlogPost(currentSlug, dataToUpdate);
 
     if (!updatedPost) {
-        // This case should ideally be caught by findBlogPost, but as a safeguard
         return {
             message: `Failed to update blog post "${currentSlug}". Post not found or update failed.`,
             isError: true,
@@ -70,14 +75,14 @@ export async function updateBlogAction(
         };
     }
     
-    console.log('[updateBlogAction] Blog Post Updated (In-Memory):', updatedPost);
+    console.log('[updateBlogAction] Blog Post Updated (JSON):', updatedPost);
     
     revalidatePath('/admin/blog');
     revalidatePath('/blog');
-    revalidatePath(`/blog/${currentSlug}`); // Revalidate the specific post page
+    revalidatePath(`/blog/${currentSlug}`);
 
     return {
-      message: `Blog post "${updatedPost.title}" updated successfully (in-memory).`,
+      message: `Blog post "${updatedPost.title}" updated successfully (saved to JSON).`,
       isError: false,
       isSuccess: true,
       updatedPost: updatedPost,

@@ -1,5 +1,15 @@
-
 [
+  {
+    "title": "respect",
+    "slug": "respect-in-work",
+    "excerpt": "trial if this literaly works",
+    "author": "Tonny Bett",
+    "category": "Respect",
+    "content": "# The Power of Respect\r\n\r\nRespect forms the bedrock of every meaningful relationship, whether personal or professional. It's more than politeness—it's recognizing the inherent worth in every person we encounter. True respect means listening without judgment, acknowledging different perspectives, and treating others with dignity regardless of our differences.\r\n\r\nIn our increasingly divided world, respect becomes a revolutionary act. It requires us to step outside our comfort zones, challenge our assumptions, and find common ground with those who see the world differently. When we lead with respect, we create space for authentic dialogue and genuine understanding.\r\n\r\nRespect isn't earned through titles or achievements—it's given freely because every human being deserves it. This simple principle has the power to transform communities, heal divisions, and build bridges where walls once stood.",
+    "date": "2025-05-29",
+    "imageUrl": "https://placehold.co/600x400.png",
+    "imageHint": "respect"
+  },
   {
     "slug": "understanding-submetering-laws",
     "title": "Navigating Sub-Metering Laws: A Landlord's Guide",

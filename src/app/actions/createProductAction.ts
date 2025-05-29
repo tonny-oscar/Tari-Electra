@@ -12,6 +12,8 @@ const CreateProductSchema = z.object({
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
   category: z.string().min(2, { message: 'Category must be at least 2 characters.' }),
   features: z.string().optional(), 
+  imageUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  imageHint: z.string().optional(),
 });
 
 export async function createProductAction(
@@ -25,6 +27,8 @@ export async function createProductAction(
     price: formData.get('price'),
     category: formData.get('category'),
     features: formData.get('features'),
+    imageUrl: formData.get('imageUrl'),
+    imageHint: formData.get('imageHint'),
   };
   console.log('[createProductAction] Raw form data:', rawFormData);
 
@@ -43,25 +47,27 @@ export async function createProductAction(
   console.log('[createProductAction] Validation successful. Validated data:', validatedFields.data);
 
   try {
-    const { features, ...restOfData } = validatedFields.data;
+    const { features, imageUrl, imageHint, ...restOfData } = validatedFields.data;
     const featuresString = features || ''; 
     const featuresArray = featuresString.split(',').map(f => f.trim()).filter(f => f.length > 0);
     
-    const productToAdd: Omit<Product, 'id' | 'imageUrl' | 'imageHint'> = {
+    const productToAdd: Omit<Product, 'id'> = {
       ...restOfData,
       features: featuresArray,
+      imageUrl: imageUrl || undefined, // Store as undefined if empty string
+      imageHint: imageHint || undefined,
     };
     
     console.log('[createProductAction] Data for addProduct:', productToAdd);
     const createdProduct = addProduct(productToAdd);
 
-    console.log('[createProductAction] New Product Created (In-Memory):', createdProduct);
+    console.log('[createProductAction] New Product Created (JSON):', createdProduct);
     
     revalidatePath('/admin/products');
-    revalidatePath('/products'); // Revalidate public products page
+    revalidatePath('/products'); 
 
     return {
-      message: `Product "${createdProduct.name}" created successfully (in-memory).`,
+      message: `Product "${createdProduct.name}" created successfully (saved to JSON).`,
       isError: false,
       isSuccess: true,
       createdProduct: createdProduct,

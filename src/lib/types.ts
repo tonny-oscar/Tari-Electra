@@ -20,8 +20,8 @@ export type BlogPost = {
   title: string;
   date: string; // YYYY-MM-DD
   excerpt: string;
-  imageUrl: string;
-  imageHint: string;
+  imageUrl?: string; // Made optional, will use placeholder if not provided
+  imageHint?: string; // Made optional
   author: string;
   category: string;
   content: string; // Potentially HTML string
@@ -43,8 +43,8 @@ export type Product = {
   description: string;
   price: number;
   category: string;
-  imageUrl: string;
-  imageHint: string;
+  imageUrl?: string; // Made optional
+  imageHint?: string; // Made optional
   features: string[];
 };
 

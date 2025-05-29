@@ -12,6 +12,8 @@ const UpdateProductSchema = z.object({
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
   category: z.string().min(2, { message: 'Category must be at least 2 characters.' }),
   features: z.string().optional(),
+  imageUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  imageHint: z.string().optional(),
 });
 
 export async function updateProductAction(
@@ -27,6 +29,8 @@ export async function updateProductAction(
     price: formData.get('price'),
     category: formData.get('category'),
     features: formData.get('features'),
+    imageUrl: formData.get('imageUrl'),
+    imageHint: formData.get('imageHint'),
   };
   console.log('[updateProductAction] Parsed raw form data:', rawFormData);
 
@@ -55,13 +59,15 @@ export async function updateProductAction(
       };
     }
     
-    const { features, ...restOfData } = validatedFields.data;
+    const { features, imageUrl, imageHint, ...restOfData } = validatedFields.data;
     const featuresString = features || ''; 
     const featuresArray = featuresString.split(',').map(f => f.trim()).filter(f => f.length > 0);
 
     const dataToUpdate: Partial<Omit<Product, 'id'>> = {
         ...restOfData, 
         features: featuresArray,
+        imageUrl: imageUrl || undefined,
+        imageHint: imageHint || undefined,
     };
     console.log('[updateProductAction] Data for updateProduct:', dataToUpdate);
         
@@ -76,14 +82,14 @@ export async function updateProductAction(
         };
     }
     
-    console.log('[updateProductAction] Product Updated (In-Memory):', updatedProduct);
+    console.log('[updateProductAction] Product Updated (JSON):', updatedProduct);
     
     revalidatePath('/admin/products');
     revalidatePath(`/admin/products/edit/${currentId}`);
-    revalidatePath('/products'); // Revalidate public products page
+    revalidatePath('/products'); 
 
     return {
-      message: `Product "${updatedProduct.name}" updated successfully (in-memory).`,
+      message: `Product "${updatedProduct.name}" updated successfully (saved to JSON).`,
       isError: false,
       isSuccess: true,
       updatedProduct: updatedProduct,

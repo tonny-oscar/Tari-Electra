@@ -1,7 +1,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { getBlogPosts } from "@/data/blogPosts"; // Updated import
+import { getBlogPosts } from "@/data/blogPosts"; 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, CalendarDays, UserCircle, Tag } from "lucide-react";
@@ -12,7 +12,7 @@ export const metadata = {
 };
 
 export default function BlogPage() {
-  const posts = getBlogPosts(); // Fetch posts using the new function
+  const posts = getBlogPosts(); 
 
   return (
     <div className="bg-secondary">
@@ -35,13 +35,13 @@ export default function BlogPage() {
             {posts.map((post) => (
               <Card key={post.slug} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 bg-background">
                  <Link href={`/blog/${post.slug}`} className="block">
-                  <div className="aspect-video w-full relative">
+                  <div className="aspect-video w-full relative bg-muted">
                     <Image
-                      src={post.imageUrl}
+                      src={post.imageUrl || 'https://placehold.co/600x400.png'}
                       alt={post.title}
                       fill
                       className="object-cover"
-                      data-ai-hint={post.imageHint}
+                      data-ai-hint={post.imageHint || post.title.split(' ').slice(0,2).join(' ').toLowerCase() || 'article image'}
                     />
                   </div>
                 </Link>
@@ -85,12 +85,6 @@ export default function BlogPage() {
   );
 }
 
-// Function to generate static params for individual blog post pages
-// This ensures Next.js knows which blog post slugs to pre-render at build time.
-// We need to use getBlogPosts here as well if this is to reflect dynamic data during build.
-// However, for a purely dynamic in-memory store, generateStaticParams might pre-render
-// based on the initial state of blogPosts.ts at build time.
-// For full dynamic behavior with an in-memory store changed at runtime, pages would effectively be server-rendered on demand.
 export async function generateStaticParams() {
   const posts = getBlogPosts();
   return posts.map((post) => ({

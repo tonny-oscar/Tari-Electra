@@ -3,10 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import type { BlogPost } from '@/lib/types';
 
-// Path to the JSON file for blog posts
 const blogDataPath = path.resolve(process.cwd(), 'src/data/blogData.json');
 
-// Initial set of blog posts (remains as a fallback/default if JSON is empty/missing)
 const initialBlogPosts: BlogPost[] = [
   {
     slug: 'understanding-submetering-laws',
@@ -78,36 +76,50 @@ function readBlogData(): BlogPost[] {
   try {
     if (fs.existsSync(blogDataPath)) {
       const fileContent = fs.readFileSync(blogDataPath, 'utf-8');
-      if (fileContent.trim() === '') return initialBlogPosts; // If file is empty, use initial
+      // If file is empty or just whitespace, initialize with initialBlogPosts
+      if (fileContent.trim() === '') {
+        fs.writeFileSync(blogDataPath, JSON.stringify(initialBlogPosts, null, 2), 'utf-8');
+        console.log('[readBlogData] Initialized blogData.json with sample data as it was empty.');
+        return JSON.parse(JSON.stringify(initialBlogPosts)); // Return a copy
+      }
       const data = JSON.parse(fileContent);
-      return Array.isArray(data) && data.length > 0 ? data : initialBlogPosts;
+      // Check if data is an array. If not, it's malformed or unexpected.
+      if (Array.isArray(data)) {
+        return data; // Return data (could be an empty array if user deleted all posts)
+      } else {
+        console.warn('[readBlogData] blogData.json does not contain a valid array. Initializing with sample data.');
+        fs.writeFileSync(blogDataPath, JSON.stringify(initialBlogPosts, null, 2), 'utf-8');
+        return JSON.parse(JSON.stringify(initialBlogPosts)); // Return a copy
+      }
     }
-    // If file doesn't exist, write initial data and return it
+    // File doesn't exist, create it with initialBlogPosts
     fs.writeFileSync(blogDataPath, JSON.stringify(initialBlogPosts, null, 2), 'utf-8');
-    return initialBlogPosts;
-  } catch (error) {
-    console.error('Error reading or initializing blogData.json:', error);
-    // Fallback to initial data and attempt to write it
+    console.log('[readBlogData] Created and initialized blogData.json with sample data.');
+    return JSON.parse(JSON.stringify(initialBlogPosts)); // Return a copy
+  } catch (error: any) {
+    console.error('[readBlogData] Error reading or initializing blogData.json:', error.message);
+    // Attempt to write initial data as a fallback in case of parse errors etc.
     try {
       fs.writeFileSync(blogDataPath, JSON.stringify(initialBlogPosts, null, 2), 'utf-8');
-    } catch (writeError) {
-      console.error('Error writing initial data to blogData.json after read error:', writeError);
+      console.log('[readBlogData] Initialized blogData.json with sample data after read error.');
+    } catch (writeError: any) {
+      console.error('[readBlogData] Error writing initial data to blogData.json after read error:', writeError.message);
     }
-    return initialBlogPosts;
+    return JSON.parse(JSON.stringify(initialBlogPosts)); // Return a copy of initial data as a last resort
   }
 }
 
 function writeBlogData(data: BlogPost[]): void {
   try {
     fs.writeFileSync(blogDataPath, JSON.stringify(data, null, 2), 'utf-8');
+    console.log('[writeBlogData] Successfully wrote to blogData.json');
   } catch (error) {
-    console.error('Error writing to blogData.json:', error);
+    console.error('[writeBlogData] Error writing to blogData.json:', error);
   }
 }
 
 export function getBlogPosts(): BlogPost[] {
   const posts = readBlogData();
-  // Return a deep copy to prevent direct mutation
   return JSON.parse(JSON.stringify(posts));
 }
 
@@ -117,30 +129,35 @@ export function findBlogPost(slug: string): BlogPost | undefined {
   return post ? { ...post } : undefined;
 }
 
-export function addBlogPost(postData: Omit<BlogPost, 'date' | 'imageUrl' | 'imageHint'>): BlogPost {
+export function addBlogPost(postData: Omit<BlogPost, 'date'>): BlogPost {
   let posts = readBlogData();
   if (posts.some(p => p.slug === postData.slug)) {
     throw new Error(`Blog post with slug "${postData.slug}" already exists.`);
   }
+  const defaultImageUrl = 'https://placehold.co/600x400.png';
   const newPost: BlogPost = {
     ...postData,
     date: new Date().toISOString().split('T')[0],
-    imageUrl: 'https://placehold.co/600x400.png',
-    imageHint: postData.title.split(' ').slice(0,2).join(' ').toLowerCase() || 'article placeholder',
+    imageUrl: postData.imageUrl || defaultImageUrl,
+    imageHint: postData.imageHint || postData.title.split(' ').slice(0,2).join(' ').toLowerCase() || 'article placeholder',
   };
   posts.unshift(newPost);
   writeBlogData(posts);
   return { ...newPost };
 }
 
-export function updateBlogPost(slug: string, updatedPostData: Partial<Omit<BlogPost, 'slug'>>): BlogPost | null {
+export function updateBlogPost(slug: string, updatedPostData: Partial<Omit<BlogPost, 'slug' | 'date'>>): BlogPost | null {
   let posts = readBlogData();
   const postIndex = posts.findIndex(p => p.slug === slug);
   if (postIndex > -1) {
-    const { slug: _slug, ...dataToUpdate } = updatedPostData; // Ensure slug isn't part of dataToUpdate
+    const existingPost = posts[postIndex];
+    const defaultImageUrl = 'https://placehold.co/600x400.png';
+
     posts[postIndex] = {
-      ...posts[postIndex],
-      ...dataToUpdate,
+      ...existingPost,
+      ...updatedPostData,
+      imageUrl: updatedPostData.imageUrl || existingPost.imageUrl || defaultImageUrl,
+      imageHint: updatedPostData.imageHint || existingPost.imageHint || updatedPostData.title?.split(' ').slice(0,2).join(' ').toLowerCase() || existingPost.title.split(' ').slice(0,2).join(' ').toLowerCase() || 'article image',
     };
     writeBlogData(posts);
     return { ...posts[postIndex] };

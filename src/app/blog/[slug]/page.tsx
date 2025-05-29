@@ -1,20 +1,19 @@
 
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { findBlogPost } from '@/data/blogPosts'; // Updated import
+import { findBlogPost } from '@/data/blogPosts'; 
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, CalendarDays, UserCircle, Tag } from 'lucide-react';
 import type { Metadata } from 'next';
-// Removed generateStaticParams from here, it's better placed in the blog index page.
 
 type Props = {
   params: { slug: string };
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const post = findBlogPost(params.slug); // Use new data access function
+  const post = findBlogPost(params.slug); 
   if (!post) {
     return {
       title: 'Post Not Found',
@@ -27,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = findBlogPost(params.slug); // Use new data access function
+  const post = findBlogPost(params.slug); 
 
   if (!post) {
     notFound();
@@ -67,22 +66,19 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
             </div>
           </div>
 
-          {post.imageUrl && (
-            <div className="aspect-video w-full relative overflow-hidden rounded-lg mb-8 shadow-md">
-                <Image
-                src={post.imageUrl}
-                alt={post.title}
-                fill
-                className="object-cover"
-                data-ai-hint={post.imageHint}
-                priority
-                />
-            </div>
-          )}
+          <div className="aspect-video w-full relative overflow-hidden rounded-lg mb-8 shadow-md bg-muted">
+              <Image
+              src={post.imageUrl || 'https://placehold.co/800x450.png'}
+              alt={post.title}
+              fill
+              className="object-cover"
+              data-ai-hint={post.imageHint || post.title.split(' ').slice(0,2).join(' ').toLowerCase() || 'article image'}
+              priority
+              />
+          </div>
           
           <Separator className="my-8" />
 
-          {/* Render HTML content, sanitize in a real app if from user input */}
           <div className="text-foreground space-y-6 text-base md:text-lg" dangerouslySetInnerHTML={{ __html: post.content }} />
 
         </article>

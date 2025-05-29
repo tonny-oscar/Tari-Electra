@@ -1,12 +1,14 @@
 
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Gauge, SplitSquareHorizontal, CheckCircle } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Gauge, SplitSquareHorizontal, CheckCircle, ShoppingBag } from "lucide-react";
 import { motion } from "framer-motion";
-import type { Product } from "@/lib/types"; // Import the Product type
+import type { Product } from "@/lib/types";
+import Image from "next/image";
+import { Button } from "../ui/button";
+import Link from "next/link";
 
-// Define the props for the component
 type ProductsSectionProps = {
   products: Product[];
 };
@@ -24,17 +26,21 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
-// Accept products as a prop
 export function ProductsSection({ products }: ProductsSectionProps) {
-  // No longer fetching products here, it's passed as a prop
-
-  // Fallback for when services array is needed for the title/description (if products is empty)
-  // Or adjust the UI to reflect that the product list is dynamic
   const hasProducts = products && products.length > 0;
+
+  const getCategoryIcon = (category: string) => {
+    if (category.toLowerCase().includes('meter')) {
+      return <Gauge className="h-10 w-10 text-primary" />;
+    } else if (category.toLowerCase().includes('service')) {
+      return <SplitSquareHorizontal className="h-10 w-10 text-primary" />;
+    }
+    return <ShoppingBag className="h-10 w-10 text-primary" />; // Default icon
+  };
 
   return (
     <motion.section
-      id="products" // This id might still be useful if you want to link to it from other parts of the site
+      id="products"
       className="py-16 lg:py-24 bg-secondary"
       initial="hidden"
       whileInView="visible"
@@ -60,36 +66,44 @@ export function ProductsSection({ products }: ProductsSectionProps) {
           <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3 items-stretch">
             {products.map((product) => (
               <motion.div key={product.id} variants={itemVariants}>
-                <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full">
-                  <CardHeader className="items-center text-center">
-                    <div className="p-4 bg-primary/10 rounded-full mb-4">
-                      {/* Choose icon based on category or a default one */}
-                      {product.category === 'Prepaid Meters' || product.category === 'Smart Meters' ? (
-                        <Gauge className="h-10 w-10 text-primary" />
-                      ) : product.category === 'Services' ? (
-                        <SplitSquareHorizontal className="h-10 w-10 text-primary" />
-                      ) : (
-                        <Gauge className="h-10 w-10 text-primary" /> // Default icon
-                      )}
+                <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full bg-background overflow-hidden">
+                  <div className="aspect-[16/9] w-full relative bg-muted">
+                    <Image
+                      src={product.imageUrl || 'https://placehold.co/600x400.png'}
+                      alt={product.name}
+                      fill
+                      className="object-cover"
+                      data-ai-hint={product.imageHint || product.name.split(' ').slice(0,2).join(' ').toLowerCase() || 'product image'}
+                    />
+                  </div>
+                  <CardHeader className="items-center text-center pt-6">
+                    <div className="p-3 bg-primary/10 rounded-full mb-3 inline-block">
+                       {getCategoryIcon(product.category)}
                     </div>
                     <CardTitle className="text-2xl font-semibold">{product.name}</CardTitle>
                   </CardHeader>
                   <CardContent className="flex-grow">
-                    <CardDescription className="text-base text-muted-foreground mb-6 text-center">{product.description}</CardDescription>
+                    <CardDescription className="text-base text-muted-foreground mb-6 text-center h-20 overflow-hidden line-clamp-4">{product.description}</CardDescription>
                     {product.features && product.features.length > 0 && (
-                      <div className="space-y-3">
-                        {product.features.map((feature) => (
-                          <div key={feature} className="flex items-start">
-                            <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" />
+                      <div className="space-y-2 mb-4">
+                        <h4 className="text-sm font-semibold text-foreground text-center mb-2">Key Features:</h4>
+                        {product.features.slice(0,3).map((feature) => ( // Show max 3 features
+                          <div key={feature} className="flex items-start text-sm">
+                            <CheckCircle className="h-4 w-4 text-primary mr-2 mt-0.5 flex-shrink-0" />
                             <span className="text-muted-foreground">{feature}</span>
                           </div>
                         ))}
                       </div>
                     )}
-                    <p className="text-center text-primary font-semibold text-lg mt-4">
+                  </CardContent>
+                  <CardFooter className="flex-col items-center pt-4 border-t">
+                     <p className="text-center text-primary font-bold text-2xl mb-4">
                       KES {product.price > 0 ? product.price.toFixed(2) : "Request Quote"}
                     </p>
-                  </CardContent>
+                    <Button asChild className="w-full">
+                        <Link href="/contact">Inquire Now</Link>
+                    </Button>
+                  </CardFooter>
                 </Card>
               </motion.div>
             ))}

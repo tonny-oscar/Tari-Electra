@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { getProducts } from '@/data/products';
-import { PlusCircle, ShoppingBag, Package } from 'lucide-react'; // Removed ExternalLink
+import { PlusCircle, ShoppingBag, Package } from 'lucide-react';
 import Image from 'next/image';
 import { ProductActionsCell } from '@/components/admin/ProductActionsCell';
 import type { Metadata } from 'next';
@@ -23,7 +23,7 @@ export default function AdminProductsListPage() {
           <ShoppingBag className="h-7 w-7 text-primary" />
           <div>
             <h1 className="text-2xl font-semibold">Product Management</h1>
-            <p className="text-muted-foreground">Manage your products and services here. (Data is in-memory)</p>
+            <p className="text-muted-foreground">Manage your products and services here. (Data saved to JSON)</p>
           </div>
         </div>
         <Button asChild>
@@ -48,17 +48,15 @@ export default function AdminProductsListPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((product) => (
             <Card key={product.id} className="flex flex-col shadow-md hover:shadow-lg transition-shadow bg-card">
-              {product.imageUrl && (
-                 <div className="aspect-[16/9] w-full relative">
-                    <Image
-                      src={product.imageUrl}
-                      alt={product.name}
-                      fill
-                      className="object-cover rounded-t-lg"
-                      data-ai-hint={product.imageHint || 'product image'}
-                    />
-                  </div>
-              )}
+              <div className="aspect-[16/9] w-full relative bg-muted rounded-t-lg overflow-hidden">
+                <Image
+                  src={product.imageUrl || 'https://placehold.co/600x400.png'}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                  data-ai-hint={product.imageHint || product.name.split(' ').slice(0,2).join(' ').toLowerCase() || 'product image'}
+                />
+              </div>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-semibold line-clamp-2 leading-tight">{product.name}</CardTitle>
                 <CardDescription className="text-xs text-muted-foreground pt-1">

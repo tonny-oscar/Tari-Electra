@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CardContent, CardFooter } from '@/components/ui/card';
-import { AlertCircle, Loader2, Save, Edit3, PackagePlus } from 'lucide-react';
+import { AlertCircle, Loader2, Save, Edit3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { ProductFormState, Product } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -47,7 +47,7 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
 
   const handleFormAction = async (formData: FormData) => {
     console.log('[CreateProductForm] handleFormAction called. Mode:', mode);
-    setFormState(prev => ({ ...prev, isError: false, isSuccess: false, message: '', fields: undefined })); // Reset previous errors
+    setFormState(prev => ({ ...prev, isError: false, isSuccess: false, message: '', fields: undefined })); 
 
     let result: ProductFormState;
     if (mode === 'edit' && currentId) {
@@ -69,23 +69,18 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
       });
       if (mode === 'create' && formRef.current) {
         formRef.current.reset();
-        // Reset form state after successful creation and toast
         setFormState(initialFormState); 
       } else if (mode === 'edit' && formState.updatedProduct) {
-        // Optionally, you could redirect or refresh data here
-        // For now, just reset the success message part of the state
-        // router.push('/admin/products'); // Example redirect
-        setFormState(prev => ({ ...prev, isSuccess: false, message: '' })); // Clear success message after showing
+        setFormState(prev => ({ ...prev, isSuccess: false, message: '' })); 
       }
-    } else if (formState.isError && formState.message) { 
+    } else if (formState.isError && formState.message && !formState.fields) { 
       toast({
         title: 'Error',
         description: formState.message,
         variant: 'destructive',
         duration: 5000,
       });
-       // Keep error messages and fields, but clear general error flag if needed
-       setFormState(prev => ({ ...prev, isError: false, message: '' })); // Clear general error message after showing toast if it's not field-specific
+       setFormState(prev => ({ ...prev, isError: false, message: '' })); 
     }
   }, [formState, toast, mode, router]);
 
@@ -137,6 +132,20 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
           />
            <p className="text-xs text-muted-foreground">Enter features separated by commas.</p>
           {formState.fields?.features && <p className="text-sm text-destructive mt-1">{formState.fields.features.join(', ')}</p>}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl">Image URL</Label>
+            <Input id="imageUrl" name="imageUrl" type="url" placeholder="https://example.com/image.png" defaultValue={initialData?.imageUrl || ''} />
+            {formState.fields?.imageUrl && <p className="text-sm text-destructive mt-1">{formState.fields.imageUrl.join(', ')}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="imageHint">Image AI Hint</Label>
+            <Input id="imageHint" name="imageHint" placeholder="e.g., smart meter" defaultValue={initialData?.imageHint || ''} />
+            <p className="text-xs text-muted-foreground">Optional. One or two keywords for AI image generation.</p>
+            {formState.fields?.imageHint && <p className="text-sm text-destructive mt-1">{formState.fields.imageHint.join(', ')}</p>}
+          </div>
         </div>
 
         {formState.isError && formState.message && formState.fields && (

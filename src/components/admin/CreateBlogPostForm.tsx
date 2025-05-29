@@ -2,14 +2,14 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { useActionState } from 'react'; // Corrected from useFormState
+import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CardContent, CardFooter } from '@/components/ui/card';
-import { AlertCircle, CheckCircle, Loader2, Save, Edit3 } from 'lucide-react';
+import { AlertCircle, Loader2, Save, Edit3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { BlogFormState, BlogPost } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -18,7 +18,7 @@ import { updateBlogAction } from '@/app/actions/updateBlogAction';
 
 type CreateBlogPostFormProps = {
   initialData?: Partial<BlogPost>;
-  currentSlug?: string; // Used for identifying the post to update
+  currentSlug?: string; 
   mode?: 'create' | 'edit';
 };
 
@@ -41,7 +41,7 @@ export function CreateBlogPostForm({ initialData, currentSlug, mode = 'create' }
   const { toast } = useToast();
   
   const actionToUse = mode === 'edit' && currentSlug 
-    ? updateBlogAction.bind(null, currentSlug) // Bind currentSlug for update action
+    ? updateBlogAction.bind(null, currentSlug) 
     : createBlogAction;
 
   const [state, formAction] = useActionState(actionToUse, initialFormState);
@@ -58,8 +58,6 @@ export function CreateBlogPostForm({ initialData, currentSlug, mode = 'create' }
       if (mode === 'create') {
         formRef.current?.reset();
       }
-      // Optionally, redirect after successful update if needed
-      // e.g., router.push('/admin/blog')
     } else if (state.isError && state.message && !state.fields) {
       toast({
         title: 'Error',
@@ -87,7 +85,7 @@ export function CreateBlogPostForm({ initialData, currentSlug, mode = 'create' }
               name="slug" 
               placeholder="your-awesome-blog-post-title" 
               defaultValue={initialData?.slug}
-              readOnly={mode === 'edit'} // Slug should not be editable once created
+              readOnly={mode === 'edit'} 
               className={mode === 'edit' ? 'bg-muted/50 cursor-not-allowed' : ''}
             />
             <p className="text-xs text-muted-foreground mt-1">
@@ -128,6 +126,20 @@ export function CreateBlogPostForm({ initialData, currentSlug, mode = 'create' }
             defaultValue={initialData?.content} 
           />
           {state.fields?.content && <p className="text-sm text-destructive mt-1">{state.fields.content.join(', ')}</p>}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+                <Label htmlFor="imageUrl">Image URL</Label>
+                <Input id="imageUrl" name="imageUrl" type="url" placeholder="https://example.com/image.png" defaultValue={initialData?.imageUrl || ''} />
+                {state.fields?.imageUrl && <p className="text-sm text-destructive mt-1">{state.fields.imageUrl.join(', ')}</p>}
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="imageHint">Image AI Hint</Label>
+                <Input id="imageHint" name="imageHint" placeholder="e.g., modern building" defaultValue={initialData?.imageHint || ''} />
+                <p className="text-xs text-muted-foreground">Optional. One or two keywords for AI image search.</p>
+                {state.fields?.imageHint && <p className="text-sm text-destructive mt-1">{state.fields.imageHint.join(', ')}</p>}
+            </div>
         </div>
 
         {state.isError && state.message && state.fields && (
