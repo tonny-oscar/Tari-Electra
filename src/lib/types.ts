@@ -1,4 +1,6 @@
 
+import type { Timestamp } from 'firebase/firestore';
+
 export type Testimonial = {
   id: string;
   name: string;
@@ -16,15 +18,15 @@ export type FAQItem = {
 };
 
 export type BlogPost = {
-  slug: string;
+  slug: string; // Used as Firestore document ID
   title: string;
-  date: string; // YYYY-MM-DD
+  date: string | Timestamp; // Store as Timestamp in Firestore, convert to string for display
   excerpt: string;
   imageUrl?: string;
   imageHint?: string;
   author: string;
   category: string;
-  content: string; // Potentially HTML string
+  content: string;
 };
 
 export type BlogFormState = {
@@ -37,7 +39,7 @@ export type BlogFormState = {
 };
 
 export type Product = {
-  id: string;
+  id: string; // Firestore document ID
   name: string;
   description: string;
   price: number;
@@ -58,12 +60,12 @@ export type ProductFormState = {
 
 
 export type ContactMessage = {
-  id: string;
+  id: string; // Firestore document ID
   name: string;
   email: string;
   phone?: string;
   message: string;
-  receivedAt: string; // ISO string date
+  receivedAt: string | Timestamp; // Store as Timestamp in Firestore
   isRead: boolean;
 };
 
@@ -84,6 +86,7 @@ export type ContactFormState = {
 export type HomepageSettings = {
   heroImageUrl?: string;
   heroImageHint?: string;
+  // Potentially other settings can be added here
 };
 
 export type HomepageSettingsFormState = {

@@ -1,122 +1,160 @@
 
-import fs from 'fs';
-import path from 'path';
+import { db } from '@/lib/firebase/client';
 import type { ContactMessage } from '@/lib/types';
-import { v4 as uuidv4 } from 'uuid';
+import {
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  Timestamp,
+  query,
+  orderBy,
+  where,
+  getCountFromServer,
+} from 'firebase/firestore';
+import { unstable_noStore as noStore } from 'next/cache';
 
-const contactDataPath = path.resolve(process.cwd(), 'src/data/contactData.json');
-console.log('[ContactMessages] Data path resolved to:', contactDataPath);
+const CONTACT_MESSAGES_COLLECTION = 'contactMessages';
 
-function readContactData(): ContactMessage[] {
-  console.log('[ContactMessages] Attempting to read contactData.json from:', contactDataPath);
+// Helper to convert Firestore Timestamps for ContactMessage
+const messageToClient = (docData: any): Omit<ContactMessage, 'id'> => {
+  const data = { ...docData };
+  if (data.receivedAt && data.receivedAt instanceof Timestamp) {
+    data.receivedAt = data.receivedAt.toISOString();
+  }
+  return data as Omit<ContactMessage, 'id'>;
+};
+
+export async function getContactMessages(): Promise<ContactMessage[]> {
+  noStore();
+  console.log('[FirestoreContactMessages] Attempting to fetch contact messages.');
   try {
-    if (fs.existsSync(contactDataPath)) {
-      const fileContent = fs.readFileSync(contactDataPath, 'utf-8');
-      console.log(`[ContactMessages] File content length: ${fileContent.length}`);
-      if (fileContent.trim() === '') {
-        console.log('[ContactMessages] contactData.json is empty. Initializing with empty array and returning.');
-        // Write an empty array if it's just whitespace or truly empty
-        fs.writeFileSync(contactDataPath, JSON.stringify([], null, 2), 'utf-8');
-        return [];
-      }
-      const data = JSON.parse(fileContent);
-      if (Array.isArray(data)) {
-        console.log(`[ContactMessages] Successfully parsed ${data.length} messages from JSON.`);
-        return data;
-      } else {
-        console.warn('[ContactMessages] contactData.json does not contain a valid array. Initializing with empty array.');
-        fs.writeFileSync(contactDataPath, JSON.stringify([], null, 2), 'utf-8');
-        return [];
-      }
-    }
-    console.log('[ContactMessages] contactData.json does not exist. Creating and initializing with empty array.');
-    fs.writeFileSync(contactDataPath, JSON.stringify([], null, 2), 'utf-8');
-    return [];
-  } catch (error: any) {
-    console.error('[ContactMessages] Error reading or initializing contactData.json:', error.message, error.stack);
-    // Fallback: attempt to write a fresh empty array and return it
-    try {
-      console.log('[ContactMessages] Attempting to write fresh empty array to contactData.json after error.');
-      fs.writeFileSync(contactDataPath, JSON.stringify([], null, 2), 'utf-8');
+    if (!db) {
+      console.error('[FirestoreContactMessages] Firestore db instance is not available.');
       return [];
-    } catch (writeError: any) {
-      console.error('[ContactMessages] Critical error: Failed to write initial data to contactData.json after read error:', writeError.message, writeError.stack);
-      return []; // Return empty array as a last resort
     }
-  }
-}
-
-function writeContactData(data: ContactMessage[]): void {
-  try {
-    console.log(`[ContactMessages] Attempting to write ${data.length} messages to contactData.json.`);
-    fs.writeFileSync(contactDataPath, JSON.stringify(data, null, 2), 'utf-8');
-    console.log('[ContactMessages] Successfully wrote to contactData.json');
+    const messagesCollection = collection(db, CONTACT_MESSAGES_COLLECTION);
+    const q = query(messagesCollection, orderBy('receivedAt', 'desc'));
+    const messageSnapshot = await getDocs(q);
+    const messageList = messageSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...messageToClient(doc.data()),
+    }));
+    console.log(`[FirestoreContactMessages] Fetched ${messageList.length} messages.`);
+    return messageList;
   } catch (error) {
-    console.error('[ContactMessages] Error writing to contactData.json:', error);
+    console.error('[FirestoreContactMessages] Error fetching contact messages:', error);
+    return [];
   }
 }
 
-export function getContactMessages(): ContactMessage[] {
-  const messages = readContactData();
-  // Return a deep copy and sort by most recent
-  return JSON.parse(JSON.stringify(messages)).sort(
-    (a: ContactMessage, b: ContactMessage) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime()
-  );
-}
-
-export function addContactMessage(
+export async function addContactMessage(
   data: Omit<ContactMessage, 'id' | 'receivedAt' | 'isRead'>
-): ContactMessage {
-  console.log('[ContactMessages] addContactMessage called with data:', data);
-  let messages = readContactData();
-  const newMessage: ContactMessage = {
-    ...data,
-    id: uuidv4(),
-    receivedAt: new Date().toISOString(),
-    isRead: false,
-  };
-  messages.unshift(newMessage); // Adds to the beginning
-  writeContactData(messages);
-  console.log('[ContactMessages] New message added and data written. Total messages:', messages.length);
-  return { ...newMessage };
-}
-
-export function findContactMessage(id: string): ContactMessage | undefined {
-  const messages = readContactData();
-  const message = messages.find(m => m.id === id);
-  return message ? { ...message } : undefined;
-}
-
-export function markMessageAsRead(id: string, isRead: boolean): ContactMessage | null {
-  let messages = readContactData();
-  const messageIndex = messages.findIndex(m => m.id === id);
-  if (messageIndex > -1) {
-    messages[messageIndex].isRead = isRead;
-    writeContactData(messages);
-    console.log(`[ContactMessages] Message ${id} marked as ${isRead ? 'read' : 'unread'} and data written.`);
-    return { ...messages[messageIndex] };
+): Promise<ContactMessage | null> {
+  noStore(); // Ensure this server action related data op is dynamic
+  console.log('[FirestoreContactMessages] addContactMessage called with data:', data);
+  try {
+    if (!db) {
+      console.error('[FirestoreContactMessages] Firestore db instance is not available.');
+      return null;
+    }
+    const newMessageForFirestore = {
+      ...data,
+      receivedAt: Timestamp.now(), // Store as Firestore Timestamp
+      isRead: false,
+    };
+    const docRef = await addDoc(collection(db, CONTACT_MESSAGES_COLLECTION), newMessageForFirestore);
+    console.log('[FirestoreContactMessages] Message added successfully to Firestore with ID:', docRef.id);
+    // For returning, convert Timestamp to string to match potential usage, or adjust type
+    return { id: docRef.id, ...messageToClient(newMessageForFirestore) };
+  } catch (error) {
+    console.error('[FirestoreContactMessages] Error adding message to Firestore:', error);
+    return null;
   }
-  console.warn(`[ContactMessages] Message ${id} not found for markAsRead.`);
-  return null;
 }
 
-export function deleteContactMessage(id: string): boolean {
-  let messages = readContactData();
-  const initialLength = messages.length;
-  messages = messages.filter(m => m.id !== id);
-  const success = messages.length < initialLength;
-  if (success) {
-    writeContactData(messages);
-    console.log(`[ContactMessages] Message ${id} deleted and data written.`);
-  } else {
-    console.warn(`[ContactMessages] Message ${id} not found for deletion.`);
+export async function findContactMessage(id: string): Promise<ContactMessage | undefined> {
+  noStore();
+  console.log(`[FirestoreContactMessages] Attempting to find message with ID: ${id}`);
+  try {
+    if (!db) {
+      console.error(`[FirestoreContactMessages] Firestore db instance is not available for ID: ${id}`);
+      return undefined;
+    }
+    const messageDocRef = doc(db, CONTACT_MESSAGES_COLLECTION, id);
+    const messageSnap = await getDoc(messageDocRef);
+    if (messageSnap.exists()) {
+      const messageData = messageToClient(messageSnap.data());
+      console.log(`[FirestoreContactMessages] Found message:`, { id: messageSnap.id, ...messageData });
+      return { id: messageSnap.id, ...messageData };
+    }
+    console.log(`[FirestoreContactMessages] Message with ID ${id} not found.`);
+    return undefined;
+  } catch (error) {
+    console.error(`[FirestoreContactMessages] Error finding message ${id}:`, error);
+    return undefined;
   }
-  return success;
 }
 
-export function getUnreadMessagesCount(): number {
-  const messages = readContactData();
-  const count = messages.filter(msg => !msg.isRead).length;
-  console.log(`[ContactMessages] Unread messages count: ${count}`);
-  return count;
+export async function markMessageAsRead(id: string, isRead: boolean): Promise<ContactMessage | null> {
+  noStore();
+  console.log(`[FirestoreContactMessages] Attempting to mark message ${id} as read: ${isRead}`);
+  try {
+    if (!db) {
+      console.error(`[FirestoreContactMessages] Firestore db instance is not available for ID: ${id}`);
+      return null;
+    }
+    const messageDocRef = doc(db, CONTACT_MESSAGES_COLLECTION, id);
+    await updateDoc(messageDocRef, { isRead });
+    console.log(`[FirestoreContactMessages] Message ${id} marked as read: ${isRead} successfully.`);
+    const updatedSnap = await getDoc(messageDocRef);
+    if (updatedSnap.exists()) {
+      return { id: updatedSnap.id, ...messageToClient(updatedSnap.data()) };
+    }
+    return null;
+  } catch (error) {
+    console.error(`[FirestoreContactMessages] Error updating message ${id} read status:`, error);
+    return null;
+  }
+}
+
+export async function deleteContactMessage(id: string): Promise<boolean> {
+  noStore();
+  console.log(`[FirestoreContactMessages] Attempting to delete message with ID: ${id}`);
+  try {
+    if (!db) {
+      console.error(`[FirestoreContactMessages] Firestore db instance is not available for ID: ${id}`);
+      return false;
+    }
+    const messageDocRef = doc(db, CONTACT_MESSAGES_COLLECTION, id);
+    await deleteDoc(messageDocRef);
+    console.log(`[FirestoreContactMessages] Message ${id} deleted successfully.`);
+    return true;
+  } catch (error) {
+    console.error(`[FirestoreContactMessages] Error deleting message ${id}:`, error);
+    return false;
+  }
+}
+
+export async function getUnreadMessagesCount(): Promise<number> {
+  noStore();
+  console.log('[FirestoreContactMessages] Attempting to fetch unread messages count.');
+  try {
+    if (!db) {
+      console.error('[FirestoreContactMessages] Firestore db instance is not available.');
+      return 0;
+    }
+    const messagesCollection = collection(db, CONTACT_MESSAGES_COLLECTION);
+    const q = query(messagesCollection, where('isRead', '==', false));
+    const snapshot = await getCountFromServer(q);
+    const count = snapshot.data().count;
+    console.log(`[FirestoreContactMessages] Unread messages count: ${count}`);
+    return count;
+  } catch (error) {
+    console.error('[FirestoreContactMessages] Error fetching unread messages count:', error);
+    return 0;
+  }
 }
