@@ -53,7 +53,7 @@ export function ProductsSection({ products }: ProductsSectionProps) {
             className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
             variants={itemVariants}
           >
-            Our Products & Services
+            Our Services
           </motion.h2>
           <motion.p
             className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto"
