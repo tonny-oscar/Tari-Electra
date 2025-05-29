@@ -1,8 +1,13 @@
 
+import fs from 'fs';
+import path from 'path';
 import type { Product } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid';
 
-// Initial set of products
+// Path to the JSON file for products
+const productDataPath = path.resolve(process.cwd(), 'src/data/productData.json');
+
+// Initial set of products (fallback/default)
 const initialProducts: Product[] = [
   {
     id: 'tari-std-001',
@@ -38,7 +43,7 @@ const initialProducts: Product[] = [
     id: 'meter-sep-svc-003',
     name: 'Meter Separation Service',
     description: 'Professional service for separating existing single meter connections into multiple individual sub-metered units.',
-    price: 0, // Price typically quoted based on project scope
+    price: 0, 
     category: 'Services',
     imageUrl: 'https://placehold.co/600x400.png',
     imageHint: 'electrical wiring service',
@@ -51,57 +56,91 @@ const initialProducts: Product[] = [
   },
 ];
 
-// Mutable array for in-memory operations
-let mutableProducts: Product[] = JSON.parse(JSON.stringify(initialProducts));
+function readProductData(): Product[] {
+  try {
+    if (fs.existsSync(productDataPath)) {
+      const fileContent = fs.readFileSync(productDataPath, 'utf-8');
+      if (fileContent.trim() === '') return initialProducts; // If file is empty, use initial
+      const data = JSON.parse(fileContent);
+      return Array.isArray(data) && data.length > 0 ? data : initialProducts;
+    }
+    fs.writeFileSync(productDataPath, JSON.stringify(initialProducts, null, 2), 'utf-8');
+    return initialProducts;
+  } catch (error) {
+    console.error('Error reading or initializing productData.json:', error);
+    try {
+      fs.writeFileSync(productDataPath, JSON.stringify(initialProducts, null, 2), 'utf-8');
+    } catch (writeError) {
+        console.error('Error writing initial data to productData.json after read error:', writeError);
+    }
+    return initialProducts;
+  }
+}
+
+function writeProductData(data: Product[]): void {
+  try {
+    fs.writeFileSync(productDataPath, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (error) {
+    console.error('Error writing to productData.json:', error);
+  }
+}
 
 export function getProducts(): Product[] {
-  // Return a deep copy to prevent direct mutation of the internal array from outside
-  return JSON.parse(JSON.stringify(mutableProducts));
+  const products = readProductData();
+  return JSON.parse(JSON.stringify(products));
 }
 
 export function findProduct(id: string): Product | undefined {
-  const product = mutableProducts.find(p => p.id === id);
-  return product ? JSON.parse(JSON.stringify(product)) : undefined; // Return a deep copy
+  const products = readProductData();
+  const product = products.find(p => p.id === id);
+  return product ? { ...product } : undefined;
 }
 
 export function addProduct(productData: Omit<Product, 'id' | 'imageUrl' | 'imageHint'>): Product {
+  let products = readProductData();
   const newProduct: Product = {
     ...productData,
-    id: uuidv4(), // Use UUID for more robust unique IDs
-    imageUrl: 'https://placehold.co/600x400.png', // Default placeholder
+    id: uuidv4(),
+    imageUrl: 'https://placehold.co/600x400.png',
     imageHint: productData.name.split(' ').slice(0,2).join(' ').toLowerCase() || 'product placeholder',
+    price: Number(productData.price), // Ensure price is a number
+    features: Array.isArray(productData.features) ? productData.features : [],
   };
-  mutableProducts.unshift(newProduct); // Add to the beginning
-  console.log('[addProduct - In-Memory] New product added:', newProduct);
-  return JSON.parse(JSON.stringify(newProduct)); // Return a deep copy
+  products.unshift(newProduct);
+  writeProductData(products);
+  console.log('[addProduct - JSON] New product added and saved:', newProduct);
+  return { ...newProduct };
 }
 
 export function updateProduct(id: string, updatedProductData: Partial<Omit<Product, 'id'>>): Product | null {
-  const productIndex = mutableProducts.findIndex(p => p.id === id);
+  let products = readProductData();
+  const productIndex = products.findIndex(p => p.id === id);
   if (productIndex > -1) {
-    // Ensure ID is not changed
-    const { id: _, ...dataToUpdate } = updatedProductData;
-    mutableProducts[productIndex] = {
-      ...mutableProducts[productIndex],
+    const { id: _id, ...dataToUpdate } = updatedProductData;
+    products[productIndex] = {
+      ...products[productIndex],
       ...dataToUpdate,
-      // Ensure price is a number if it's being updated
-      price: dataToUpdate.price !== undefined ? Number(dataToUpdate.price) : mutableProducts[productIndex].price,
+      price: dataToUpdate.price !== undefined ? Number(dataToUpdate.price) : products[productIndex].price,
+      features: Array.isArray(dataToUpdate.features) ? dataToUpdate.features : products[productIndex].features,
     };
-    console.log('[updateProduct - In-Memory] Product updated:', mutableProducts[productIndex]);
-    return JSON.parse(JSON.stringify(mutableProducts[productIndex])); // Return a deep copy
+    writeProductData(products);
+    console.log('[updateProduct - JSON] Product updated and saved:', products[productIndex]);
+    return { ...products[productIndex] };
   }
-  console.warn('[updateProduct - In-Memory] Product not found for ID:', id);
+  console.warn('[updateProduct - JSON] Product not found for ID:', id);
   return null;
 }
 
 export function deleteProduct(id: string): boolean {
-  const initialLength = mutableProducts.length;
-  mutableProducts = mutableProducts.filter(p => p.id !== id);
-  const success = mutableProducts.length < initialLength;
+  let products = readProductData();
+  const initialLength = products.length;
+  products = products.filter(p => p.id !== id);
+  const success = products.length < initialLength;
   if (success) {
-    console.log('[deleteProduct - In-Memory] Product deleted:', id);
+    writeProductData(products);
+    console.log('[deleteProduct - JSON] Product deleted and saved:', id);
   } else {
-    console.warn('[deleteProduct - In-Memory] Product not found for deletion, ID:', id);
+    console.warn('[deleteProduct - JSON] Product not found for deletion, ID:', id);
   }
   return success;
 }

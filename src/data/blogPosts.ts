@@ -1,7 +1,12 @@
 
+import fs from 'fs';
+import path from 'path';
 import type { BlogPost } from '@/lib/types';
 
-// Initial set of blog posts
+// Path to the JSON file for blog posts
+const blogDataPath = path.resolve(process.cwd(), 'src/data/blogData.json');
+
+// Initial set of blog posts (remains as a fallback/default if JSON is empty/missing)
 const initialBlogPosts: BlogPost[] = [
   {
     slug: 'understanding-submetering-laws',
@@ -69,52 +74,87 @@ const initialBlogPosts: BlogPost[] = [
   },
 ];
 
-// Mutable array for in-memory operations.
-// Deep copy initialBlogPosts to ensure modifications don't affect the const.
-let mutableBlogPosts: BlogPost[] = JSON.parse(JSON.stringify(initialBlogPosts));
+function readBlogData(): BlogPost[] {
+  try {
+    if (fs.existsSync(blogDataPath)) {
+      const fileContent = fs.readFileSync(blogDataPath, 'utf-8');
+      if (fileContent.trim() === '') return initialBlogPosts; // If file is empty, use initial
+      const data = JSON.parse(fileContent);
+      return Array.isArray(data) && data.length > 0 ? data : initialBlogPosts;
+    }
+    // If file doesn't exist, write initial data and return it
+    fs.writeFileSync(blogDataPath, JSON.stringify(initialBlogPosts, null, 2), 'utf-8');
+    return initialBlogPosts;
+  } catch (error) {
+    console.error('Error reading or initializing blogData.json:', error);
+    // Fallback to initial data and attempt to write it
+    try {
+      fs.writeFileSync(blogDataPath, JSON.stringify(initialBlogPosts, null, 2), 'utf-8');
+    } catch (writeError) {
+      console.error('Error writing initial data to blogData.json after read error:', writeError);
+    }
+    return initialBlogPosts;
+  }
+}
+
+function writeBlogData(data: BlogPost[]): void {
+  try {
+    fs.writeFileSync(blogDataPath, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (error) {
+    console.error('Error writing to blogData.json:', error);
+  }
+}
 
 export function getBlogPosts(): BlogPost[] {
-  // Return a copy to prevent direct mutation of the internal array from outside
-  return JSON.parse(JSON.stringify(mutableBlogPosts));
+  const posts = readBlogData();
+  // Return a deep copy to prevent direct mutation
+  return JSON.parse(JSON.stringify(posts));
 }
 
 export function findBlogPost(slug: string): BlogPost | undefined {
-  const post = mutableBlogPosts.find(p => p.slug === slug);
-  return post ? { ...post } : undefined; // Return a copy
+  const posts = readBlogData();
+  const post = posts.find(p => p.slug === slug);
+  return post ? { ...post } : undefined;
 }
 
 export function addBlogPost(postData: Omit<BlogPost, 'date' | 'imageUrl' | 'imageHint'>): BlogPost {
-  if (mutableBlogPosts.some(p => p.slug === postData.slug)) {
-    // For this prototype, we'll throw an error if slug exists to simplify.
-    // A real app might generate a unique slug or allow updates via a different mechanism.
+  let posts = readBlogData();
+  if (posts.some(p => p.slug === postData.slug)) {
     throw new Error(`Blog post with slug "${postData.slug}" already exists.`);
   }
   const newPost: BlogPost = {
     ...postData,
-    date: new Date().toISOString().split('T')[0], // Current date
-    imageUrl: 'https://placehold.co/600x400.png', // Default placeholder
-    imageHint: 'article placeholder', // Default hint
+    date: new Date().toISOString().split('T')[0],
+    imageUrl: 'https://placehold.co/600x400.png',
+    imageHint: postData.title.split(' ').slice(0,2).join(' ').toLowerCase() || 'article placeholder',
   };
-  mutableBlogPosts.unshift(newPost); // Add to the beginning
-  return { ...newPost }; // Return a copy
+  posts.unshift(newPost);
+  writeBlogData(posts);
+  return { ...newPost };
 }
 
 export function updateBlogPost(slug: string, updatedPostData: Partial<Omit<BlogPost, 'slug'>>): BlogPost | null {
-  const postIndex = mutableBlogPosts.findIndex(p => p.slug === slug);
+  let posts = readBlogData();
+  const postIndex = posts.findIndex(p => p.slug === slug);
   if (postIndex > -1) {
-    // Ensure slug is not changed through this function
-    const { slug: _, ...dataToUpdate } = updatedPostData;
-    mutableBlogPosts[postIndex] = {
-      ...mutableBlogPosts[postIndex],
+    const { slug: _slug, ...dataToUpdate } = updatedPostData; // Ensure slug isn't part of dataToUpdate
+    posts[postIndex] = {
+      ...posts[postIndex],
       ...dataToUpdate,
     };
-    return { ...mutableBlogPosts[postIndex] }; // Return a copy
+    writeBlogData(posts);
+    return { ...posts[postIndex] };
   }
   return null;
 }
 
 export function deleteBlogPost(slug: string): boolean {
-  const initialLength = mutableBlogPosts.length;
-  mutableBlogPosts = mutableBlogPosts.filter(p => p.slug !== slug);
-  return mutableBlogPosts.length < initialLength;
+  let posts = readBlogData();
+  const initialLength = posts.length;
+  posts = posts.filter(p => p.slug !== slug);
+  const success = posts.length < initialLength;
+  if (success) {
+    writeBlogData(posts);
+  }
+  return success;
 }
