@@ -1,5 +1,5 @@
 
-import { db } from '@/lib/firebase/client';
+import { db } from '@/lib/firebase/client'; // Ensure db is correctly imported
 import type { Product } from '@/lib/types';
 import {
   collection,
@@ -27,7 +27,7 @@ const productToClient = (docData: any): Product => {
 
 export async function getProducts(): Promise<Product[]> {
   noStore(); // Opt out of caching for this function
-  console.log('[FirestoreProducts - getProducts] Attempting to fetch products (noStore active).');
+  console.log('[FirestoreProducts - getProducts] Attempting to fetch products from Firestore (noStore active).');
   try {
     if (!db) {
       console.error('[FirestoreProducts - getProducts] Firestore db instance is not available.');
@@ -40,17 +40,17 @@ export async function getProducts(): Promise<Product[]> {
       id: doc.id,
       ...productToClient(doc.data()),
     }));
-    console.log(`[FirestoreProducts - getProducts] Fetched ${productList.length} products.`);
+    console.log(`[FirestoreProducts - getProducts] Fetched ${productList.length} products from Firestore.`);
     return productList;
   } catch (error) {
-    console.error('[FirestoreProducts - getProducts] Error fetching products:', error);
+    console.error('[FirestoreProducts - getProducts] Error fetching products from Firestore:', error);
     return [];
   }
 }
 
 export async function findProduct(id: string): Promise<Product | undefined> {
-  noStore(); // Opt out of caching for this function as well for consistency on edit pages
-  console.log(`[FirestoreProducts - findProduct] Attempting to find product with ID: ${id} (noStore active)`);
+  noStore(); // Opt out of caching for this function
+  console.log(`[FirestoreProducts - findProduct] Attempting to find product with ID: ${id} from Firestore (noStore active)`);
   try {
     if (!db) {
       console.error(`[FirestoreProducts - findProduct] Firestore db instance is not available for ID: ${id}`);
@@ -60,13 +60,13 @@ export async function findProduct(id: string): Promise<Product | undefined> {
     const productSnap = await getDoc(productDocRef);
     if (productSnap.exists()) {
       const productData = productToClient(productSnap.data());
-      console.log(`[FirestoreProducts - findProduct] Found product:`, { id: productSnap.id, ...productData });
+      console.log(`[FirestoreProducts - findProduct] Found product from Firestore:`, { id: productSnap.id, ...productData });
       return { id: productSnap.id, ...productData };
     }
-    console.log(`[FirestoreProducts - findProduct] Product with ID ${id} not found.`);
+    console.log(`[FirestoreProducts - findProduct] Product with ID ${id} not found in Firestore.`);
     return undefined;
   } catch (error) {
-    console.error(`[FirestoreProducts - findProduct] Error finding product ${id}:`, error);
+    console.error(`[FirestoreProducts - findProduct] Error finding product ${id} from Firestore:`, error);
     return undefined;
   }
 }
@@ -74,7 +74,7 @@ export async function findProduct(id: string): Promise<Product | undefined> {
 export async function addProduct(
   productData: Omit<Product, 'id'>
 ): Promise<Product | null> {
-  console.log('[FirestoreProducts - addProduct] Attempting to add product:', productData);
+  console.log('[FirestoreProducts - addProduct] Attempting to add product to Firestore:', productData);
   try {
     if (!db) {
       console.error('[FirestoreProducts - addProduct] Firestore db instance is not available.');
@@ -93,10 +93,10 @@ export async function addProduct(
       collection(db, PRODUCTS_COLLECTION),
       productForFirestore
     );
-    console.log('[FirestoreProducts - addProduct] Product added successfully with ID:', docRef.id);
+    console.log('[FirestoreProducts - addProduct] Product added successfully to Firestore with ID:', docRef.id);
     return { id: docRef.id, ...productForFirestore };
   } catch (error) {
-    console.error('[FirestoreProducts - addProduct] Error adding product:', error);
+    console.error('[FirestoreProducts - addProduct] Error adding product to Firestore:', error);
     return null;
   }
 }
@@ -105,7 +105,7 @@ export async function updateProduct(
   id: string,
   updatedProductData: Partial<Omit<Product, 'id'>>
 ): Promise<Product | null> {
-  console.log(`[FirestoreProducts - updateProduct] Attempting to update product ${id} with data:`, updatedProductData);
+  console.log(`[FirestoreProducts - updateProduct] Attempting to update product ${id} in Firestore with data:`, updatedProductData);
   try {
     if (!db) {
       console.error(`[FirestoreProducts - updateProduct] Firestore db instance is not available for ID: ${id}`);
@@ -123,24 +123,23 @@ export async function updateProduct(
     await setDoc(productDocRef, dataToUpdate, { merge: true });
     console.log(`[FirestoreProducts - updateProduct] Product ${id} updated successfully in Firestore.`);
     
-    // Fetch the updated document to return it
     const updatedSnap = await getDoc(productDocRef);
     if (updatedSnap.exists()) {
       const updatedProduct = { id: updatedSnap.id, ...productToClient(updatedSnap.data()) };
-      console.log(`[FirestoreProducts - updateProduct] Returning updated product data:`, updatedProduct);
+      console.log(`[FirestoreProducts - updateProduct] Returning updated product data from Firestore:`, updatedProduct);
       return updatedProduct;
     } else {
-      console.error(`[FirestoreProducts - updateProduct] Product ${id} not found after update attempt.`);
+      console.error(`[FirestoreProducts - updateProduct] Product ${id} not found in Firestore after update attempt.`);
       return null;
     }
   } catch (error) {
-    console.error(`[FirestoreProducts - updateProduct] Error updating product ${id}:`, error);
+    console.error(`[FirestoreProducts - updateProduct] Error updating product ${id} in Firestore:`, error);
     return null;
   }
 }
 
 export async function deleteProduct(id: string): Promise<boolean> {
-  console.log(`[FirestoreProducts - deleteProduct] Attempting to delete product with ID: ${id}`);
+  console.log(`[FirestoreProducts - deleteProduct] Attempting to delete product with ID: ${id} from Firestore`);
   try {
     if (!db) {
       console.error(`[FirestoreProducts - deleteProduct] Firestore db instance is not available for ID: ${id}`);
@@ -151,7 +150,7 @@ export async function deleteProduct(id: string): Promise<boolean> {
     console.log(`[FirestoreProducts - deleteProduct] Product ${id} deleted successfully from Firestore.`);
     return true;
   } catch (error) {
-    console.error(`[FirestoreProducts - deleteProduct] Error deleting product ${id}:`, error);
+    console.error(`[FirestoreProducts - deleteProduct] Error deleting product ${id} from Firestore:`, error);
     return false;
   }
 }
