@@ -38,7 +38,7 @@ export default function AdminMessagesPage() {
           </CardHeader>
           <CardContent className="py-10 text-center">
             <p className="text-muted-foreground">There are no contact messages to display at this time.</p>
-            <p className="text-xs mt-2">Try submitting one from the main contact form!</p>
+            <p className="text-xs mt-2">Try submitting one from the main inquiry form!</p>
           </CardContent>
         </Card>
       ) : (
@@ -64,7 +64,8 @@ export default function AdminMessagesPage() {
                 </div>
               </CardHeader>
               <CardContent className="flex-grow pt-2">
-                <p className="text-sm text-foreground line-clamp-4 bg-secondary p-3 rounded-md">{msg.message}</p>
+                {/* Removed line-clamp-4 to show full message */}
+                <p className="text-sm text-foreground bg-secondary p-3 rounded-md whitespace-pre-wrap break-words">{msg.message}</p>
               </CardContent>
               <CardFooter className="flex-col items-start gap-2 pt-3">
                 <div className="text-xs text-muted-foreground flex items-center w-full justify-between">
