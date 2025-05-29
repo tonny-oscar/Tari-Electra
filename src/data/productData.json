@@ -1,0 +1,47 @@
+[
+  {
+    "id": "tari-std-001",
+    "name": "Tari Standard Prepaid Meter",
+    "description": "Reliable and affordable prepaid electricity meter for residential and small commercial use. Easy to install and manage.",
+    "price": 2500,
+    "category": "Prepaid Meters",
+    "imageUrl": "https://placehold.co/600x400.png",
+    "imageHint": "electricity meter standard",
+    "features": [
+      "STS Compliant",
+      "Tamper Detection",
+      "Low Credit Warning",
+      "Compact Design"
+    ]
+  },
+  {
+    "id": "tari-adv-002",
+    "name": "Tari Advanced Smart Meter",
+    "description": "Smart prepaid meter with remote monitoring capabilities, detailed consumption reports, and mobile app integration.",
+    "price": 4500,
+    "category": "Smart Meters",
+    "imageUrl": "https://placehold.co/600x400.png",
+    "imageHint": "smart meter advanced",
+    "features": [
+      "Remote Reading & Vending",
+      "Real-time Usage Data",
+      "Mobile App Control",
+      "Load Management"
+    ]
+  },
+  {
+    "id": "meter-sep-svc-003",
+    "name": "Meter Separation Service",
+    "description": "Professional service for separating existing single meter connections into multiple individual sub-metered units.",
+    "price": 0,
+    "category": "Services",
+    "imageUrl": "https://placehold.co/600x400.png",
+    "imageHint": "electrical wiring service",
+    "features": [
+      "Site Assessment Included",
+      "Compliant Installations",
+      "Suitable for Multi-Tenant Properties",
+      "Reduces Billing Disputes"
+    ]
+  }
+]
