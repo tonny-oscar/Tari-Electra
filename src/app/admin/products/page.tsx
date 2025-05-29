@@ -7,14 +7,15 @@ import { PlusCircle, ShoppingBag, Package } from 'lucide-react';
 import Image from 'next/image';
 import { ProductActionsCell } from '@/components/admin/ProductActionsCell';
 import type { Metadata } from 'next';
+import type { Product } from '@/lib/types';
 
 export const metadata: Metadata = {
   title: 'Product Management - Admin',
   description: 'Manage products and services for Tari Electra.',
 };
 
-export default function AdminProductsListPage() {
-  const products = getProducts();
+export default async function AdminProductsListPage() {
+  const products: Product[] = await getProducts();
 
   return (
     <div className="space-y-6">
@@ -23,7 +24,7 @@ export default function AdminProductsListPage() {
           <ShoppingBag className="h-7 w-7 text-primary" />
           <div>
             <h1 className="text-2xl font-semibold">Product Management</h1>
-            <p className="text-muted-foreground">Manage your products and services here. (Data saved to JSON)</p>
+            <p className="text-muted-foreground">Manage your products and services here. (Data saved to Firestore)</p>
           </div>
         </div>
         <Button asChild>
