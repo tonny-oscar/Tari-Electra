@@ -12,7 +12,7 @@ const CreateProductSchema = z.object({
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
   category: z.string().min(2, { message: 'Category must be at least 2 characters.' }),
   features: z.string().optional(), 
-  imageUrl: z.string().optional().or(z.literal('')), // Allow any string (URL or Data URL) or empty
+  imageUrl: z.string().optional().or(z.literal('')), 
   imageHint: z.string().optional(),
 });
 
@@ -58,16 +58,25 @@ export async function createProductAction(
       imageHint: imageHint || undefined,
     };
     
-    console.log('[createProductAction] Data for addProduct:', productToAdd);
-    const createdProduct = addProduct(productToAdd);
+    console.log('[createProductAction] Data for addProduct (Firestore):', productToAdd);
+    const createdProduct = await addProduct(productToAdd); // Await the Firestore operation
 
-    console.log('[createProductAction] New Product Created (JSON):', createdProduct);
+    if (!createdProduct) {
+      console.error('[createProductAction] Failed to create product in Firestore.');
+      return {
+        message: 'Failed to create product. Please try again.',
+        isError: true,
+        isSuccess: false,
+      };
+    }
+
+    console.log('[createProductAction] New Product Created (Firestore):', createdProduct);
     
     revalidatePath('/admin/products');
     revalidatePath('/products'); 
 
     return {
-      message: `Product "${createdProduct.name}" created successfully (saved to JSON).`,
+      message: `Product "${createdProduct.name}" created successfully.`,
       isError: false,
       isSuccess: true,
       createdProduct: createdProduct,

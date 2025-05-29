@@ -45,12 +45,13 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
   const router = useRouter();
   const [formState, setFormState] = useState<ProductFormState>(initialFormState);
   const formRef = useRef<HTMLFormElement>(null);
-  const imageUrlRef = useRef<HTMLInputElement>(null); // Ref for the Image URL input
+  const imageUrlRef = useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null);
 
   const handleFormAction = async (formData: FormData) => {
     console.log('[CreateProductForm] handleFormAction called. Mode:', mode);
-    setFormState(prev => ({ ...prev, isError: false, isSuccess: false, message: '', fields: undefined })); 
+    console.log('[CreateProductForm] FormData entries:', Array.from(formData.entries()));
+    setFormState(prev => ({ ...prev, message: '', fields: undefined, isError: false, isSuccess: false })); 
 
     let result: ProductFormState;
     if (mode === 'edit' && currentId) {
@@ -61,35 +62,44 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
     console.log('[CreateProductForm] Server action result:', result);
     setFormState(result);
     if (result.isSuccess) {
-        if(mode === 'create') setImagePreview(null); // Clear preview on successful creation
-        else if (result.updatedProduct?.imageUrl) setImagePreview(result.updatedProduct.imageUrl);
+        if(mode === 'create') {
+          setImagePreview(null); 
+        } else if (result.updatedProduct?.imageUrl) {
+          setImagePreview(result.updatedProduct.imageUrl);
+        }
     }
   };
 
   useEffect(() => {
-    if (formState.isSuccess && formState.message) {
-      toast({
-        title: 'Success!',
-        description: formState.message,
-        variant: 'default',
-        duration: 5000,
-      });
-      if (mode === 'create' && formRef.current) {
-        formRef.current.reset();
-        setImagePreview(null); 
-        setFormState(initialFormState); 
-      } else if (mode === 'edit' && formState.updatedProduct) {
-        setFormState(prev => ({ ...prev, isSuccess: false, message: '' })); 
-        if(formState.updatedProduct.imageUrl) setImagePreview(formState.updatedProduct.imageUrl);
+    console.log('[CreateProductForm] Form state changed:', formState);
+    if (formState.message) {
+      if (formState.isSuccess) {
+        toast({
+          title: 'Success!',
+          description: formState.message,
+          variant: 'default',
+          duration: 5000,
+        });
+        if (mode === 'create' && formRef.current) {
+          formRef.current.reset();
+          setImagePreview(null); 
+          // Reset local state after successful create
+          setFormState(initialFormState); 
+        } else if (mode === 'edit' && formState.updatedProduct) {
+          // Potentially reset message for edit, or handle as needed
+          // setFormState(prev => ({ ...prev, isSuccess: false, message: '' })); 
+          if(formState.updatedProduct.imageUrl) setImagePreview(formState.updatedProduct.imageUrl);
+          router.refresh(); // Good practice to refresh after edit
+        }
+      } else if (formState.isError && !formState.fields) { 
+        toast({
+          title: 'Error',
+          description: formState.message,
+          variant: 'destructive',
+          duration: 5000,
+        });
+         // setFormState(prev => ({ ...prev, isError: false, message: '' })); 
       }
-    } else if (formState.isError && formState.message && !formState.fields) { 
-      toast({
-        title: 'Error',
-        description: formState.message,
-        variant: 'destructive',
-        duration: 5000,
-      });
-       setFormState(prev => ({ ...prev, isError: false, message: '' })); 
     }
   }, [formState, toast, mode, router]);
   
@@ -97,7 +107,10 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
     if (initialData?.imageUrl) {
       setImagePreview(initialData.imageUrl);
     }
-  }, [initialData?.imageUrl]);
+    if (mode === 'create' && !initialData?.imageUrl) {
+        setImagePreview(null);
+    }
+  }, [initialData, mode]);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -107,17 +120,14 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
         const dataUrl = reader.result as string;
         setImagePreview(dataUrl);
         if (imageUrlRef.current) {
-          imageUrlRef.current.value = dataUrl; // Set the Data URL to the hidden/actual Image URL input
+          imageUrlRef.current.value = dataUrl; 
         }
       };
       reader.readAsDataURL(file);
     } else {
-      // If no file is selected, clear preview and potentially the imageUrl input
-      // Or, if initialData.imageUrl exists, revert to it, or clear it.
-      // For now, let's clear if the user deselects.
-      setImagePreview(null);
+      setImagePreview(initialData?.imageUrl || null);
       if (imageUrlRef.current) {
-          imageUrlRef.current.value = initialData?.imageUrl || ''; // Revert or clear
+          imageUrlRef.current.value = initialData?.imageUrl || ''; 
       }
     }
   };
@@ -205,11 +215,11 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
             <Input 
               id="imageUrl" 
               name="imageUrl" 
-              type="text" // Changed from url to text to allow Data URLs
+              type="text" 
               placeholder="https://example.com/image.png or populated by upload" 
               defaultValue={initialData?.imageUrl || ''}
               ref={imageUrlRef} 
-              onChange={(e) => setImagePreview(e.target.value)} // Update preview if URL is manually changed
+              onChange={(e) => setImagePreview(e.target.value)} 
             />
             {formState.fields?.imageUrl && <p className="text-sm text-destructive mt-1">{formState.fields.imageUrl.join(', ')}</p>}
           </div>
@@ -221,7 +231,7 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
           </div>
         </div>
 
-        {formState.isError && formState.message && formState.fields && (
+        {formState.isError && formState.fields && formState.message && (
            <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Form Error</AlertTitle>
@@ -237,3 +247,4 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
     </form>
   );
 }
+

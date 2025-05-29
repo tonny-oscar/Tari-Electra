@@ -1,162 +1,139 @@
 
-import fs from 'fs';
-import path from 'path';
+import { db } from '@/lib/firebase/client'; // Ensure db is correctly imported
 import type { Product } from '@/lib/types';
-import { v4 as uuidv4 } from 'uuid';
+import {
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  addDoc,
+  setDoc,
+  deleteDoc,
+  Timestamp,
+  query,
+  orderBy,
+  where,
+  writeBatch,
+} from 'firebase/firestore';
+import { v4 as uuidv4 } from 'uuid'; // Still useful for ensuring client-side ID if needed, but Firestore auto-generates
 
-const productDataPath = path.resolve(process.cwd(), 'src/data/productData.json');
+const PRODUCTS_COLLECTION = 'products';
 
-const initialProducts: Product[] = [
-  {
-    id: 'tari-std-001',
-    name: 'Tari Standard Prepaid Meter',
-    description: 'Reliable and affordable prepaid electricity meter for residential and small commercial use. Easy to install and manage.',
-    price: 2500.00,
-    category: 'Prepaid Meters',
-    imageUrl: 'https://placehold.co/600x400.png',
-    imageHint: 'electricity meter standard',
-    features: [
-      'STS Compliant',
-      'Tamper Detection',
-      'Low Credit Warning',
-      'Compact Design',
-    ],
-  },
-  {
-    id: 'tari-adv-002',
-    name: 'Tari Advanced Smart Meter',
-    description: 'Smart prepaid meter with remote monitoring capabilities, detailed consumption reports, and mobile app integration.',
-    price: 4500.00,
-    category: 'Smart Meters',
-    imageUrl: 'https://placehold.co/600x400.png',
-    imageHint: 'smart meter advanced',
-    features: [
-      'Remote Reading & Vending',
-      'Real-time Usage Data',
-      'Mobile App Control',
-      'Load Management',
-    ],
-  },
-  {
-    id: 'meter-sep-svc-003',
-    name: 'Meter Separation Service',
-    description: 'Professional service for separating existing single meter connections into multiple individual sub-metered units.',
-    price: 0,
-    category: 'Services',
-    imageUrl: 'https://placehold.co/600x400.png',
-    imageHint: 'electrical wiring service',
-    features: [
-      'Site Assessment Included',
-      'Compliant Installations',
-      'Suitable for Multi-Tenant Properties',
-      'Reduces Billing Disputes',
-    ],
-  },
-];
+// Helper to convert Firestore Timestamps to ISO strings for dates
+const productToClient = (docData: any): Product => {
+  const data = { ...docData } as Product;
+  // Convert any Timestamp fields to ISO strings if necessary
+  // For Product, 'price' is number, 'features' is string[]. No explicit date fields in base Product.
+  return data;
+};
 
-function readProductData(): Product[] {
+export async function getProducts(): Promise<Product[]> {
+  console.log('[FirestoreProducts] Attempting to fetch products.');
   try {
-    if (fs.existsSync(productDataPath)) {
-      const fileContent = fs.readFileSync(productDataPath, 'utf-8');
-      if (fileContent.trim() === '') {
-        fs.writeFileSync(productDataPath, JSON.stringify(initialProducts, null, 2), 'utf-8');
-        console.log('[readProductData] Initialized productData.json with sample data as it was empty.');
-        return JSON.parse(JSON.stringify(initialProducts)); // Return a copy
-      }
-      const data = JSON.parse(fileContent);
-      if (Array.isArray(data)) {
-        return data;
-      } else {
-        console.warn('[readProductData] productData.json does not contain a valid array. Initializing with sample data.');
-        fs.writeFileSync(productDataPath, JSON.stringify(initialProducts, null, 2), 'utf-8');
-        return JSON.parse(JSON.stringify(initialProducts)); // Return a copy
-      }
-    }
-    fs.writeFileSync(productDataPath, JSON.stringify(initialProducts, null, 2), 'utf-8');
-    console.log('[readProductData] Created and initialized productData.json with sample data.');
-    return JSON.parse(JSON.stringify(initialProducts)); // Return a copy
-  } catch (error: any) {
-    console.error('[readProductData] Error reading or initializing productData.json:', error.message);
-    try {
-      fs.writeFileSync(productDataPath, JSON.stringify(initialProducts, null, 2), 'utf-8');
-      console.log('[readProductData] Initialized productData.json with sample data after read error.');
-    } catch (writeError: any) {
-      console.error('[readProductData] Error writing initial data to productData.json after read error:', writeError.message);
-    }
-    return JSON.parse(JSON.stringify(initialProducts)); // Return a copy
-  }
-}
-
-function writeProductData(data: Product[]): void {
-  try {
-    fs.writeFileSync(productDataPath, JSON.stringify(data, null, 2), 'utf-8');
-    console.log('[writeProductData] Successfully wrote to productData.json');
+    const productsCollection = collection(db, PRODUCTS_COLLECTION);
+    const q = query(productsCollection, orderBy('name', 'asc')); // Example: order by name
+    const productSnapshot = await getDocs(q);
+    const productList = productSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...productToClient(doc.data()),
+    }));
+    console.log(`[FirestoreProducts] Fetched ${productList.length} products.`);
+    return productList;
   } catch (error) {
-    console.error('[writeProductData] Error writing to productData.json:', error);
+    console.error('[FirestoreProducts] Error fetching products:', error);
+    return [];
   }
 }
 
-export function getProducts(): Product[] {
-  const products = readProductData();
-  return JSON.parse(JSON.stringify(products));
+export async function findProduct(id: string): Promise<Product | undefined> {
+  console.log(`[FirestoreProducts] Attempting to find product with ID: ${id}`);
+  try {
+    const productDocRef = doc(db, PRODUCTS_COLLECTION, id);
+    const productSnap = await getDoc(productDocRef);
+    if (productSnap.exists()) {
+      const productData = productToClient(productSnap.data());
+      console.log(`[FirestoreProducts] Found product:`, productData);
+      return { id: productSnap.id, ...productData };
+    }
+    console.log(`[FirestoreProducts] Product with ID ${id} not found.`);
+    return undefined;
+  } catch (error) {
+    console.error(`[FirestoreProducts] Error finding product ${id}:`, error);
+    return undefined;
+  }
 }
 
-export function findProduct(id: string): Product | undefined {
-  const products = readProductData();
-  const product = products.find(p => p.id === id);
-  return product ? { ...product } : undefined;
-}
-
-export function addProduct(productData: Omit<Product, 'id'>): Product {
-  let products = readProductData();
-  const defaultImageUrl = 'https://placehold.co/600x400.png';
-  const newProduct: Product = {
-    ...productData,
-    id: uuidv4(),
-    imageUrl: productData.imageUrl || defaultImageUrl,
-    imageHint: productData.imageHint || productData.name.split(' ').slice(0,2).join(' ').toLowerCase() || 'product image',
-    price: Number(productData.price),
-    features: Array.isArray(productData.features) ? productData.features : [],
-  };
-  products.unshift(newProduct);
-  writeProductData(products);
-  console.log('[addProduct - JSON] New product added and saved:', newProduct);
-  return { ...newProduct };
-}
-
-export function updateProduct(id: string, updatedProductData: Partial<Omit<Product, 'id'>>): Product | null {
-  let products = readProductData();
-  const productIndex = products.findIndex(p => p.id === id);
-  if (productIndex > -1) {
-    const existingProduct = products[productIndex];
-    const defaultImageUrl = 'https://placehold.co/600x400.png';
-    
-    products[productIndex] = {
-      ...existingProduct,
-      ...updatedProductData,
-      price: updatedProductData.price !== undefined ? Number(updatedProductData.price) : existingProduct.price,
-      features: Array.isArray(updatedProductData.features) ? updatedProductData.features : existingProduct.features,
-      imageUrl: updatedProductData.imageUrl || existingProduct.imageUrl || defaultImageUrl,
-      imageHint: updatedProductData.imageHint || existingProduct.imageHint || updatedProductData.name?.split(' ').slice(0,2).join(' ').toLowerCase() || existingProduct.name.split(' ').slice(0,2).join(' ').toLowerCase() || 'product image',
+export async function addProduct(
+  productData: Omit<Product, 'id'>
+): Promise<Product | null> {
+  console.log('[FirestoreProducts] Attempting to add product:', productData);
+  try {
+    if (!db) {
+      console.error('[FirestoreProducts] Firestore db instance is not available in addProduct.');
+      throw new Error('Firestore instance is not available');
+    }
+    const productForFirestore = {
+      ...productData,
+      // Firestore will auto-generate an ID for the document
+      // Ensure price is a number
+      price: Number(productData.price) || 0,
+      features: Array.isArray(productData.features) ? productData.features : [],
+      imageUrl: productData.imageUrl || 'https://placehold.co/600x400.png',
+      imageHint: productData.imageHint || productData.name.split(' ').slice(0,2).join(' ').toLowerCase() || 'product image',
     };
-    writeProductData(products);
-    console.log('[updateProduct - JSON] Product updated and saved:', products[productIndex]);
-    return { ...products[productIndex] };
+    console.log('[FirestoreProducts] Data prepared for Firestore:', productForFirestore);
+
+    const docRef = await addDoc(
+      collection(db, PRODUCTS_COLLECTION),
+      productForFirestore
+    );
+    console.log('[FirestoreProducts] Product added successfully with ID:', docRef.id);
+    return { id: docRef.id, ...productForFirestore };
+  } catch (error) {
+    console.error('[FirestoreProducts] Error adding product:', error);
+    return null;
   }
-  console.warn('[updateProduct - JSON] Product not found for ID:', id);
-  return null;
 }
 
-export function deleteProduct(id: string): boolean {
-  let products = readProductData();
-  const initialLength = products.length;
-  products = products.filter(p => p.id !== id);
-  const success = products.length < initialLength;
-  if (success) {
-    writeProductData(products);
-    console.log('[deleteProduct - JSON] Product deleted and saved:', id);
-  } else {
-    console.warn('[deleteProduct - JSON] Product not found for deletion, ID:', id);
+export async function updateProduct(
+  id: string,
+  updatedProductData: Partial<Omit<Product, 'id'>>
+): Promise<Product | null> {
+  console.log(`[FirestoreProducts] Attempting to update product ${id} with data:`, updatedProductData);
+  try {
+    const productDocRef = doc(db, PRODUCTS_COLLECTION, id);
+    // Ensure price is a number if provided
+    const dataToUpdate: Record<string, any> = { ...updatedProductData };
+    if (typeof updatedProductData.price !== 'undefined') {
+        dataToUpdate.price = Number(updatedProductData.price);
+    }
+    if (typeof updatedProductData.features !== 'undefined' && !Array.isArray(updatedProductData.features)) {
+        // This case should ideally be handled by Zod schema to ensure features is an array
+        dataToUpdate.features = []; 
+    }
+    
+    await setDoc(productDocRef, dataToUpdate, { merge: true }); // Use setDoc with merge for partial updates
+    console.log(`[FirestoreProducts] Product ${id} updated successfully.`);
+    const updatedDoc = await getDoc(productDocRef);
+    if (updatedDoc.exists()) {
+      return { id: updatedDoc.id, ...productToClient(updatedDoc.data()) };
+    }
+    return null; // Should not happen if update was successful
+  } catch (error) {
+    console.error(`[FirestoreProducts] Error updating product ${id}:`, error);
+    return null;
   }
-  return success;
+}
+
+export async function deleteProduct(id: string): Promise<boolean> {
+  console.log(`[FirestoreProducts] Attempting to delete product with ID: ${id}`);
+  try {
+    const productDocRef = doc(db, PRODUCTS_COLLECTION, id);
+    await deleteDoc(productDocRef);
+    console.log(`[FirestoreProducts] Product ${id} deleted successfully.`);
+    return true;
+  } catch (error) {
+    console.error(`[FirestoreProducts] Error deleting product ${id}:`, error);
+    return false;
+  }
 }
