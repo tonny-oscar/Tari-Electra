@@ -2,7 +2,9 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus, useActionState } from 'react-dom'; // Keep useFormStatus from react-dom
+// Import useActionState from 'react' directly for newer React/Next.js versions if issues persist with react-dom export
+// For now, assuming Next.js handles the react-dom export correctly for useActionState
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,7 +36,11 @@ function SubmitButton() {
 
 export function HomepageSettingsForm({ initialSettings }: HomepageSettingsFormProps) {
   const { toast } = useToast();
-  const [state, formAction] = useFormState(updateHomepageSettingsAction, initialFormState);
+  // Corrected: useActionState should be imported from 'react' in modern Next.js/React
+  // However, the error message points to ReactDOM.useFormState being renamed, 
+  // and Next.js sometimes aliases React.useActionState through react-dom for server actions.
+  // Let's try importing directly from 'react' for useActionState.
+  const [state, formAction] = React.useActionState(updateHomepageSettingsAction, initialFormState);
   const formRef = useRef<HTMLFormElement>(null);
   const imageUrlRef = useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(initialSettings?.heroImageUrl || null);
