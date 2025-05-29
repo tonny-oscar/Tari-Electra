@@ -69,8 +69,8 @@ export default function AdminProductsListPage() {
                   <div className="mt-3">
                     <h4 className="text-xs font-semibold text-foreground mb-1">Features:</h4>
                     <ul className="list-disc list-inside pl-2 space-y-0.5">
-                      {product.features.slice(0, 3).map(feature => (
-                        <li key={feature} className="text-xs text-muted-foreground truncate">
+                      {product.features.slice(0, 3).map((feature, index) => (
+                        <li key={`${feature}-${index}`} className="text-xs text-muted-foreground truncate">
                           {feature}
                         </li>
                       ))}
