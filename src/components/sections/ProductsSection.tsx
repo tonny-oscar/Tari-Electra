@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Gauge, SplitSquareHorizontal, CheckCircle, ShoppingBag } from "lucide-react";
+import { Gauge, SplitSquareHorizontal, CheckCircle, ShoppingBag } from "lucide-react"; // Assuming ShoppingBag is for default
 import { motion } from "framer-motion";
 import type { Product } from "@/lib/types";
 import Image from "next/image";
@@ -40,7 +40,7 @@ export function ProductsSection({ products }: ProductsSectionProps) {
 
   return (
     <motion.section
-      id="products"
+      id="products" // id can remain if used for direct linking, but nav scrolls to /products page
       className="py-16 lg:py-24 bg-secondary"
       initial="hidden"
       whileInView="visible"
@@ -87,8 +87,8 @@ export function ProductsSection({ products }: ProductsSectionProps) {
                     {product.features && product.features.length > 0 && (
                       <div className="space-y-2 mb-4">
                         <h4 className="text-sm font-semibold text-foreground text-center mb-2">Key Features:</h4>
-                        {product.features.slice(0,3).map((feature) => ( // Show max 3 features
-                          <div key={feature} className="flex items-start text-sm">
+                        {product.features.slice(0,3).map((feature, index) => ( // Show max 3 features, add index here
+                          <div key={`${feature}-${index}`} className="flex items-start text-sm"> {/* Use feature + index for key */}
                             <CheckCircle className="h-4 w-4 text-primary mr-2 mt-0.5 flex-shrink-0" />
                             <span className="text-muted-foreground">{feature}</span>
                           </div>
