@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Newspaper, LayoutDashboard, ShoppingBag, MessageSquare, ImageIcon } from "lucide-react"; // Added ImageIcon
+import { Newspaper, LayoutDashboard, ShoppingBag, MessageSquare, ImageIcon } from "lucide-react";
 
 export default function AdminDashboardPage() {
   return (
