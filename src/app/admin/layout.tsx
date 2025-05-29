@@ -4,7 +4,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
-  Bell,
   CircleUser,
   Home,
   LayoutDashboard,
@@ -13,6 +12,7 @@ import {
   MessageSquare,
   ShoppingBag,
   Settings,
+  ImageIcon, // Added ImageIcon
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
@@ -36,6 +36,7 @@ const navLinks = [
   { href: '/admin/blog', label: 'Blog Management', icon: Newspaper },
   { href: '/admin/products', label: 'Product Management', icon: ShoppingBag },
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
+  { href: '/admin/homepage', label: 'Homepage Settings', icon: ImageIcon }, // Added Homepage Settings
 ];
 
 export default function AdminLayout({
@@ -45,7 +46,7 @@ export default function AdminLayout({
 }) {
   const { user, loading, logOut } = useAuth();
   const router = useRouter();
-  const [isAccessAllowed, setIsAccessAllowed] = useState(false); // Renamed for clarity
+  const [isAdminRouteAllowed, setIsAdminRouteAllowed] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -53,30 +54,48 @@ export default function AdminLayout({
 
     if (loading) {
       console.log('[AdminLayout] Auth is loading. Waiting...');
-      setIsAccessAllowed(false); 
+      setIsAdminRouteAllowed(false);
       return;
     }
 
     if (!user) {
       console.log('[AdminLayout] No user authenticated. Redirecting to login.');
       router.push('/login?redirect=/admin');
-      setIsAccessAllowed(false);
+      setIsAdminRouteAllowed(false);
       return;
     }
 
-    // If user is authenticated (which means they signed up with the invite code), grant access.
-    console.log(`[AdminLayout] User ${user.email} is authenticated. Granting access to admin area.`);
-    setIsAccessAllowed(true);
+    const adminEmailEnv = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+    console.log(`[AdminLayout] Checking access: User Email (from auth): '${user.email}', Configured Admin Email (from env): '${adminEmailEnv}'`);
+
+    if (!adminEmailEnv || adminEmailEnv.trim() === "") {
+      console.error('[AdminLayout] CRITICAL: NEXT_PUBLIC_ADMIN_EMAIL environment variable is not set or is empty. Admin access denied.');
+      setIsAdminRouteAllowed(false);
+      router.push('/');
+      toast({ title: 'Configuration Error', description: 'Admin email not configured. Please contact support.', variant: 'destructive', duration: 10000 });
+      return;
+    }
+
+    const isActualAdmin = user.email?.toLowerCase() === adminEmailEnv.toLowerCase();
+    console.log(`[AdminLayout] Email comparison: User: '${user.email?.toLowerCase()}', Admin: '${adminEmailEnv.toLowerCase()}', Match: ${isActualAdmin}`);
+
+    if (isActualAdmin) {
+      console.log(`[AdminLayout] User ${user.email} is ADMIN. Granting access to admin area.`);
+      setIsAdminRouteAllowed(true);
+    } else {
+      console.log(`[AdminLayout] User ${user.email} is NOT ADMIN. Denying access to admin area.`);
+      setIsAdminRouteAllowed(false);
+      router.push('/');
+      toast({ title: 'Access Denied', description: 'You do not have permission to view this page.', variant: 'destructive', duration: 7000 });
+    }
 
   }, [user, loading, router, toast]);
 
   const handleLogout = async () => {
     await logOut();
-    // router.push('/') is handled by logOut in AuthContext
   };
 
   if (loading) {
-    console.log('[AdminLayout] Render: Auth is loading...');
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -85,20 +104,8 @@ export default function AdminLayout({
     );
   }
 
-  if (!user) {
-    console.log('[AdminLayout] Render: No user object. Login redirection should be in progress.');
-    // This state is typically brief as the useEffect should redirect.
-    return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground">Authenticating...</p>
-      </div>
-    );
-  }
-  
-  if (!isAccessAllowed) {
-     console.log('[AdminLayout] Render: Access not allowed or still verifying. Redirection should be in progress if denied.');
-    // This state is also typically brief.
+  if (!user || !isAdminRouteAllowed) {
+    // This state is typically brief as the useEffect should redirect if not allowed.
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -194,7 +201,7 @@ export default function AdminLayout({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">User</p> 
+                    <p className="text-sm font-medium leading-none">Admin User</p> 
                     <p className="text-xs leading-none text-muted-foreground">
                     {user?.email}
                     </p>
@@ -212,5 +219,3 @@ export default function AdminLayout({
     </div>
   );
 }
-
-    

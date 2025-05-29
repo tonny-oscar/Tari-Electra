@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Newspaper, LayoutDashboard, ShoppingBag, MessageSquare } from "lucide-react"; // Added MessageSquare
+import { Newspaper, LayoutDashboard, ShoppingBag, MessageSquare, ImageIcon } from "lucide-react"; // Added ImageIcon
 
 export default function AdminDashboardPage() {
   return (
@@ -66,6 +66,22 @@ export default function AdminDashboardPage() {
                 </p>
                 <Button asChild>
                   <Link href="/admin/messages">View Messages</Link>
+                </Button>
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <ImageIcon className="h-5 w-5 text-primary" />
+                  Homepage Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Manage settings for your homepage, like the hero image.
+                </p>
+                <Button asChild>
+                  <Link href="/admin/homepage">Go to Homepage Settings</Link>
                 </Button>
               </CardContent>
             </Card>
