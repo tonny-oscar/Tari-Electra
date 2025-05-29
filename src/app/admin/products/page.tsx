@@ -48,7 +48,7 @@ export default function AdminProductsListPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((product) => (
             <Card key={product.id} className="flex flex-col shadow-md hover:shadow-lg transition-shadow bg-card">
-              <div className="aspect-[16/9] w-full relative bg-muted rounded-t-lg overflow-hidden">
+              <div className="aspect-[3/2] w-full relative bg-muted rounded-t-lg overflow-hidden">
                 <Image
                   src={product.imageUrl || 'https://placehold.co/600x400.png'}
                   alt={product.name}

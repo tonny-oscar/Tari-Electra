@@ -37,7 +37,7 @@ export default function AdminBlogListPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {posts.map((post) => (
             <Card key={post.slug} className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
-              <div className="aspect-[16/9] w-full relative bg-muted rounded-t-lg overflow-hidden">
+              <div className="aspect-[3/2] w-full relative bg-muted rounded-t-lg overflow-hidden">
                 <Image
                   src={post.imageUrl || 'https://placehold.co/600x400.png'}
                   alt={post.title}

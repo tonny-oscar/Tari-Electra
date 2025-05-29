@@ -35,7 +35,7 @@ export default function BlogPage() {
             {posts.map((post) => (
               <Card key={post.slug} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 bg-background">
                  <Link href={`/blog/${post.slug}`} className="block">
-                  <div className="aspect-video w-full relative bg-muted">
+                  <div className="aspect-[3/2] w-full relative bg-muted">
                     <Image
                       src={post.imageUrl || 'https://placehold.co/600x400.png'}
                       alt={post.title}

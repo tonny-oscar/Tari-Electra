@@ -83,14 +83,14 @@ export function HeroSection() {
 
           {/* Image Column */}
           <motion.div
-            className="relative aspect-square md:aspect-[4/3] lg:aspect-square max-w-md mx-auto md:max-w-none w-full mt-10 md:mt-0"
+            className="relative aspect-square md:aspect-[4/3] lg:aspect-[3/2] max-w-md mx-auto md:max-w-none w-full mt-10 md:mt-0"
             variants={itemVariants}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.5 }}
           >
             <Image
-              src="https://placehold.co/800x800.png"
+              src="https://placehold.co/800x600.png" 
               alt="Smart meter solutions for modern buildings"
               fill
               className="object-cover rounded-xl shadow-2xl"

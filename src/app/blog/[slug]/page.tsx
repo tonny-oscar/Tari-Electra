@@ -66,9 +66,9 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
             </div>
           </div>
 
-          <div className="aspect-video w-full relative overflow-hidden rounded-lg mb-8 shadow-md bg-muted">
+          <div className="aspect-[3/2] w-full relative overflow-hidden rounded-lg mb-8 shadow-md bg-muted">
               <Image
-              src={post.imageUrl || 'https://placehold.co/800x450.png'}
+              src={post.imageUrl || 'https://placehold.co/600x400.png'}
               alt={post.title}
               fill
               className="object-cover"

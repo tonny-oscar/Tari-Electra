@@ -67,7 +67,7 @@ export function ProductsSection({ products }: ProductsSectionProps) {
             {products.map((product) => (
               <motion.div key={product.id} variants={itemVariants}>
                 <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full bg-background overflow-hidden">
-                  <div className="aspect-[16/9] w-full relative bg-muted">
+                  <div className="aspect-[3/2] w-full relative bg-muted">
                     <Image
                       src={product.imageUrl || 'https://placehold.co/600x400.png'}
                       alt={product.name}
