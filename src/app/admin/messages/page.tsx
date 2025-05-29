@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 
 export default function AdminMessagesPage() {
   const messages = getContactMessages();
+  console.log(`[AdminMessagesPage] Displaying ${messages.length} messages. Data:`, messages);
 
   return (
     <div className="space-y-6">
@@ -22,7 +23,7 @@ export default function AdminMessagesPage() {
           <MessageSquare className="h-7 w-7 text-primary" />
           <div>
             <h1 className="text-2xl font-semibold">Contact Messages</h1>
-            <p className="text-muted-foreground">Manage inquiries from your website. (Data is in-memory)</p>
+            <p className="text-muted-foreground">Manage inquiries from your website. (Data saved to JSON)</p>
           </div>
         </div>
         {/* Add a "Mark all as read" or filter options here in the future */}
@@ -37,6 +38,7 @@ export default function AdminMessagesPage() {
           </CardHeader>
           <CardContent className="py-10 text-center">
             <p className="text-muted-foreground">There are no contact messages to display at this time.</p>
+            <p className="text-xs mt-2">Try submitting one from the main contact form!</p>
           </CardContent>
         </Card>
       ) : (

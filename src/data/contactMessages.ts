@@ -5,56 +5,60 @@ import type { ContactMessage } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid';
 
 const contactDataPath = path.resolve(process.cwd(), 'src/data/contactData.json');
-
-const initialMessages: ContactMessage[] = []; // Start with no initial messages in the code
+console.log('[ContactMessages] Data path resolved to:', contactDataPath);
 
 function readContactData(): ContactMessage[] {
+  console.log('[ContactMessages] Attempting to read contactData.json from:', contactDataPath);
   try {
     if (fs.existsSync(contactDataPath)) {
       const fileContent = fs.readFileSync(contactDataPath, 'utf-8');
+      console.log(`[ContactMessages] File content length: ${fileContent.length}`);
       if (fileContent.trim() === '') {
-        // File is empty, write initial (empty array) and return it
+        console.log('[ContactMessages] contactData.json is empty. Initializing with empty array and returning.');
+        // Write an empty array if it's just whitespace or truly empty
         fs.writeFileSync(contactDataPath, JSON.stringify([], null, 2), 'utf-8');
-        console.log('[readContactData] Initialized empty contactData.json');
         return [];
       }
       const data = JSON.parse(fileContent);
       if (Array.isArray(data)) {
+        console.log(`[ContactMessages] Successfully parsed ${data.length} messages from JSON.`);
         return data;
       } else {
-        console.warn('[readContactData] contactData.json does not contain a valid array. Initializing with empty array.');
+        console.warn('[ContactMessages] contactData.json does not contain a valid array. Initializing with empty array.');
         fs.writeFileSync(contactDataPath, JSON.stringify([], null, 2), 'utf-8');
         return [];
       }
     }
-    // File doesn't exist, write initial (empty array) and return it
+    console.log('[ContactMessages] contactData.json does not exist. Creating and initializing with empty array.');
     fs.writeFileSync(contactDataPath, JSON.stringify([], null, 2), 'utf-8');
-    console.log('[readContactData] Created and initialized empty contactData.json');
     return [];
   } catch (error: any) {
-    console.error('[readContactData] Error reading or initializing contactData.json:', error.message);
-    // Fallback to an empty array in memory and attempt to write it if possible
+    console.error('[ContactMessages] Error reading or initializing contactData.json:', error.message, error.stack);
+    // Fallback: attempt to write a fresh empty array and return it
     try {
+      console.log('[ContactMessages] Attempting to write fresh empty array to contactData.json after error.');
       fs.writeFileSync(contactDataPath, JSON.stringify([], null, 2), 'utf-8');
-      console.log('[readContactData] Initialized contactData.json with empty array after read error.');
+      return [];
     } catch (writeError: any) {
-      console.error('[readContactData] Error writing initial data to contactData.json after read error:', writeError.message);
+      console.error('[ContactMessages] Critical error: Failed to write initial data to contactData.json after read error:', writeError.message, writeError.stack);
+      return []; // Return empty array as a last resort
     }
-    return []; // Return empty array in case of any unrecoverable error
   }
 }
 
 function writeContactData(data: ContactMessage[]): void {
   try {
+    console.log(`[ContactMessages] Attempting to write ${data.length} messages to contactData.json.`);
     fs.writeFileSync(contactDataPath, JSON.stringify(data, null, 2), 'utf-8');
-    console.log('[writeContactData] Successfully wrote to contactData.json');
+    console.log('[ContactMessages] Successfully wrote to contactData.json');
   } catch (error) {
-    console.error('[writeContactData] Error writing to contactData.json:', error);
+    console.error('[ContactMessages] Error writing to contactData.json:', error);
   }
 }
 
 export function getContactMessages(): ContactMessage[] {
   const messages = readContactData();
+  // Return a deep copy and sort by most recent
   return JSON.parse(JSON.stringify(messages)).sort(
     (a: ContactMessage, b: ContactMessage) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime()
   );
@@ -63,6 +67,7 @@ export function getContactMessages(): ContactMessage[] {
 export function addContactMessage(
   data: Omit<ContactMessage, 'id' | 'receivedAt' | 'isRead'>
 ): ContactMessage {
+  console.log('[ContactMessages] addContactMessage called with data:', data);
   let messages = readContactData();
   const newMessage: ContactMessage = {
     ...data,
@@ -70,9 +75,9 @@ export function addContactMessage(
     receivedAt: new Date().toISOString(),
     isRead: false,
   };
-  messages.unshift(newMessage);
+  messages.unshift(newMessage); // Adds to the beginning
   writeContactData(messages);
-  console.log('[addContactMessage] New message added and saved to JSON:', newMessage);
+  console.log('[ContactMessages] New message added and data written. Total messages:', messages.length);
   return { ...newMessage };
 }
 
@@ -88,10 +93,10 @@ export function markMessageAsRead(id: string, isRead: boolean): ContactMessage |
   if (messageIndex > -1) {
     messages[messageIndex].isRead = isRead;
     writeContactData(messages);
-    console.log(`[markMessageAsRead] Message ${id} marked as ${isRead ? 'read' : 'unread'} and saved to JSON.`);
+    console.log(`[ContactMessages] Message ${id} marked as ${isRead ? 'read' : 'unread'} and data written.`);
     return { ...messages[messageIndex] };
   }
-  console.warn(`[markMessageAsRead] Message ${id} not found.`);
+  console.warn(`[ContactMessages] Message ${id} not found for markAsRead.`);
   return null;
 }
 
@@ -102,9 +107,9 @@ export function deleteContactMessage(id: string): boolean {
   const success = messages.length < initialLength;
   if (success) {
     writeContactData(messages);
-    console.log(`[deleteContactMessage] Message ${id} deleted and saved to JSON.`);
+    console.log(`[ContactMessages] Message ${id} deleted and data written.`);
   } else {
-    console.warn(`[deleteContactMessage] Message ${id} not found for deletion.`);
+    console.warn(`[ContactMessages] Message ${id} not found for deletion.`);
   }
   return success;
 }
@@ -112,5 +117,6 @@ export function deleteContactMessage(id: string): boolean {
 export function getUnreadMessagesCount(): number {
   const messages = readContactData();
   const count = messages.filter(msg => !msg.isRead).length;
+  console.log(`[ContactMessages] Unread messages count: ${count}`);
   return count;
 }
