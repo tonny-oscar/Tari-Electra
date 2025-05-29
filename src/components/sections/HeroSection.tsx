@@ -8,10 +8,11 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 
 const heroVariants = {
-  hidden: { opacity: 0 },
+  hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.2, delayChildren: 0.3 }
+    y: 0,
+    transition: { staggerChildren: 0.2, delayChildren: 0.1 }
   },
 };
 
@@ -26,7 +27,15 @@ const bulletPoints = [
   "Easy Power Management"
 ];
 
-export function HeroSection() {
+type HeroSectionProps = {
+  imageUrl?: string;
+  imageHint?: string;
+};
+
+export function HeroSection({ 
+  imageUrl = 'https://placehold.co/800x600.png', 
+  imageHint = 'smart meter' 
+}: HeroSectionProps) {
   return (
     <section className="relative bg-secondary py-20 md:py-28 lg:py-32 overflow-hidden">
       <div className="absolute inset-0 opacity-5">
@@ -36,7 +45,8 @@ export function HeroSection() {
         className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10"
         variants={heroVariants}
         initial="hidden"
-        animate="visible"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
       >
         <div className="grid md:grid-cols-2 gap-8 lg:gap-16 items-center">
           {/* Text Content Column */}
@@ -74,7 +84,7 @@ export function HeroSection() {
               variants={itemVariants}
             >
               <Button asChild size="lg" className="w-full sm:w-auto">
-                <Link href="/contact">
+                <Link href="/#contact">
                   Request Free Estimate
                 </Link>
               </Button>
@@ -83,18 +93,18 @@ export function HeroSection() {
 
           {/* Image Column */}
           <motion.div
-            className="relative aspect-square md:aspect-[4/3] lg:aspect-[3/2] max-w-md mx-auto md:max-w-none w-full mt-10 md:mt-0"
+            className="relative aspect-[3/2] w-full mt-10 md:mt-0" // Changed aspect ratio here
             variants={itemVariants}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.5 }}
           >
             <Image
-              src="https://placehold.co/800x600.png" 
+              src={imageUrl} 
               alt="Smart meter solutions for modern buildings"
               fill
               className="object-cover rounded-xl shadow-2xl"
-              data-ai-hint="smart meter"
+              data-ai-hint={imageHint}
               priority
             />
           </motion.div>

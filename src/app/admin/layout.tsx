@@ -11,8 +11,8 @@ import {
   Newspaper,
   MessageSquare,
   ShoppingBag,
-  Settings,
-  ImageIcon, // Added ImageIcon
+  Settings as SettingsIcon, // Renamed to avoid conflict with component
+  ImageIcon,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
@@ -36,7 +36,7 @@ const navLinks = [
   { href: '/admin/blog', label: 'Blog Management', icon: Newspaper },
   { href: '/admin/products', label: 'Product Management', icon: ShoppingBag },
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
-  { href: '/admin/homepage', label: 'Homepage Settings', icon: ImageIcon }, // Added Homepage Settings
+  { href: '/admin/homepage', label: 'Homepage Settings', icon: ImageIcon },
 ];
 
 export default function AdminLayout({
@@ -65,29 +65,10 @@ export default function AdminLayout({
       return;
     }
 
-    const adminEmailEnv = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-    console.log(`[AdminLayout] Checking access: User Email (from auth): '${user.email}', Configured Admin Email (from env): '${adminEmailEnv}'`);
-
-    if (!adminEmailEnv || adminEmailEnv.trim() === "") {
-      console.error('[AdminLayout] CRITICAL: NEXT_PUBLIC_ADMIN_EMAIL environment variable is not set or is empty. Admin access denied.');
-      setIsAdminRouteAllowed(false);
-      router.push('/');
-      toast({ title: 'Configuration Error', description: 'Admin email not configured. Please contact support.', variant: 'destructive', duration: 10000 });
-      return;
-    }
-
-    const isActualAdmin = user.email?.toLowerCase() === adminEmailEnv.toLowerCase();
-    console.log(`[AdminLayout] Email comparison: User: '${user.email?.toLowerCase()}', Admin: '${adminEmailEnv.toLowerCase()}', Match: ${isActualAdmin}`);
-
-    if (isActualAdmin) {
-      console.log(`[AdminLayout] User ${user.email} is ADMIN. Granting access to admin area.`);
-      setIsAdminRouteAllowed(true);
-    } else {
-      console.log(`[AdminLayout] User ${user.email} is NOT ADMIN. Denying access to admin area.`);
-      setIsAdminRouteAllowed(false);
-      router.push('/');
-      toast({ title: 'Access Denied', description: 'You do not have permission to view this page.', variant: 'destructive', duration: 7000 });
-    }
+    // For this setup, any logged-in user (who signed up with invite code) can access admin.
+    // The NEXT_PUBLIC_ADMIN_EMAIL is now only for header link visibility if needed.
+    console.log(`[AdminLayout] User ${user.email} is authenticated. Granting access to admin area.`);
+    setIsAdminRouteAllowed(true);
 
   }, [user, loading, router, toast]);
 
@@ -105,7 +86,6 @@ export default function AdminLayout({
   }
 
   if (!user || !isAdminRouteAllowed) {
-    // This state is typically brief as the useEffect should redirect if not allowed.
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
