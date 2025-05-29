@@ -8,13 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CardContent, CardFooter } from '@/components/ui/card';
-import { AlertCircle, Loader2, Save, Edit3 } from 'lucide-react';
+import { AlertCircle, Loader2, Save, Edit3, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { ProductFormState, Product } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { createProductAction } from '@/app/actions/createProductAction';
 import { updateProductAction } from '@/app/actions/updateProductAction';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 type CreateProductFormProps = {
   initialData?: Partial<Product>;
@@ -44,6 +45,8 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
   const router = useRouter();
   const [formState, setFormState] = useState<ProductFormState>(initialFormState);
   const formRef = useRef<HTMLFormElement>(null);
+  const imageUrlRef = useRef<HTMLInputElement>(null); // Ref for the Image URL input
+  const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null);
 
   const handleFormAction = async (formData: FormData) => {
     console.log('[CreateProductForm] handleFormAction called. Mode:', mode);
@@ -57,6 +60,10 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
     }
     console.log('[CreateProductForm] Server action result:', result);
     setFormState(result);
+    if (result.isSuccess) {
+        if(mode === 'create') setImagePreview(null); // Clear preview on successful creation
+        else if (result.updatedProduct?.imageUrl) setImagePreview(result.updatedProduct.imageUrl);
+    }
   };
 
   useEffect(() => {
@@ -69,9 +76,11 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
       });
       if (mode === 'create' && formRef.current) {
         formRef.current.reset();
+        setImagePreview(null); 
         setFormState(initialFormState); 
       } else if (mode === 'edit' && formState.updatedProduct) {
         setFormState(prev => ({ ...prev, isSuccess: false, message: '' })); 
+        if(formState.updatedProduct.imageUrl) setImagePreview(formState.updatedProduct.imageUrl);
       }
     } else if (formState.isError && formState.message && !formState.fields) { 
       toast({
@@ -83,6 +92,35 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
        setFormState(prev => ({ ...prev, isError: false, message: '' })); 
     }
   }, [formState, toast, mode, router]);
+  
+  useEffect(() => {
+    if (initialData?.imageUrl) {
+      setImagePreview(initialData.imageUrl);
+    }
+  }, [initialData?.imageUrl]);
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setImagePreview(dataUrl);
+        if (imageUrlRef.current) {
+          imageUrlRef.current.value = dataUrl; // Set the Data URL to the hidden/actual Image URL input
+        }
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // If no file is selected, clear preview and potentially the imageUrl input
+      // Or, if initialData.imageUrl exists, revert to it, or clear it.
+      // For now, let's clear if the user deselects.
+      setImagePreview(null);
+      if (imageUrlRef.current) {
+          imageUrlRef.current.value = initialData?.imageUrl || ''; // Revert or clear
+      }
+    }
+  };
 
   return (
     <form action={handleFormAction} ref={formRef}>
@@ -133,11 +171,46 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
            <p className="text-xs text-muted-foreground">Enter features separated by commas.</p>
           {formState.fields?.features && <p className="text-sm text-destructive mt-1">{formState.fields.features.join(', ')}</p>}
         </div>
+        
+        <div className="space-y-2">
+            <Label htmlFor="imageFile">Upload Image (Optional)</Label>
+            <Input 
+                id="imageFile" 
+                name="imageFile" 
+                type="file" 
+                accept="image/*" 
+                onChange={handleImageChange} 
+                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+            />
+            <p className="text-xs text-muted-foreground">Upload an image or provide a URL below. Upload will populate URL field.</p>
+        </div>
+
+        {imagePreview && (
+          <div className="space-y-2">
+            <Label>Image Preview</Label>
+            <Image 
+              src={imagePreview} 
+              alt="Image preview" 
+              width={200} 
+              height={200} 
+              className="rounded-md border object-contain" 
+              onError={() => setImagePreview('https://placehold.co/200x200.png?text=Invalid+Image')}
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label htmlFor="imageUrl">Image URL</Label>
-            <Input id="imageUrl" name="imageUrl" type="url" placeholder="https://example.com/image.png" defaultValue={initialData?.imageUrl || ''} />
+            <Input 
+              id="imageUrl" 
+              name="imageUrl" 
+              type="text" // Changed from url to text to allow Data URLs
+              placeholder="https://example.com/image.png or populated by upload" 
+              defaultValue={initialData?.imageUrl || ''}
+              ref={imageUrlRef} 
+              onChange={(e) => setImagePreview(e.target.value)} // Update preview if URL is manually changed
+            />
             {formState.fields?.imageUrl && <p className="text-sm text-destructive mt-1">{formState.fields.imageUrl.join(', ')}</p>}
           </div>
           <div className="space-y-2">

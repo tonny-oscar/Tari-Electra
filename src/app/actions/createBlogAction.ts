@@ -14,7 +14,7 @@ const CreateBlogPostSchema = z.object({
   author: z.string().min(2, { message: 'Author name must be at least 2 characters.' }),
   category: z.string().min(2, { message: 'Category must be at least 2 characters.' }),
   content: z.string().min(50, { message: 'Content must be at least 50 characters.' }),
-  imageUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  imageUrl: z.string().optional().or(z.literal('')), // Allow any string (URL or Data URL) or empty
   imageHint: z.string().optional(),
 });
 
@@ -52,9 +52,9 @@ export async function createBlogAction(
 
   try {
     const { imageUrl, imageHint, ...restOfData } = validatedFields.data;
-    const newPostData: Omit<BlogPost, 'date'> = { // Date is auto-generated in addBlogPost
+    const newPostData: Omit<BlogPost, 'date'> = { 
         ...restOfData,
-        imageUrl: imageUrl || undefined, // Store as undefined if empty string
+        imageUrl: imageUrl || undefined, 
         imageHint: imageHint || undefined,
     };
 

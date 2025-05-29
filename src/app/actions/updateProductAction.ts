@@ -12,7 +12,7 @@ const UpdateProductSchema = z.object({
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
   category: z.string().min(2, { message: 'Category must be at least 2 characters.' }),
   features: z.string().optional(),
-  imageUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  imageUrl: z.string().optional().or(z.literal('')), // Allow any string (URL or Data URL) or empty
   imageHint: z.string().optional(),
 });
 

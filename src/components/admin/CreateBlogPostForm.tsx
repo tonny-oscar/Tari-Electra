@@ -1,20 +1,21 @@
 
 'use client';
 
-import React, { useEffect, useRef } from 'react';
-import { useActionState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CardContent, CardFooter } from '@/components/ui/card';
-import { AlertCircle, Loader2, Save, Edit3 } from 'lucide-react';
+import { AlertCircle, Loader2, Save, Edit3, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { BlogFormState, BlogPost } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { createBlogAction } from '@/app/actions/createBlogAction';
 import { updateBlogAction } from '@/app/actions/updateBlogAction';
+import { useActionState } from 'react'; // Keep using useActionState as it's stable for blogs
+import Image from 'next/image';
 
 type CreateBlogPostFormProps = {
   initialData?: Partial<BlogPost>;
@@ -39,6 +40,8 @@ function SubmitButton({ mode }: { mode: 'create' | 'edit' }) {
 
 export function CreateBlogPostForm({ initialData, currentSlug, mode = 'create' }: CreateBlogPostFormProps) {
   const { toast } = useToast();
+  const imageUrlRef = useRef<HTMLInputElement>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null);
   
   const actionToUse = mode === 'edit' && currentSlug 
     ? updateBlogAction.bind(null, currentSlug) 
@@ -57,6 +60,9 @@ export function CreateBlogPostForm({ initialData, currentSlug, mode = 'create' }
       });
       if (mode === 'create') {
         formRef.current?.reset();
+        setImagePreview(null);
+      } else if (state.updatedPost?.imageUrl) {
+        setImagePreview(state.updatedPost.imageUrl);
       }
     } else if (state.isError && state.message && !state.fields) {
       toast({
@@ -67,6 +73,36 @@ export function CreateBlogPostForm({ initialData, currentSlug, mode = 'create' }
       });
     }
   }, [state, toast, mode]);
+
+  useEffect(() => {
+    if (initialData?.imageUrl) {
+      setImagePreview(initialData.imageUrl);
+    }
+     // When in create mode and form resets, ensure preview clears if initialData changes
+     if (mode === 'create' && !initialData?.imageUrl) {
+      setImagePreview(null);
+    }
+  }, [initialData, mode]);
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setImagePreview(dataUrl);
+        if (imageUrlRef.current) {
+          imageUrlRef.current.value = dataUrl;
+        }
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview(initialData?.imageUrl || null); // Revert to initial on deselect or clear
+      if (imageUrlRef.current) {
+        imageUrlRef.current.value = initialData?.imageUrl || '';
+      }
+    }
+  };
 
   return (
     <form action={formAction} ref={formRef}>
@@ -128,10 +164,45 @@ export function CreateBlogPostForm({ initialData, currentSlug, mode = 'create' }
           {state.fields?.content && <p className="text-sm text-destructive mt-1">{state.fields.content.join(', ')}</p>}
         </div>
 
+        <div className="space-y-2">
+            <Label htmlFor="imageFile">Upload Image (Optional)</Label>
+            <Input 
+                id="imageFile" 
+                name="imageFile" 
+                type="file" 
+                accept="image/*" 
+                onChange={handleImageChange}
+                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+            />
+            <p className="text-xs text-muted-foreground">Upload an image or provide a URL below. Upload will populate URL field.</p>
+        </div>
+
+        {imagePreview && (
+          <div className="space-y-2">
+            <Label>Image Preview</Label>
+            <Image 
+              src={imagePreview} 
+              alt="Image preview" 
+              width={200} 
+              height={200} 
+              className="rounded-md border object-contain"
+              onError={() => setImagePreview('https://placehold.co/200x200.png?text=Invalid+Image')}
+            />
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
                 <Label htmlFor="imageUrl">Image URL</Label>
-                <Input id="imageUrl" name="imageUrl" type="url" placeholder="https://example.com/image.png" defaultValue={initialData?.imageUrl || ''} />
+                <Input 
+                  id="imageUrl" 
+                  name="imageUrl" 
+                  type="text" // Changed from url to text
+                  placeholder="https://example.com/image.png or populated by upload" 
+                  defaultValue={initialData?.imageUrl || ''}
+                  ref={imageUrlRef}
+                  onChange={(e) => setImagePreview(e.target.value)} 
+                />
                 {state.fields?.imageUrl && <p className="text-sm text-destructive mt-1">{state.fields.imageUrl.join(', ')}</p>}
             </div>
             <div className="space-y-2">
