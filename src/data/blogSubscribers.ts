@@ -62,14 +62,20 @@ export async function isEmailSubscribed(email: string): Promise<boolean> {
 
 export async function getAllBlogSubscribers(): Promise<BlogSubscriber[]> {
   noStore();
-  console.log('[FirestoreBlogSubscribers - getAllBlogSubscribers] Attempting to fetch all blog subscribers.');
+  console.log('🔵 [FirestoreBlogSubscribers - getAllBlogSubscribers] Attempting to fetch all blog subscribers.');
   try {
     if (!db) {
-      console.error('[FirestoreBlogSubscribers - getAllBlogSubscribers] Firestore db instance is not available.');
+      console.error('🔴 [FirestoreBlogSubscribers - getAllBlogSubscribers] Firestore db instance is not available.');
       return [];
     }
     const subscribersCollection = collection(db, BLOG_SUBSCRIBERS_COLLECTION);
     const subscriberSnapshot = await getDocs(subscribersCollection);
+    
+    if (subscriberSnapshot.empty) {
+      console.log('🟡 [FirestoreBlogSubscribers - getAllBlogSubscribers] No subscribers found in the collection.');
+      return [];
+    }
+
     const subscriberList = subscriberSnapshot.docs.map(doc => {
       const data = doc.data();
       return {
@@ -77,10 +83,11 @@ export async function getAllBlogSubscribers(): Promise<BlogSubscriber[]> {
         subscribedAt: data.subscribedAt instanceof Timestamp ? data.subscribedAt : Timestamp.now(), // Ensure Timestamp
       };
     });
-    console.log(`[FirestoreBlogSubscribers - getAllBlogSubscribers] Fetched ${subscriberList.length} subscribers.`);
+    console.log(`✅ [FirestoreBlogSubscribers - getAllBlogSubscribers] Fetched ${subscriberList.length} subscribers:`, subscriberList.map(s => s.email));
     return subscriberList;
-  } catch (error) {
-    console.error('[FirestoreBlogSubscribers - getAllBlogSubscribers] Error fetching subscribers:', error);
+  } catch (error: any) {
+    console.error('🔴 [FirestoreBlogSubscribers - getAllBlogSubscribers] Error fetching subscribers:', error.message, error.stack);
     return [];
   }
 }
+
