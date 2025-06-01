@@ -1,8 +1,8 @@
 
 'use client';
 
-import React, { useEffect, useRef } from 'react';
-import { useFormStatus, useActionState } from 'react-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +15,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 const initialFormState: BlogSubscriptionFormState = {
   message: '',
+  isError: false,
+  isSuccess: false,
 };
 
 function SubmitButton() {
@@ -29,8 +31,14 @@ function SubmitButton() {
 
 export function BlogSubscriptionForm() {
   const { toast } = useToast();
-  const [state, formAction] = useActionState(subscribeToBlogAction, initialFormState);
+  const [state, setState] = useState<BlogSubscriptionFormState>(initialFormState);
   const formRef = useRef<HTMLFormElement>(null);
+
+  const handleFormAction = async (formData: FormData) => {
+    setState(prev => ({ ...prev, message: '', fields: undefined, isError: false, isSuccess: false }));
+    const result = await subscribeToBlogAction(initialFormState, formData);
+    setState(result);
+  };
 
   useEffect(() => {
     if (state.message) {
@@ -42,7 +50,8 @@ export function BlogSubscriptionForm() {
           duration: 5000,
         });
         formRef.current?.reset();
-      } else if (state.isError && !state.fields) { // General error not tied to a field
+        setState(initialFormState); // Reset state after successful submission
+      } else if (state.isError && !state.fields) { 
         toast({
           title: 'Subscription Failed',
           description: state.message,
@@ -61,7 +70,7 @@ export function BlogSubscriptionForm() {
                 Subscribe to our newsletter to get the latest blog posts directly in your inbox.
             </CardDescription>
         </CardHeader>
-        <form action={formAction} ref={formRef}>
+        <form action={handleFormAction} ref={formRef}>
             <CardContent className="space-y-4">
                 <div className="space-y-1">
                     <Label htmlFor="email-subscribe" className="sr-only">Email Address</Label>
@@ -80,7 +89,7 @@ export function BlogSubscriptionForm() {
                     </p>
                     )}
                 </div>
-                {state.isError && state.message && state.fields && ( // Field-specific error message
+                {state.isError && state.fields && state.message && ( 
                     <Alert variant="destructive" className="mt-2">
                         <AlertCircle className="h-4 w-4" />
                         <AlertTitle>Error</AlertTitle>
@@ -95,3 +104,4 @@ export function BlogSubscriptionForm() {
     </Card>
   );
 }
+
