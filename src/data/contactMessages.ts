@@ -55,7 +55,7 @@ export async function addContactMessage(
   data: Omit<ContactMessage, 'id' | 'receivedAt' | 'isRead'>
 ): Promise<ContactMessage | null> {
   noStore(); 
-  console.log('[FirestoreContactMessages - addContactMessage] Preparing to add message to Firestore with data:', data);
+  console.log('🔵 [FirestoreContactMessages - addContactMessage] Preparing to add message to Firestore with data:', data);
   try {
     if (!db) {
       console.error('🔴 [FirestoreContactMessages - addContactMessage] CRITICAL: Firestore db instance is NOT available. Cannot add message.');
