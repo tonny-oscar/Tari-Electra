@@ -20,6 +20,13 @@ export async function sendNewBlogPostEmailAction(
   const blogPostUrl = `${appUrl}/blog/${blogPost.slug}`;
   const blogPageUrl = `${appUrl}/blog`; // Link to the main blog page
 
+  // Validate environment variables
+  if (!process.env.SMTP_HOST || !process.env.SMTP_PORT || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.error("[sendNewBlogPostEmailAction] Critical: SMTP environment variables are not fully configured.");
+    return { success: false, message: "Server SMTP configuration error. Emails not sent." };
+  }
+  const senderEmail = process.env.SMTP_SENDER_EMAIL || 'noreply@example.com'; // Fallback sender
+
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT || '587', 10),
@@ -28,7 +35,6 @@ export async function sendNewBlogPostEmailAction(
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
-    // Add timeout options
     connectionTimeout: 10000, // 10 seconds
     greetingTimeout: 10000, // 10 seconds
     socketTimeout: 10000, // 10 seconds
@@ -36,20 +42,28 @@ export async function sendNewBlogPostEmailAction(
 
   const emailSubject = `New Post on ${appName} Blog: ${blogPost.title}`;
   const emailHtmlBody = `
-    <p>Hello,</p>
-    <p>A new blog post has been published on the ${appName} blog:</p>
-    <h2><a href="${blogPostUrl}">${blogPost.title}</a></h2>
-    <p><strong>Excerpt:</strong> ${blogPost.excerpt}</p>
-    <p><a href="${blogPostUrl}">Read More &raquo;</a></p>
-    <hr>
-    <p>Visit our <a href="${blogPageUrl}">blog</a> for more articles or to subscribe.</p>
-    <p><small>To unsubscribe, click here (feature coming soon).</small></p>
-    <p>Sincerely,<br>The ${appName} Team</p>
+    <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+      <p>Hello,</p>
+      <p>A new blog post has been published on the ${appName} blog:</p>
+      <h2 style="margin-bottom: 0.5em;"><a href="${blogPostUrl}" style="color: #a6ed0b; text-decoration: none;">${blogPost.title}</a></h2>
+      <p><strong>Category:</strong> ${blogPost.category}</p>
+      <p><strong>Published on:</strong> ${new Date(blogPost.date as string).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} by ${blogPost.author}</p>
+      <p><strong>Excerpt:</strong> ${blogPost.excerpt}</p>
+      <p style="margin-top: 1em;">
+        <a href="${blogPostUrl}" style="background-color: #a6ed0b; color: #1a202c; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">
+          Read More &raquo;
+        </a>
+      </p>
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+      <p>Visit our <a href="${blogPageUrl}" style="color: #a6ed0b; text-decoration: none;">blog</a> for more articles or to subscribe/unsubscribe.</p>
+      <p><small>To unsubscribe directly, click here (note: full unsubscribe functionality is planned for a future update).</small></p>
+      <p>Sincerely,<br>The ${appName} Team</p>
+    </div>
   `;
 
   const emailPromises = subscribers.map(subscriber => {
     const mailOptions = {
-      from: `"${appName}" <${process.env.SMTP_SENDER_EMAIL || 'noreply@example.com'}>`,
+      from: `"${appName}" <${senderEmail}>`,
       to: subscriber.email,
       subject: emailSubject,
       html: emailHtmlBody,

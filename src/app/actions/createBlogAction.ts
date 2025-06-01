@@ -54,10 +54,9 @@ export async function createBlogAction(
 
   try {
     const { imageUrl, imageHint, ...restOfData } = validatedFields.data;
-    // Ensure slug is part of restOfData
-    const newPostData: Omit<BlogPost, 'date'> = { // BlogPost type no longer has 'id'
+    const newPostData: Omit<BlogPost, 'date'> = { 
         ...restOfData,
-        slug: validatedFields.data.slug, // Explicitly include slug
+        slug: validatedFields.data.slug, 
         imageUrl: imageUrl || undefined, 
         imageHint: imageHint || undefined,
     };
@@ -80,22 +79,24 @@ export async function createBlogAction(
     revalidatePath(`/blog/${createdPost.slug}`);
 
     // Send email notifications to subscribers
+    console.log('[createBlogAction] Attempting to fetch subscribers for email notification...');
     try {
       const subscribers = await getAllBlogSubscribers();
       if (subscribers.length > 0) {
-        console.log(`[createBlogAction] Found ${subscribers.length} subscribers. Attempting to send notifications.`);
+        console.log(`[createBlogAction] Found ${subscribers.length} subscribers. Initiating email notifications for post: "${createdPost.title}".`);
         // Pass the full createdPost object which includes date as a string
         const emailResult = await sendNewBlogPostEmailAction(createdPost as BlogPost, subscribers); 
         if (emailResult.success) {
-          console.log(`[createBlogAction] Successfully sent ${subscribers.length} notification emails.`);
+          console.log(`[createBlogAction] Successfully initiated sending ${subscribers.length} notification emails.`);
         } else {
           console.warn(`[createBlogAction] Email notification sending had issues: ${emailResult.message}`, emailResult.errors);
         }
       } else {
-        console.log('[createBlogAction] No subscribers found for email notification.');
+        console.log('[createBlogAction] No subscribers found. Skipping email notification.');
       }
     } catch (emailError) {
-      console.error('[createBlogAction] Error during email notification process:', emailError);
+      console.error('[createBlogAction] Error during subscriber fetching or email notification process:', emailError);
+      // Note: We don't fail the whole action if email sending fails, but we log it.
     }
 
     return {
@@ -104,7 +105,8 @@ export async function createBlogAction(
       isSuccess: true,
       createdPost: createdPost,
     };
-  } catch (error) {
+  } catch (error)
+ {
     console.error('[createBlogAction] Error creating post:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
     return {
