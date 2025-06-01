@@ -96,3 +96,15 @@ export type HomepageSettingsFormState = {
   isSuccess?: boolean;
   updatedSettings?: HomepageSettings;
 };
+
+export type BlogSubscriber = {
+  email: string; // Document ID in Firestore
+  subscribedAt: Timestamp;
+};
+
+export type BlogSubscriptionFormState = {
+  message: string;
+  fields?: Record<string, string[] | undefined>;
+  isError?: boolean;
+  isSuccess?: boolean;
+};

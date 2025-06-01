@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, CalendarDays, UserCircle, Tag } from "lucide-react";
 import type { Metadata } from 'next';
-import { headers } from 'next/headers'; // To make the page dynamic
-import { unstable_noStore as noStore } from 'next/cache'; // For explicit no-store
+import { headers } from 'next/headers'; 
+import { unstable_noStore as noStore } from 'next/cache'; 
 import type { BlogPost } from "@/lib/types";
+import { BlogSubscriptionForm } from "@/components/blog/BlogSubscriptionForm"; // Import the new component
 
 export const metadata: Metadata = {
   title: "Blog - Tari Electra",
@@ -16,11 +17,11 @@ export const metadata: Metadata = {
 };
 
 export default async function BlogPage() {
-  headers(); // Accessing headers makes this page dynamically rendered on each request.
-  noStore(); // Explicitly opt out of caching for this Server Component's data fetching operation.
+  headers(); 
+  noStore(); 
   
   console.log('[BlogPage] Fetching blog posts from Firestore for public page...');
-  const posts: BlogPost[] = await getBlogPosts(); // Ensure getBlogPosts is async if it involves DB calls
+  const posts: BlogPost[] = await getBlogPosts(); 
   console.log(`[BlogPage] Public page fetched ${posts.length} posts:`, posts.map(p => ({ slug: p.slug, title: p.title })));
 
   return (
@@ -89,16 +90,19 @@ export default async function BlogPage() {
             ))}
           </div>
         )}
+
+        {/* Add Subscription Form Section */}
+        <div className="mt-16 md:mt-24 max-w-xl mx-auto">
+            <BlogSubscriptionForm />
+        </div>
+
       </div>
     </div>
   );
 }
 
-// generateStaticParams can still be useful for SEO and initial builds,
-// even if the page is dynamically rendered on request.
-// Next.js can use these params to know which pages to potentially pre-render.
 export async function generateStaticParams() {
-  const posts = await getBlogPosts(); // Fetch posts for param generation
+  const posts = await getBlogPosts(); 
   return posts.map((post) => ({
     slug: post.slug,
   }));
