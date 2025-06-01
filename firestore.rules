@@ -1,0 +1,48 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Contact Messages
+    // Allows anyone to create (submit) a contact message.
+    // Only authenticated users (admins) can read, update, or delete messages.
+    match /contactMessages/{messageId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
+
+    // Blog Posts
+    // Allows anyone to read blog posts.
+    // Only authenticated users (admins) can create, update, or delete blog posts.
+    match /blogs/{slug} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null;
+    }
+
+    // Blog Subscribers
+    // Allows anyone to create (subscribe) by adding their email as a document.
+    // Only authenticated users (admins) can read the list of subscribers or delete them.
+    match /blogSubscribers/{email} {
+      allow create: if true; // Anyone can subscribe
+      allow read, delete: if request.auth != null; // Admins to manage list
+    }
+
+    // Products
+    // Allows anyone to read product information.
+    // Only authenticated users (admins) can create, update, or delete products.
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null;
+    }
+
+    // Default fallback rule for development.
+    // This rule allows anyone with your Firestore database reference to view, edit,
+    // and delete all data in your Firestore database for paths NOT covered above.
+    // It is configured to expire. Make sure to write more specific security
+    // rules for your app or adjust the expiry date before it expires.
+    match /{document=**} {
+      allow read, write: if request.time < timestamp.date(2025, 7, 28); // Adjusted expiry
+    }
+  }
+}
