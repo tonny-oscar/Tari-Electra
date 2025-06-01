@@ -56,20 +56,26 @@ export async function addContactMessage(
 ): Promise<ContactMessage | null> {
   noStore(); 
   console.log('🔵 [FirestoreContactMessages - addContactMessage] Preparing to add message to Firestore with data:', data);
+  
+  if (!db) {
+    console.error('🔴 [FirestoreContactMessages - addContactMessage] CRITICAL: Firestore db instance is NOT available at the start of addContactMessage. Cannot add message.');
+    return null;
+  }
+  console.log('🟢 [FirestoreContactMessages - addContactMessage] Firestore db instance IS available at the start.');
+    
+  const newMessageForFirestore = {
+    ...data,
+    receivedAt: Timestamp.now(), // Store as Firestore Timestamp
+    isRead: false,
+  };
+  console.log('🔵 [FirestoreContactMessages - addContactMessage] Data ready for Firestore:', newMessageForFirestore);
+  
   try {
+    // Re-check db instance immediately before the Firestore operation for extra safety
     if (!db) {
-      console.error('🔴 [FirestoreContactMessages - addContactMessage] CRITICAL: Firestore db instance is NOT available. Cannot add message.');
-      return null;
+        console.error('🔴 [FirestoreContactMessages - addContactMessage] CRITICAL: Firestore db instance became unavailable just before addDoc. This is unexpected.');
+        return null;
     }
-    console.log('🟢 [FirestoreContactMessages - addContactMessage] Firestore db instance IS available.');
-    
-    const newMessageForFirestore = {
-      ...data,
-      receivedAt: Timestamp.now(), // Store as Firestore Timestamp
-      isRead: false,
-    };
-    console.log('🔵 [FirestoreContactMessages - addContactMessage] Data ready for Firestore:', newMessageForFirestore);
-    
     console.log(`Attempting to write to Firestore collection: ${CONTACT_MESSAGES_COLLECTION}`);
     const docRef = await addDoc(collection(db, CONTACT_MESSAGES_COLLECTION), newMessageForFirestore);
     console.log('✅ [FirestoreContactMessages - addContactMessage] Message ADDED successfully to Firestore. Document ID:', docRef.id);
@@ -77,6 +83,9 @@ export async function addContactMessage(
     return { id: docRef.id, ...messageToClient(newMessageForFirestore) };
   } catch (error: any) {
     console.error('🔴 [FirestoreContactMessages - addContactMessage] Error ADDING message to Firestore:', error.message, error.stack);
+    if (error.message && (error.message.toLowerCase().includes('permission') || error.message.toLowerCase().includes('denied'))) {
+      console.error('👉 This looks like a Firestore security rule issue. Please check that your rules allow writes to the "contactMessages" collection for unauthenticated users (or the appropriate authentication state).');
+    }
     return null;
   }
 }
