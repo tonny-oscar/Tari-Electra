@@ -6,9 +6,10 @@ import { getBlogPosts } from '@/data/blogPosts';
 import { PlusCircle, ExternalLink, Newspaper } from 'lucide-react';
 import Image from 'next/image';
 import { BlogActionsCell } from '@/components/admin/BlogActionsCell';
+import type { BlogPost } from '@/lib/types';
 
-export default function AdminBlogListPage() {
-  const posts = getBlogPosts(); 
+export default async function AdminBlogListPage() {
+  const posts: BlogPost[] = await getBlogPosts(); 
 
   return (
     <div className="space-y-6">
@@ -35,7 +36,7 @@ export default function AdminBlogListPage() {
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {posts.map((post) => (
+          {posts.map((post: BlogPost) => (
             <Card key={post.slug} className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
               <div className="aspect-[3/2] w-full relative bg-muted rounded-t-lg overflow-hidden">
                 <Image
