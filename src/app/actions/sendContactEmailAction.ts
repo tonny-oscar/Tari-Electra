@@ -46,35 +46,35 @@ export async function sendContactEmailAction(
     const phoneValue = phone || undefined;
 
     // Store the message in Firestore
+    console.log("[sendContactEmailAction] Attempting to store message in Firestore...");
     const dataToStore: Omit<ContactMessage, 'id' | 'receivedAt' | 'isRead'> = { name, email, phone: phoneValue, message };
     const storedMessage = await addContactMessage(dataToStore);
     
     if (!storedMessage) {
-      console.error("[sendContactEmailAction] Failed to store message in Firestore.");
+      console.error("[sendContactEmailAction] FAILED to store message in Firestore.");
       return {
         message: "Server error: Could not save your message. Please try again later.",
         isError: true,
         isSuccess: false,
       };
     }
-    console.log("[sendContactEmailAction] New Inquiry Stored (Firestore):", storedMessage);
+    console.log("[sendContactEmailAction] Message STORED successfully in Firestore. Stored data:", storedMessage);
 
     // Email sending logic
-    const adminEmail = 'betttonny26@gmail.com';
+    const adminEmail = 'betttonny26@gmail.com'; // Replace with your admin email
     const appName = 'Tari Electra';
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'yourwebsite.com';
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587', 10),
-      secure: (process.env.SMTP_PORT || '587') === '465', // true for 465, false for other ports
+      secure: (process.env.SMTP_PORT || '587') === '465', 
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
     });
 
-    // Email to Admin
     const adminMailOptions = {
       from: `"${appName} Contact Form" <${process.env.SMTP_SENDER_EMAIL || email}>`,
       to: adminEmail,
@@ -93,7 +93,6 @@ export async function sendContactEmailAction(
       `,
     };
 
-    // Confirmation Email to User
     const userMailOptions = {
       from: `"${appName}" <${process.env.SMTP_SENDER_EMAIL || adminEmail}>`,
       to: email,
@@ -124,8 +123,8 @@ export async function sendContactEmailAction(
       // Still return success for form submission if message was stored, but with a note about email failure
       return {
         message: `Thank you, ${name}! Your message was received. However, there was an issue sending email notifications. We will still get back to you.`,
-        isError: false, // Set to false as the primary action (storing message) was successful
-        isSuccess: true, // The user's message *was* saved.
+        isError: false, 
+        isSuccess: true, 
       };
     }
 

@@ -54,11 +54,11 @@ export async function getContactMessages(): Promise<ContactMessage[]> {
 export async function addContactMessage(
   data: Omit<ContactMessage, 'id' | 'receivedAt' | 'isRead'>
 ): Promise<ContactMessage | null> {
-  noStore(); // Ensure this server action related data op is dynamic
-  console.log('[FirestoreContactMessages] addContactMessage called with data:', data);
+  noStore(); 
+  console.log('[FirestoreContactMessages] addContactMessage: Preparing to add message to Firestore with data:', data);
   try {
     if (!db) {
-      console.error('[FirestoreContactMessages] Firestore db instance is not available.');
+      console.error('[FirestoreContactMessages] addContactMessage: Firestore db instance is NOT available. Cannot add message.');
       return null;
     }
     const newMessageForFirestore = {
@@ -66,12 +66,14 @@ export async function addContactMessage(
       receivedAt: Timestamp.now(), // Store as Firestore Timestamp
       isRead: false,
     };
+    console.log('[FirestoreContactMessages] addContactMessage: Data ready for Firestore:', newMessageForFirestore);
+    
     const docRef = await addDoc(collection(db, CONTACT_MESSAGES_COLLECTION), newMessageForFirestore);
-    console.log('[FirestoreContactMessages] Message added successfully to Firestore with ID:', docRef.id);
-    // For returning, convert Timestamp to string to match potential usage, or adjust type
+    console.log('[FirestoreContactMessages] addContactMessage: Message ADDED successfully to Firestore. Document ID:', docRef.id);
+    
     return { id: docRef.id, ...messageToClient(newMessageForFirestore) };
   } catch (error) {
-    console.error('[FirestoreContactMessages] Error adding message to Firestore:', error);
+    console.error('[FirestoreContactMessages] addContactMessage: Error ADDING message to Firestore:', error);
     return null;
   }
 }
@@ -131,7 +133,7 @@ export async function deleteContactMessage(id: string): Promise<boolean> {
     }
     const messageDocRef = doc(db, CONTACT_MESSAGES_COLLECTION, id);
     await deleteDoc(messageDocRef);
-    console.log(`[FirestoreContactMessages] Message ${id} deleted successfully.`);
+    console.log(`[FirestoreContactMessages] Message ${id} deleted successfully from Firestore.`);
     return true;
   } catch (error) {
     console.error(`[FirestoreContactMessages] Error deleting message ${id}:`, error);
@@ -141,17 +143,17 @@ export async function deleteContactMessage(id: string): Promise<boolean> {
 
 export async function getUnreadMessagesCount(): Promise<number> {
   noStore();
-  console.log('[FirestoreContactMessages] Attempting to fetch unread messages count.');
+  // console.log('[FirestoreContactMessages] Attempting to fetch unread messages count.'); // Too frequent, commenting out
   try {
     if (!db) {
-      console.error('[FirestoreContactMessages] Firestore db instance is not available.');
+      // console.error('[FirestoreContactMessages] Firestore db instance is not available for count.'); // Too frequent
       return 0;
     }
     const messagesCollection = collection(db, CONTACT_MESSAGES_COLLECTION);
     const q = query(messagesCollection, where('isRead', '==', false));
     const snapshot = await getCountFromServer(q);
     const count = snapshot.data().count;
-    console.log(`[FirestoreContactMessages] Unread messages count: ${count}`);
+    // console.log(`[FirestoreContactMessages] Unread messages count: ${count}`); // Too frequent
     return count;
   } catch (error) {
     console.error('[FirestoreContactMessages] Error fetching unread messages count:', error);
