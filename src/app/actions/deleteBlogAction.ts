@@ -1,7 +1,7 @@
 
 'use server';
 
-import { deleteBlogPost } from '@/data/blogPosts';
+import { deleteBlogPost } from '@/data/blogPosts'; // Firestore version
 import { revalidatePath } from 'next/cache';
 
 export type DeleteBlogFormState = {
@@ -11,7 +11,7 @@ export type DeleteBlogFormState = {
 };
 
 export async function deleteBlogAction(
-  slug: string
+  slug: string // Slug is the identifier
 ): Promise<DeleteBlogFormState> {
   console.log('[deleteBlogAction] Action invoked for slug:', slug);
 
@@ -24,22 +24,23 @@ export async function deleteBlogAction(
   }
 
   try {
-    const success = deleteBlogPost(slug);
+    // deleteBlogPost now interacts with Firestore
+    const success = await deleteBlogPost(slug);
 
     if (success) {
-      console.log('[deleteBlogAction] Blog Post Deleted (In-Memory):', slug);
+      console.log('[deleteBlogAction] Blog Post Deleted (Firestore):', slug);
       revalidatePath('/admin/blog');
       revalidatePath('/blog');
-      // No specific slug to revalidate as it's deleted. Revalidating /blog should suffice.
+      // No specific slug page to revalidate for /blog/[slug] as it's deleted.
       
       return {
-        message: `Blog post "${slug}" deleted successfully (in-memory).`,
+        message: `Blog post "${slug}" deleted successfully from Firestore.`,
         isError: false,
         isSuccess: true,
       };
     } else {
       return {
-        message: `Error: Blog post with slug "${slug}" not found or deletion failed.`,
+        message: `Error: Blog post with slug "${slug}" not found in Firestore or deletion failed.`,
         isError: true,
         isSuccess: false,
       };
