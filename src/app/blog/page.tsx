@@ -5,14 +5,23 @@ import { getBlogPosts } from "@/data/blogPosts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, CalendarDays, UserCircle, Tag } from "lucide-react";
+import type { Metadata } from 'next';
+import { headers } from 'next/headers'; // To make the page dynamic
+import { unstable_noStore as noStore } from 'next/cache'; // For explicit no-store
+import type { BlogPost } from "@/lib/types";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Blog - Tari Electra",
   description: "Articles and insights on energy saving, sub-metering, and landlord advice.",
 };
 
-export default function BlogPage() {
-  const posts = getBlogPosts(); 
+export default async function BlogPage() {
+  headers(); // Accessing headers makes this page dynamically rendered on each request.
+  noStore(); // Explicitly opt out of caching for this Server Component's data fetching operation.
+  
+  console.log('[BlogPage] Fetching blog posts from Firestore for public page...');
+  const posts: BlogPost[] = await getBlogPosts(); // Ensure getBlogPosts is async if it involves DB calls
+  console.log(`[BlogPage] Public page fetched ${posts.length} posts:`, posts.map(p => ({ slug: p.slug, title: p.title })));
 
   return (
     <div className="bg-secondary">
@@ -58,7 +67,7 @@ export default function BlogPage() {
                   <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-3">
                     <div className="flex items-center">
                       <CalendarDays className="mr-1.5 h-4 w-4" />
-                      {new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      {new Date(post.date as string).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </div>
                     <div className="flex items-center">
                       <UserCircle className="mr-1.5 h-4 w-4" />
@@ -85,8 +94,11 @@ export default function BlogPage() {
   );
 }
 
+// generateStaticParams can still be useful for SEO and initial builds,
+// even if the page is dynamically rendered on request.
+// Next.js can use these params to know which pages to potentially pre-render.
 export async function generateStaticParams() {
-  const posts = getBlogPosts();
+  const posts = await getBlogPosts(); // Fetch posts for param generation
   return posts.map((post) => ({
     slug: post.slug,
   }));

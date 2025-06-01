@@ -6,15 +6,22 @@ import { Mail, MessageSquare, User, Phone, CalendarDays, Info } from "lucide-rea
 import { MessageActionsCell } from "@/components/admin/MessageActionsCell";
 import { Separator } from "@/components/ui/separator";
 import type { Metadata } from 'next';
+import { headers } from 'next/headers'; // To make the page dynamic
+import { unstable_noStore as noStore } from 'next/cache'; // For explicit no-store
+import type { ContactMessage } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: 'Contact Messages - Admin',
   description: 'View and manage inquiries submitted through the contact form.',
 };
 
-export default function AdminMessagesPage() {
-  const messages = getContactMessages();
-  console.log(`[AdminMessagesPage] Displaying ${messages.length} messages. Data:`, messages);
+export default async function AdminMessagesPage() {
+  headers(); 
+  noStore(); 
+
+  console.log('[AdminMessagesPage] Fetching contact messages from Firestore...');
+  const messages: ContactMessage[] = await getContactMessages();
+  console.log(`[AdminMessagesPage] Displaying ${messages.length} messages. First message ID: ${messages[0]?.id}`);
 
   return (
     <div className="space-y-6">
@@ -23,7 +30,7 @@ export default function AdminMessagesPage() {
           <MessageSquare className="h-7 w-7 text-primary" />
           <div>
             <h1 className="text-2xl font-semibold">Contact Messages</h1>
-            <p className="text-muted-foreground">Manage inquiries from your website. (Data saved to JSON)</p>
+            <p className="text-muted-foreground">Manage inquiries from your website. (Data from Firestore)</p>
           </div>
         </div>
         {/* Add a "Mark all as read" or filter options here in the future */}
@@ -69,7 +76,7 @@ export default function AdminMessagesPage() {
               </CardContent>
               <CardFooter className="flex-col items-start gap-2 pt-3">
                 <div className="text-xs text-muted-foreground flex items-center w-full justify-between">
-                    <span className="flex items-center"><CalendarDays className="h-3 w-3 mr-1" /> Received: {new Date(msg.receivedAt).toLocaleString()}</span>
+                    <span className="flex items-center"><CalendarDays className="h-3 w-3 mr-1" /> Received: {new Date(msg.receivedAt as string).toLocaleString()}</span>
                 </div>
                 <Separator className="my-2" />
                 <MessageActionsCell messageId={msg.id} isCurrentlyRead={msg.isRead} messageFromName={msg.name} />

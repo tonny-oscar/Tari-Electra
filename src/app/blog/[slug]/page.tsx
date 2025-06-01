@@ -7,13 +7,16 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, CalendarDays, UserCircle, Tag } from 'lucide-react';
 import type { Metadata } from 'next';
+import { headers } from 'next/headers'; // To make the page dynamic
+import { unstable_noStore as noStore } from 'next/cache'; // For explicit no-store
 
 type Props = {
   params: { slug: string };
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const post = findBlogPost(params.slug); 
+  noStore(); // Ensure metadata also fetches fresh data if needed
+  const post = await findBlogPost(params.slug); 
   if (!post) {
     return {
       title: 'Post Not Found',
@@ -25,8 +28,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = findBlogPost(params.slug); 
+export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+  headers(); 
+  noStore(); 
+  
+  console.log(`[BlogPostPage/${params.slug}] Fetching blog post from Firestore...`);
+  const post = await findBlogPost(params.slug); 
+  console.log(`[BlogPostPage/${params.slug}] Fetched post:`, post ? post.title : 'Not found');
 
   if (!post) {
     notFound();
@@ -57,7 +65,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
             <div className="flex flex-wrap items-center space-x-4 text-sm text-muted-foreground">
               <div className="flex items-center">
                 <CalendarDays className="mr-1.5 h-4 w-4" />
-                Published on {new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                Published on {new Date(post.date as string).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
               </div>
               <div className="flex items-center">
                 <UserCircle className="mr-1.5 h-4 w-4" />
