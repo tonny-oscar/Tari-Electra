@@ -23,7 +23,7 @@ const CONTACT_MESSAGES_COLLECTION = 'contactMessages';
 const messageToClient = (docData: any): Omit<ContactMessage, 'id'> => {
   const data = { ...docData };
   if (data.receivedAt && data.receivedAt instanceof Timestamp) {
-    data.receivedAt = data.receivedAt.toISOString();
+    data.receivedAt = data.receivedAt.toDate().toISOString(); // Corrected line
   }
   return data as Omit<ContactMessage, 'id'>;
 };
