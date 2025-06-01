@@ -4,10 +4,12 @@
 import { db } from '@/lib/firebase/client';
 import type { BlogSubscriber } from '@/lib/types';
 import {
+  collection,
   doc,
   setDoc,
   Timestamp,
   getDoc,
+  getDocs, // Added for getAllBlogSubscribers
 } from 'firebase/firestore';
 import { unstable_noStore as noStore } from 'next/cache';
 
@@ -56,4 +58,29 @@ export async function isEmailSubscribed(email: string): Promise<boolean> {
         console.error(`[FirestoreBlogSubscribers - isEmailSubscribed] Error checking subscription for ${email}:`, error);
         return false; // Assume not subscribed on error
     }
+}
+
+export async function getAllBlogSubscribers(): Promise<BlogSubscriber[]> {
+  noStore();
+  console.log('[FirestoreBlogSubscribers - getAllBlogSubscribers] Attempting to fetch all blog subscribers.');
+  try {
+    if (!db) {
+      console.error('[FirestoreBlogSubscribers - getAllBlogSubscribers] Firestore db instance is not available.');
+      return [];
+    }
+    const subscribersCollection = collection(db, BLOG_SUBSCRIBERS_COLLECTION);
+    const subscriberSnapshot = await getDocs(subscribersCollection);
+    const subscriberList = subscriberSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        email: doc.id, // Email is the document ID
+        subscribedAt: data.subscribedAt instanceof Timestamp ? data.subscribedAt : Timestamp.now(), // Ensure Timestamp
+      };
+    });
+    console.log(`[FirestoreBlogSubscribers - getAllBlogSubscribers] Fetched ${subscriberList.length} subscribers.`);
+    return subscriberList;
+  } catch (error) {
+    console.error('[FirestoreBlogSubscribers - getAllBlogSubscribers] Error fetching subscribers:', error);
+    return [];
+  }
 }
