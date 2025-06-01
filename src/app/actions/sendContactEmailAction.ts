@@ -32,7 +32,7 @@ export async function sendContactEmailAction(
     const validatedFields = ContactFormSchema.safeParse(rawFormData);
 
     if (!validatedFields.success) {
-      console.error("[sendContactEmailAction] Validation failed:", validatedFields.error.flatten().fieldErrors);
+      console.error("🔴 [sendContactEmailAction] Validation failed:", validatedFields.error.flatten().fieldErrors);
       return {
         message: "Invalid form data. Please check your inputs.",
         fields: validatedFields.error.flatten().fieldErrors as Record<string, string>,
@@ -40,28 +40,28 @@ export async function sendContactEmailAction(
         isSuccess: false,
       };
     }
-    console.log("[sendContactEmailAction] Validation successful.");
+    console.log("🟢 [sendContactEmailAction] Validation successful.");
 
     const { name, email, phone, message } = validatedFields.data;
     const phoneValue = phone || undefined;
 
     // Store the message in Firestore
-    console.log("[sendContactEmailAction] Attempting to store message in Firestore...");
+    console.log("🔵 [sendContactEmailAction] Attempting to store message in Firestore...");
     const dataToStore: Omit<ContactMessage, 'id' | 'receivedAt' | 'isRead'> = { name, email, phone: phoneValue, message };
     const storedMessage = await addContactMessage(dataToStore);
     
     if (!storedMessage) {
-      console.error("[sendContactEmailAction] FAILED to store message in Firestore.");
+      console.error("🔴 [sendContactEmailAction] FAILED to store message in Firestore. addContactMessage returned null.");
       return {
         message: "Server error: Could not save your message. Please try again later.",
         isError: true,
         isSuccess: false,
       };
     }
-    console.log("[sendContactEmailAction] Message STORED successfully in Firestore. Stored data:", storedMessage);
+    console.log("✅ [sendContactEmailAction] Message STORED successfully in Firestore. Stored data:", storedMessage);
 
     // Email sending logic
-    const adminEmail = 'betttonny26@gmail.com'; // Replace with your admin email
+    const adminEmail = process.env.ADMIN_EMAIL || 'betttonny26@gmail.com'; 
     const appName = 'Tari Electra';
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'yourwebsite.com';
 
@@ -110,26 +110,25 @@ export async function sendContactEmailAction(
 
     try {
       await transporter.sendMail(adminMailOptions);
-      console.log('[sendContactEmailAction] Admin notification email sent successfully.');
+      console.log('📧 [sendContactEmailAction] Admin notification email sent successfully.');
       await transporter.sendMail(userMailOptions);
-      console.log('[sendContactEmailAction] User confirmation email sent successfully.');
+      console.log('📧 [sendContactEmailAction] User confirmation email sent successfully.');
       return {
         message: `Thank you for your inquiry, ${name}! We've received your message and will get back to you shortly.`,
         isError: false,
         isSuccess: true,
       };
     } catch (emailError: any) {
-      console.error("[sendContactEmailAction] Error sending email(s):", emailError);
-      // Still return success for form submission if message was stored, but with a note about email failure
+      console.error("🔴 [sendContactEmailAction] Error sending email(s):", emailError.message, emailError.stack);
       return {
-        message: `Thank you, ${name}! Your message was received. However, there was an issue sending email notifications. We will still get back to you.`,
+        message: `Thank you, ${name}! Your message was received (saved to database). However, there was an issue sending email notifications. We will still get back to you.`,
         isError: false, 
         isSuccess: true, 
       };
     }
 
   } catch (error: any) {
-    console.error("[sendContactEmailAction] Critical error during action execution:", error);
+    console.error("🔴 [sendContactEmailAction] Critical error during action execution:", error.message, error.stack);
     const errorMessage = error instanceof Error ? error.message : "An unknown server error occurred.";
     return {
       message: `Server error: ${errorMessage}. Please try again.`,
