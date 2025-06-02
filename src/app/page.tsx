@@ -3,13 +3,12 @@ import { ServiceHighlightsSection } from "@/components/sections/ServiceHighlight
 import { TestimonialSection } from "@/components/sections/TestimonialSection";
 import { CallToActionStripSection } from "@/components/sections/CallToActionStripSection";
 import { ContactSection } from "@/components/sections/ContactSection";
-import { getHomepageSettings } from "@/data/homepageSettings";
+import { getHomepageSettings } from "@/data/homepageSettings"; // Firestore version
 import { unstable_noStore as noStore } from 'next/cache';
 
-export default async function HomePage() {
-  noStore(); // Ensures fresh data for homepage settings
-
-  const homepageSettings = await getHomepageSettings();
+export default async function HomePage() { // Make async
+  noStore(); 
+  const homepageSettings = await getHomepageSettings(); // Await the Firestore call
 
   return (
     <>

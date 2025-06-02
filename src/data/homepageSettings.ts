@@ -1,78 +1,75 @@
 
-import fs from 'fs';
-import path from 'path';
-import type { HomepageSettings } from '@/lib/types';
+'use server';
 
-const settingsDataPath = path.resolve(process.cwd(), 'src/data/homepageSettings.json');
+import { db } from '@/lib/firebase/client';
+import type { HomepageSettings } from '@/lib/types';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { unstable_noStore as noStore } from 'next/cache';
+
+const SETTINGS_COLLECTION = 'settings';
+const HOMEPAGE_DOC_ID = 'homepage'; // Fixed document ID for homepage settings
 
 const defaultSettings: HomepageSettings = {
   heroImageUrl: 'https://placehold.co/800x600.png',
   heroImageHint: 'modern building technology',
 };
 
-function readHomepageSettingsData(): HomepageSettings {
-  console.log('[HomepageSettings] Attempting to read homepageSettings.json from:', settingsDataPath);
+export async function getHomepageSettings(): Promise<HomepageSettings> {
+  noStore();
+  console.log('[FirestoreHomepageSettings - getHomepageSettings] Attempting to fetch homepage settings.');
   try {
-    if (fs.existsSync(settingsDataPath)) {
-      const fileContent = fs.readFileSync(settingsDataPath, 'utf-8');
-      if (fileContent.trim() === '' || fileContent.trim() === '{}') {
-        console.log('[HomepageSettings] homepageSettings.json is empty or default. Initializing and returning default settings.');
-        fs.writeFileSync(settingsDataPath, JSON.stringify(defaultSettings, null, 2), 'utf-8');
-        return { ...defaultSettings };
-      }
-      const data = JSON.parse(fileContent);
-      // Ensure data is an object and not an array or other type
-      if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
-        console.log('[HomepageSettings] Successfully parsed settings from JSON.');
-        // Merge with defaults to ensure all expected fields are present
-        return { ...defaultSettings, ...data };
-      } else {
-        console.warn('[HomepageSettings] homepageSettings.json does not contain a valid object. Initializing with default settings.');
-        fs.writeFileSync(settingsDataPath, JSON.stringify(defaultSettings, null, 2), 'utf-8');
-        return { ...defaultSettings };
-      }
+    if (!db) {
+      console.error('[FirestoreHomepageSettings - getHomepageSettings] Firestore db instance is not available.');
+      return { ...defaultSettings }; // Return default if DB fails
     }
-    console.log('[HomepageSettings] homepageSettings.json does not exist. Creating and initializing with default settings.');
-    fs.writeFileSync(settingsDataPath, JSON.stringify(defaultSettings, null, 2), 'utf-8');
-    return { ...defaultSettings };
-  } catch (error: any) {
-    console.error('[HomepageSettings] Error reading or initializing homepageSettings.json:', error.message);
-    try {
-      fs.writeFileSync(settingsDataPath, JSON.stringify(defaultSettings, null, 2), 'utf-8');
-      console.log('[HomepageSettings] Initialized homepageSettings.json with default data after read error.');
-    } catch (writeError: any) {
-      console.error('[HomepageSettings] Error writing default data to homepageSettings.json after read error:', writeError.message);
+    const settingsDocRef = doc(db, SETTINGS_COLLECTION, HOMEPAGE_DOC_ID);
+    const docSnap = await getDoc(settingsDocRef);
+    if (docSnap.exists()) {
+      const settings = docSnap.data() as HomepageSettings;
+      console.log('[FirestoreHomepageSettings - getHomepageSettings] Fetched settings:', settings);
+      // Merge with defaults to ensure all expected fields are present, especially if new fields are added to defaultSettings later
+      return { ...defaultSettings, ...settings };
+    } else {
+      console.log('[FirestoreHomepageSettings - getHomepageSettings] Homepage settings document does not exist. Creating and returning default settings.');
+      // Attempt to create the document with defaults if it doesn't exist
+      await setDoc(settingsDocRef, defaultSettings);
+      return { ...defaultSettings };
     }
-    return { ...defaultSettings };
-  }
-}
-
-function writeHomepageSettingsData(data: HomepageSettings): void {
-  try {
-    console.log('[HomepageSettings] Attempting to write settings to homepageSettings.json:', data);
-    fs.writeFileSync(settingsDataPath, JSON.stringify(data, null, 2), 'utf-8');
-    console.log('[HomepageSettings] Successfully wrote to homepageSettings.json');
   } catch (error) {
-    console.error('[HomepageSettings] Error writing to homepageSettings.json:', error);
+    console.error('[FirestoreHomepageSettings - getHomepageSettings] Error fetching homepage settings:', error);
+    return { ...defaultSettings }; // Return default on error
   }
 }
 
-export function getHomepageSettings(): HomepageSettings {
-  const settings = readHomepageSettingsData();
-  return JSON.parse(JSON.stringify(settings)); // Return a deep copy
-}
+export async function updateHomepageSettings(
+  updatedSettingsData: Partial<HomepageSettings>
+): Promise<HomepageSettings | null> {
+  console.log('[FirestoreHomepageSettings - updateHomepageSettings] Attempting to update homepage settings with data:', updatedSettingsData);
+  try {
+    if (!db) {
+      console.error('[FirestoreHomepageSettings - updateHomepageSettings] Firestore db instance is not available.');
+      return null;
+    }
+    const settingsDocRef = doc(db, SETTINGS_COLLECTION, HOMEPAGE_DOC_ID);
+    
+    // Fetch current settings to merge correctly and handle empty string updates
+    const currentSettings = await getHomepageSettings(); // This will return defaults if doc doesn't exist
+    
+    const newSettings: HomepageSettings = {
+      heroImageUrl: updatedSettingsData.heroImageUrl === '' ? defaultSettings.heroImageUrl : (updatedSettingsData.heroImageUrl || currentSettings.heroImageUrl || defaultSettings.heroImageUrl),
+      heroImageHint: updatedSettingsData.heroImageHint === '' ? defaultSettings.heroImageHint : (updatedSettingsData.heroImageHint || currentSettings.heroImageHint || defaultSettings.heroImageHint),
+    };
 
-export function updateHomepageSettings(updatedSettingsData: Partial<HomepageSettings>): HomepageSettings {
-  let settings = readHomepageSettingsData(); // Read current or default settings
-  
-  const newSettings: HomepageSettings = {
-    ...settings, // Spread existing settings
-    ...updatedSettingsData, // Override with new data
-    heroImageUrl: updatedSettingsData.heroImageUrl || settings.heroImageUrl || defaultSettings.heroImageUrl,
-    heroImageHint: updatedSettingsData.heroImageHint || settings.heroImageHint || defaultSettings.heroImageHint,
-  };
-
-  writeHomepageSettingsData(newSettings);
-  console.log('[updateHomepageSettings - JSON] Settings updated and saved:', newSettings);
-  return { ...newSettings };
+    await setDoc(settingsDocRef, newSettings, { merge: true }); // Use merge: true to update or create
+    console.log('[FirestoreHomepageSettings - updateHomepageSettings] Homepage settings updated successfully.');
+    
+    const updatedSnap = await getDoc(settingsDocRef);
+    if (updatedSnap.exists()) {
+      return updatedSnap.data() as HomepageSettings;
+    }
+    return null; // Should not happen if setDoc was successful
+  } catch (error) {
+    console.error('[FirestoreHomepageSettings - updateHomepageSettings] Error updating homepage settings:', error);
+    return null;
+  }
 }
