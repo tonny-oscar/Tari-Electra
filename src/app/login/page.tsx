@@ -11,6 +11,8 @@ import type { Metadata } from 'next';
 // description: 'Login to your Tari Electra account.',
 // };
 
+
+
 export default function LoginPage() {
   return (
     <div className="flex min-h-[calc(100vh-var(--header-height)-var(--footer-height))] items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-secondary">
