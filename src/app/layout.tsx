@@ -14,6 +14,10 @@ const fontSans = FontSans({
   variable: "--font-sans",
 })
 
+
+
+
+
 export const metadata: Metadata = {
   title: 'Tari Electra - Empowering Your Property',
   description: 'Meter separation and prepaid sub-metering solutions for landlords and property owners.',
