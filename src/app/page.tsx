@@ -1,7 +1,7 @@
 
 import { HeroSection } from "@/components/sections/HeroSection";
 import { ServiceHighlightsSection } from "@/components/sections/ServiceHighlightsSection";
-// import { ProductsSection } from "@/components/sections/ProductsSection"; // Removed
+import { ProductsSection } from "@/components/sections/ProductsSection"; // Removed
 import { TestimonialSection } from "@/components/sections/TestimonialSection";
 import { CallToActionStripSection } from "@/components/sections/CallToActionStripSection";
 import { ContactSection } from "@/components/sections/ContactSection";
