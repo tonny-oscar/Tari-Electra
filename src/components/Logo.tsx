@@ -9,7 +9,7 @@ export function Logo({ className }: LogoProps) {
   return (
     <Link href="/" className={`flex items-center ${className || ''}`.trim()}>
       <Image
-        src="/tari-logo.png" // Public folder image
+        src="/tari-logo.png" 
         alt="Tari Electra Logo"
         width={130}
         height={28}
