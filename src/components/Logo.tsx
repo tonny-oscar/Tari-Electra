@@ -9,11 +9,11 @@ export function Logo({ className }: LogoProps) {
   return (
     <Link href="/" className={`flex items-center ${className || ''}`.trim()}>
       <Image
-        src="/tari-logo.png"
+        src="/tari-logo.png" // Public folder image
         alt="Tari Electra Logo"
-        width={130} // Aspect ratio preserved (original 195x42)
+        width={130}
         height={28}
-        priority // Consider logo as LCP element
+        priority
       />
     </Link>
   );
