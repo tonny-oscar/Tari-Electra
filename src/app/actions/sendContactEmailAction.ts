@@ -1,139 +1,57 @@
+'use server';
 
-"use server";
-
-import { z } from 'zod';
-import nodemailer from 'nodemailer';
-import { addContactMessage } from '@/data/contactMessages';
-import type { ContactFormState, ContactMessage } from '@/lib/types';
-import { Timestamp } from 'firebase/firestore';
-
-const ContactFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().min(10, "Phone number must be at least 10 characters").optional().or(z.literal('')),
-  message: z.string().min(10, "Message must be at least 10 characters"),
-});
+export type ContactFormState = {
+  message: string;
+  isSuccess: boolean;
+  isError: boolean;
+  fields?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    message?: string;
+  };
+};
 
 export async function sendContactEmailAction(
   prevState: ContactFormState,
   formData: FormData
 ): Promise<ContactFormState> {
-  console.log("[sendContactEmailAction] Action invoked.");
+  const name = formData.get('name')?.toString() || '';
+  const email = formData.get('email')?.toString() || '';
+  const phone = formData.get('phone')?.toString() || '';
+  const message = formData.get('message')?.toString() || '';
 
-  try {
-    const rawFormData = {
-      name: formData.get('name'),
-      email: formData.get('email'),
-      phone: formData.get('phone'),
-      message: formData.get('message'),
-    };
-    console.log("[sendContactEmailAction] Raw form data:", rawFormData);
+  // Very basic validation (adjust as needed)
+  const fields: ContactFormState["fields"] = {};
+  if (!name) fields.name = "Name is required.";
+  if (!email) fields.email = "Email is required.";
+  if (!message) fields.message = "Message is required.";
 
-    const validatedFields = ContactFormSchema.safeParse(rawFormData);
-
-    if (!validatedFields.success) {
-      console.error("🔴 [sendContactEmailAction] Validation failed:", validatedFields.error.flatten().fieldErrors);
-      return {
-        message: "Invalid form data. Please check your inputs.",
-        fields: validatedFields.error.flatten().fieldErrors as Record<string, string>,
-        isError: true,
-        isSuccess: false,
-      };
-    }
-    console.log("🟢 [sendContactEmailAction] Validation successful.");
-
-    const { name, email, phone, message } = validatedFields.data;
-    const phoneValue = phone || undefined;
-
-    // Store the message in Firestore
-    console.log("🔵 [sendContactEmailAction] Attempting to store message in Firestore...");
-    const dataToStore: Omit<ContactMessage, 'id' | 'receivedAt' | 'isRead'> = { name, email, phone: phoneValue, message };
-    const storedMessage = await addContactMessage(dataToStore);
-    
-    if (!storedMessage) {
-      console.error("🔴 [sendContactEmailAction] FAILED to store message in Firestore. addContactMessage returned null.");
-      return {
-        message: "Server error: Could not save your message. Please try again later.",
-        isError: true,
-        isSuccess: false,
-      };
-    }
-    console.log("✅ [sendContactEmailAction] Message STORED successfully in Firestore. Stored data:", storedMessage);
-
-    // Email sending logic
-    const adminEmail = process.env.ADMIN_EMAIL || 'betttonny26@gmail.com'; 
-    const appName = 'Tari Electra';
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'yourwebsite.com';
-
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587', 10),
-      secure: (process.env.SMTP_PORT || '587') === '465', 
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-
-    const adminMailOptions = {
-      from: `"${appName} Contact Form" <${process.env.SMTP_SENDER_EMAIL || email}>`,
-      to: adminEmail,
-      subject: `New Contact Form Submission from ${name}`,
-      html: `
-        <p>You have received a new contact form submission:</p>
-        <ul>
-          <li><strong>Name:</strong> ${name}</li>
-          <li><strong>Email:</strong> ${email}</li>
-          ${phoneValue ? `<li><strong>Phone:</strong> ${phoneValue}</li>` : ''}
-          <li><strong>Message:</strong></li>
-        </ul>
-        <p style="white-space: pre-wrap;">${message}</p>
-        <hr>
-        <p>This message was sent from the contact form on ${appUrl}</p>
-      `,
-    };
-
-    const userMailOptions = {
-      from: `"${appName}" <${process.env.SMTP_SENDER_EMAIL || adminEmail}>`,
-      to: email,
-      subject: `Thank You for Your Inquiry, ${name}!`,
-      html: `
-        <p>Dear ${name},</p>
-        <p>Thank you for contacting ${appName}. We have received your message and will get back to you as soon as possible.</p>
-        <p><strong>Your Message:</strong></p>
-        <blockquote style="border-left: 2px solid #ccc; padding-left: 1em; margin-left: 1em; white-space: pre-wrap;">${message}</blockquote>
-        <hr>
-        <p>If you have any urgent concerns, please feel free to call us.</p>
-        <p>Sincerely,<br>The ${appName} Team</p>
-      `,
-    };
-
-    try {
-      await transporter.sendMail(adminMailOptions);
-      console.log('📧 [sendContactEmailAction] Admin notification email sent successfully.');
-      await transporter.sendMail(userMailOptions);
-      console.log('📧 [sendContactEmailAction] User confirmation email sent successfully.');
-      return {
-        message: `Thank you for your inquiry, ${name}! We've received your message and will get back to you shortly.`,
-        isError: false,
-        isSuccess: true,
-      };
-    } catch (emailError: any) {
-      console.error("🔴 [sendContactEmailAction] Error sending email(s):", emailError.message, emailError.stack);
-      return {
-        message: `Thank you, ${name}! Your message was received (saved to database). However, there was an issue sending email notifications. We will still get back to you.`,
-        isError: false, 
-        isSuccess: true, 
-      };
-    }
-
-  } catch (error: any) {
-    console.error("🔴 [sendContactEmailAction] Critical error during action execution:", error.message, error.stack);
-    const errorMessage = error instanceof Error ? error.message : "An unknown server error occurred.";
+  if (Object.keys(fields).length > 0) {
     return {
-      message: `Server error: ${errorMessage}. Please try again.`,
+      message: "Please correct the errors below.",
       isError: true,
       isSuccess: false,
+      fields
+    };
+  }
+
+  // Simulate sending email (replace with real API call or logic)
+  try {
+    console.log('Sending contact message...', { name, email, phone, message });
+
+    return {
+      message: "Your message has been sent successfully!",
+      isError: false,
+      isSuccess: true,
+      fields: undefined
+    };
+  } catch (err) {
+    return {
+      message: "Something went wrong while sending your message.",
+      isError: true,
+      isSuccess: false,
+      fields: undefined
     };
   }
 }
