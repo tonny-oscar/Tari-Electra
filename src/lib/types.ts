@@ -20,7 +20,7 @@ export type FAQItem = {
 export type BlogPost = {
   slug: string; // Will be used as Firestore document ID
   title: string;
-  date: string; // Store as Timestamp in Firestore, convert to string for display if needed
+  date: string | Timestamp; // Store as Timestamp in Firestore, convert to string for display if needed
   excerpt: string;
   imageUrl?: string;
   imageHint?: string;
