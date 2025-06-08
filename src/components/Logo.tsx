@@ -11,8 +11,8 @@ export function Logo({ className }: LogoProps) {
       <Image
         src="/tari-logo.png" 
         alt="Tari Electra Logo"
-        width={130}
-        height={28}
+        width={150}
+        height={0}
         priority
       />
     </Link>
