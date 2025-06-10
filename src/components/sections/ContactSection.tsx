@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from "next/image";
@@ -8,12 +7,24 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import React, { useEffect, useRef, useState } from "react"; // Added useState
-import { useFormStatus } from 'react-dom';
-import { sendContactEmailAction, type ContactFormState } from '@/app/actions/sendContactEmailAction';
+import React, { useEffect, useRef, useState } from "react";
 import { AlertCircle, Loader2, Send, MapPin, Mail, PhoneIcon, Clock } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { motion } from "framer-motion";
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase'; 
+
+interface ContactFormState {
+  message: string;
+  isSuccess: boolean;
+  isError: boolean;
+  fields?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    message?: string;
+  };
+}
 
 const initialState: ContactFormState = {
   message: "",
@@ -22,11 +33,10 @@ const initialState: ContactFormState = {
   fields: undefined,
 };
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
+function SubmitButton({ isSubmitting }: { isSubmitting: boolean }) {
   return (
-    <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+    <Button type="submit" className="w-full" disabled={isSubmitting}>
+      {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
       Send Message
     </Button>
   );
@@ -45,16 +55,95 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
+// Validation function
+const validateForm = (formData: FormData): { isValid: boolean; fields?: any } => {
+  const errors: any = {};
+  
+  const name = formData.get('name') as string;
+  const email = formData.get('email') as string;
+  const phone = formData.get('phone') as string;
+  const message = formData.get('message') as string;
+
+  if (!name || name.trim().length < 2) {
+    errors.name = 'Name must be at least 2 characters long';
+  }
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.email = 'Please enter a valid email address';
+  }
+
+  if (phone && phone.trim() && !/^[\+]?[0-9\s\-\(\)]{10,}$/.test(phone.replace(/\s/g, ''))) {
+    errors.phone = 'Please enter a valid phone number';
+  }
+
+  if (!message || message.trim().length < 10) {
+    errors.message = 'Message must be at least 10 characters long';
+  }
+
+  return {
+    isValid: Object.keys(errors).length === 0,
+    fields: Object.keys(errors).length > 0 ? errors : undefined
+  };
+};
+
 export function ContactSection() {
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
-  // Use local state instead of useActionState
   const [formState, setFormState] = useState<ContactFormState>(initialState);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Manual handler for form submission
-  const handleFormSubmit = async (formData: FormData) => {
-    const result = await sendContactEmailAction(initialState, formData);
-    setFormState(result);
+  // Handle form submission to Firestore
+  const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData(event.currentTarget);
+      
+      // Validate form
+      const validation = validateForm(formData);
+      if (!validation.isValid) {
+        setFormState({
+          message: "Please check the form for errors.",
+          isSuccess: false,
+          isError: true,
+          fields: validation.fields
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Prepare data for Firestore
+      const contactData = {
+        name: formData.get('name') as string,
+        email: formData.get('email') as string,
+        phone: formData.get('phone') as string || '',
+        message: formData.get('message') as string,
+        createdAt: serverTimestamp(),
+        status: 'unread' // For admin to track message status
+      };
+
+      // Save to Firestore
+      await addDoc(collection(db, 'contactMessages'), contactData);
+
+      setFormState({
+        message: "Thank you for your message! We'll get back to you soon.",
+        isSuccess: true,
+        isError: false,
+        fields: undefined
+      });
+
+    } catch (error) {
+      console.error('Error saving contact message:', error);
+      setFormState({
+        message: "There was an error sending your message. Please try again.",
+        isSuccess: false,
+        isError: true,
+        fields: undefined
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   useEffect(() => {
@@ -66,7 +155,8 @@ export function ContactSection() {
           variant: "default",
         });
         formRef.current?.reset();
-        setFormState(initialState); 
+        // Reset form state after showing success message
+        setTimeout(() => setFormState(initialState), 2000);
       } else if (formState.isError && !formState.fields) { 
         toast({
           title: "Error",
@@ -157,8 +247,7 @@ export function ContactSection() {
                 <CardDescription>Fill out the form below and we'll get back to you.</CardDescription>
               </CardHeader>
               <CardContent>
-                {/* Pass the manual handler to the form's action */}
-                <form action={handleFormSubmit} ref={formRef} className="space-y-6">
+                <form onSubmit={handleFormSubmit} ref={formRef} className="space-y-6">
                   <div>
                     <Label htmlFor="name">Full Name</Label>
                     <Input id="name" name="name" type="text" placeholder="John Doe" required />
@@ -189,7 +278,7 @@ export function ContactSection() {
                       </AlertDescription>
                     </Alert>
                   )}
-                  <SubmitButton />
+                  <SubmitButton isSubmitting={isSubmitting} />
                 </form>
               </CardContent>
             </Card>
@@ -199,4 +288,3 @@ export function ContactSection() {
     </motion.section>
   );
 }
-
