@@ -13,18 +13,22 @@ export function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const pathname = usePathname(); // Hook to re-fetch on navigation
 
-  useEffect(() => {
-    async function fetchCount() {
-      try {
-        const count = await getUnreadMessagesCountAction();
-        setUnreadCount(count);
-      } catch (error) {
-        console.error("Failed to fetch unread messages count:", error);
-        setUnreadCount(0); // Default to 0 on error
-      }
+useEffect(() => {
+  const fetchCount = async () => {
+    try {
+      const count = await getUnreadMessagesCountAction();
+      setUnreadCount(count);
+    } catch {
+      setUnreadCount(0);
     }
-    fetchCount();
-  }, [pathname]); // Re-fetch when pathname changes
+  };
+
+  fetchCount();
+  const interval = setInterval(fetchCount, 10000); // every 10s
+
+  return () => clearInterval(interval);
+}, [pathname]);
+
 
   return (
     <Button variant="ghost" size="icon" asChild className="relative">

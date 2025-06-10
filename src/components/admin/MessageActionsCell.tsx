@@ -33,26 +33,26 @@ export function MessageActionsCell({ messageId, isCurrentlyRead, messageFromName
   const [isDeletePending, startDeleteTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const handleToggleReadStatus = async () => {
-    setError(null);
-    startReadTransition(async () => {
-      const result: ContactMessageActionState = await markMessageReadAction(messageId, !isCurrentlyRead);
-      if (result.isSuccess) {
-        toast({
-          title: 'Success!',
-          description: result.message,
-        });
-        router.refresh(); // Re-fetches data for the current route
-      } else {
-        setError(result.message);
-        toast({
-          title: 'Error Updating Message',
-          description: result.message,
-          variant: 'destructive',
-        });
-      }
-    });
-  };
+  
+  const [readState, setReadState] = useState(isCurrentlyRead);
+
+// Immediately reflect change in UI
+const handleToggleReadStatus = async () => {
+  setError(null);
+  const newState = !readState;
+  setReadState(newState); // optimistic UI
+  startReadTransition(async () => {
+    const result = await markMessageReadAction(messageId, newState);
+    if (!result.isSuccess) {
+      setReadState(!newState); // revert on error
+      setError(result.message);
+      toast({ title: 'Error Updating Message', description: result.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success!', description: result.message });
+      router.refresh();
+    }
+  });
+};
 
   const handleDelete = async () => {
     setError(null);
