@@ -138,13 +138,13 @@ export function ContactSection() {
                 </div>
                 <div className="aspect-video w-full overflow-hidden rounded-lg border mt-6">
                   <Image
-                    src="https://placehold.co/800x500.png"
-                    alt="Service Area Map Placeholder"
-                    width={800}
-                    height={500}
-                    className="object-cover"
-                    data-ai-hint="Athi River"
-                  />
+                      src="/8e8f8290-9ac0-4a92-a18c-cd3e69b35d03.jpeg"
+                      alt="Athi River Location"
+                      width={800}
+                      height={500}
+                      className="object-cover"
+                      data-ai-hint="Athi River"
+                    />
                 </div>
               </CardContent>
             </Card>
