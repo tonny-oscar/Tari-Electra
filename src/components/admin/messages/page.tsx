@@ -17,6 +17,8 @@ export default function AdminMessagesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+
+
   useEffect(() => {
     const q = query(
       collection(db, 'contactMessages'),
@@ -36,6 +38,9 @@ export default function AdminMessagesPage() {
       }
     );
 
+
+
+    
     return () => unsubscribe();
   }, []);
 
