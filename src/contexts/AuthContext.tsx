@@ -1,10 +1,9 @@
-
+// src/context/AuthContext.tsx
 'use client';
 
 import type { User } from 'firebase/auth';
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
-import type { ReactNode } from 'react';
-import React, { createContext, useEffect, useState } from 'react';
+import { createContext, useEffect, useState, type ReactNode } from 'react';
 import { auth } from '@/lib/firebase/client';
 import { useRouter } from 'next/navigation';
 
@@ -14,7 +13,7 @@ interface AuthContextType {
   logOut: () => Promise<void>;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined); // ✅ Must be a value
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -30,28 +29,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(currentUser);
       setLoading(false);
     });
+
     return () => unsubscribe();
   }, []);
 
   const logOut = async () => {
-    setLoading(true);
-    try {
-      await firebaseSignOut(auth);
-      setUser(null);
-      router.push('/'); // Redirect to home page after logout
-    } catch (error) {
-      console.error('Error signing out: ', error);
-      // Handle error appropriately
-    } finally {
-      setLoading(false);
-    }
+    await firebaseSignOut(auth);
+    setUser(null);
+    router.push('/');
   };
 
-  const value = {
-    user,
-    loading,
-    logOut,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, loading, logOut }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
