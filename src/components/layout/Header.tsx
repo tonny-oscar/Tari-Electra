@@ -1,4 +1,3 @@
-// src/components/layout/Header.tsx
 'use client';
 
 import Link from 'next/link';
@@ -32,14 +31,14 @@ const mainNavItems = [
 ];
 
 export function Header() {
-  const { user, loading, logOut } = useAuth();
+  const { user, loading, logout } = useAuth();
   const { cartItems } = useCart();
 
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   const cartTotal = cartItems.reduce((total, item) => total + item.quantity * item.price, 0);
 
   const handleLogout = async () => {
-    await logOut();
+    await logout(); // ✅ Corrected here
   };
 
   return (

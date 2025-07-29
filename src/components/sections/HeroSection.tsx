@@ -11,7 +11,7 @@ const heroVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { staggerChildren: 0.2, delayChildren: 0.1 }
+    transition: { staggerChildren: 0.2, delayChildren: 0.1 },
   },
 };
 
@@ -22,18 +22,18 @@ const itemVariants = {
 
 const imageVariants = {
   hidden: { opacity: 0, scale: 0.95, y: 30 },
-  visible: { 
-    opacity: 1, 
-    scale: 1, 
+  visible: {
+    opacity: 1,
+    scale: 1,
     y: 0,
-    transition: { duration: 0.8, ease: "easeOut" }
+    transition: { duration: 0.8, ease: "easeOut" },
   },
 };
 
 const bulletPoints = [
   "Prepaid Sub-Meters",
   "No Bill Disputes",
-  "Easy Power Management"
+  "Easy Power Management",
 ];
 
 type HeroSectionProps = {
@@ -41,15 +41,14 @@ type HeroSectionProps = {
   imageHint?: string;
 };
 
-export function HeroSection({ 
-  imageUrl = 'https://placehold.co/1200x600.png', 
-  imageHint = 'smart meter' 
+export function HeroSection({
+  imageUrl = "https://placehold.co/1200x600.png",
+  imageHint = "smart meter",
 }: HeroSectionProps) {
   return (
     <section className="relative h-[80vh] md:h-[85vh] flex items-center justify-center overflow-hidden">
-      
-      {/* Full-Width Background Image - Acts as Shadow/Background */}
-      <motion.div 
+      {/* Background Image */}
+      <motion.div
         className="absolute inset-0 z-0"
         variants={imageVariants}
         initial="hidden"
@@ -59,20 +58,19 @@ export function HeroSection({
           src={imageUrl}
           alt="Smart meter solutions for modern buildings"
           fill
+          sizes="100vw"
           className="object-cover object-center"
           data-ai-hint={imageHint}
           priority
         />
-        {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-black/50 z-10" />
-        {/* Gradient overlay for extra depth */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/50 z-20" />
       </motion.div>
 
-      {/* Subtle Background Pattern */}
+      {/* Optional Background Noise Pattern */}
       <div className="absolute inset-0 bg-[url('/patterns/noise.svg')] bg-repeat opacity-10 z-30 pointer-events-none" />
 
-      {/* Text Content - Overlaid on Image */}
+      {/* Main Content */}
       <div className="container mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 relative z-40">
         <motion.div
           className="text-center text-white"
@@ -81,14 +79,12 @@ export function HeroSection({
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
         >
-          {/* Icon */}
           <motion.div variants={itemVariants} className="mb-6 flex justify-center">
             <div className="p-4 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
               <Zap className="h-12 w-12 md:h-16 md:w-16 text-white" />
             </div>
           </motion.div>
 
-          {/* Main Heading */}
           <motion.h1
             className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl xl:text-7xl mb-4"
             variants={itemVariants}
@@ -99,7 +95,6 @@ export function HeroSection({
             </span>
           </motion.h1>
 
-          {/* Tagline */}
           <motion.span
             className="block text-blue-300 font-semibold text-lg md:text-xl mb-6"
             variants={itemVariants}
@@ -107,7 +102,6 @@ export function HeroSection({
             Smart Sub-Metering Solutions
           </motion.span>
 
-          {/* Description */}
           <motion.p
             className="max-w-2xl mx-auto text-lg md:text-xl text-gray-200 mb-8"
             variants={itemVariants}
@@ -115,14 +109,11 @@ export function HeroSection({
             Meter separation for landlords and property owners.
           </motion.p>
 
-          {/* Feature Points */}
-          <motion.div
-            className="mb-10 space-y-3 max-w-md mx-auto"
-            variants={itemVariants}
-          >
+          {/* Bullet Points */}
+          <motion.div className="mb-10 space-y-3 max-w-md mx-auto" variants={itemVariants}>
             {bulletPoints.map((point, index) => (
-              <motion.div 
-                key={point} 
+              <motion.div
+                key={point}
                 className="flex items-center justify-center bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -135,11 +126,12 @@ export function HeroSection({
           </motion.div>
 
           {/* CTA Button */}
-          <motion.div
-            className="mb-8"
-            variants={itemVariants}
-          >
-            <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white border-0 shadow-2xl px-8 py-4 text-lg font-semibold transition-all duration-300 hover:scale-105">
+          <motion.div className="mb-8" variants={itemVariants}>
+            <Button
+              asChild
+              size="lg"
+              className="bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white border-0 shadow-2xl px-8 py-4 text-lg font-semibold transition-all duration-300 hover:scale-105"
+            >
               <Link href="/#contact" aria-label="Request a free estimate via contact section">
                 Request Free Estimate
               </Link>
