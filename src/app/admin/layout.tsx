@@ -44,7 +44,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading, logOut } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [isAdminRouteAllowed, setIsAdminRouteAllowed] = useState(false);
   const { toast } = useToast();
@@ -73,7 +73,7 @@ export default function AdminLayout({
   }, [user, loading, router, toast]);
 
   const handleLogout = async () => {
-    await logOut();
+    await logout();
   };
 
   if (loading) {

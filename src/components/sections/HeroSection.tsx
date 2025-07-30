@@ -42,9 +42,14 @@ type HeroSectionProps = {
 };
 
 export function HeroSection({
-  imageUrl = "https://placehold.co/1200x600.png",
+  imageUrl,
   imageHint = "smart meter",
 }: HeroSectionProps) {
+  // Provide a fallback image and validate the imageUrl
+  const validImageUrl = imageUrl && imageUrl.trim() !== '' 
+    ? imageUrl 
+    : null; // Use null to trigger gradient fallback
+
   return (
     <section className="relative h-[80vh] md:h-[85vh] flex items-center justify-center overflow-hidden">
       {/* Background Image */}
@@ -54,15 +59,24 @@ export function HeroSection({
         initial="hidden"
         animate="visible"
       >
-        <Image
-          src={imageUrl}
-          alt="Smart meter solutions for modern buildings"
-          fill
-          sizes="100vw"
-          className="object-cover object-center"
-          data-ai-hint={imageHint}
-          priority
-        />
+        {validImageUrl ? (
+          <Image
+            src={validImageUrl}
+            alt="Smart meter solutions for modern buildings"
+            fill
+            sizes="100vw"
+            className="object-cover object-center"
+            data-ai-hint={imageHint}
+            priority
+            onError={(e) => {
+              // Handle image load errors - could trigger a state update to show gradient
+              console.warn('Failed to load hero image:', validImageUrl);
+            }}
+          />
+        ) : (
+          // Fallback gradient background if no image is available
+          <div className="w-full h-full bg-gradient-to-br from-blue-900 via-slate-800 to-emerald-900" />
+        )}
         <div className="absolute inset-0 bg-black/50 z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/50 z-20" />
       </motion.div>

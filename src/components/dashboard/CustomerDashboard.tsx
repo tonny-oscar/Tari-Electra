@@ -102,59 +102,9 @@ export default function CustomerDashboard() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // Sample products - in production, this would come from Firestore
-  const [products] = useState<Product[]>([
-    { 
-      id: '1', 
-      name: 'Wireless Headphones', 
-      price: 99.99, 
-      image: '🎧', 
-      stock: 15,
-      description: 'High-quality wireless headphones with noise cancellation',
-      rating: 4.5,
-      category: 'Electronics'
-    },
-    { 
-      id: '2', 
-      name: 'Smart Watch', 
-      price: 249.99, 
-      image: '⌚', 
-      stock: 8,
-      description: 'Feature-rich smartwatch with health monitoring',
-      rating: 4.8,
-      category: 'Wearables'
-    },
-    { 
-      id: '3', 
-      name: 'Laptop Stand', 
-      price: 79.99, 
-      image: '💻', 
-      stock: 20,
-      description: 'Ergonomic adjustable laptop stand',
-      rating: 4.3,
-      category: 'Accessories'
-    },
-    { 
-      id: '4', 
-      name: 'Bluetooth Speaker', 
-      price: 129.99, 
-      image: '🔊', 
-      stock: 12,
-      description: 'Portable wireless speaker with premium sound',
-      rating: 4.6,
-      category: 'Audio'
-    },
-    { 
-      id: '5', 
-      name: 'Phone Case', 
-      price: 24.99, 
-      image: '📱', 
-      stock: 25,
-      description: 'Protective case with wireless charging support',
-      rating: 4.2,
-      category: 'Accessories'
-    }
-  ]);
+  // Products from Firestore
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
 
   // Order tracking stages
   const trackingStages: TrackingStage[] = [
@@ -192,22 +142,73 @@ export default function CustomerDashboard() {
         setCustomerData(data);
 
         // Load orders from Firestore
-        const ordersQuery = query(
-          collection(db, 'orders'),
-          where('customerId', '==', user.uid),
-          orderBy('createdAt', 'desc')
-        );
+        const tryOptimizedOrdersQuery = () => {
+          const ordersQuery = query(
+            collection(db, 'orders'),
+            where('customerId', '==', user.uid),
+            orderBy('createdAt', 'desc')
+          );
 
-        const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
-          const ordersList = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })) as Order[];
-          setOrders(ordersList);
-        });
+          return onSnapshot(ordersQuery, (snapshot) => {
+            const ordersList = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            })) as Order[];
+            setOrders(ordersList);
+          }, (error) => {
+            console.error('Optimized orders query failed, trying fallback:', error);
+            
+            if (error.code === 'failed-precondition') {
+              // Use fallback query without orderBy
+              tryFallbackOrdersQuery();
+            } else if (error.code === 'permission-denied') {
+              toast({
+                title: 'Access Denied',
+                description: 'Unable to load your orders. Please contact support.',
+                variant: 'destructive',
+              });
+            }
+          });
+        };
+
+        const tryFallbackOrdersQuery = () => {
+          console.log('Using fallback query for orders...');
+          const simpleOrdersQuery = query(
+            collection(db, 'orders'),
+            where('customerId', '==', user.uid)
+          );
+          
+          return onSnapshot(simpleOrdersQuery, (snapshot) => {
+            const ordersList = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            })) as Order[];
+            
+            // Sort manually by createdAt
+            ordersList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            setOrders(ordersList);
+            
+            toast({
+              title: 'Orders Loaded',
+              description: 'Orders loaded using fallback method. Consider creating database indexes for better performance.',
+            });
+          }, (error) => {
+            console.error('Fallback orders query also failed:', error);
+            toast({
+              title: 'Error Loading Orders',
+              description: 'Unable to load your orders. Please try again later.',
+              variant: 'destructive',
+            });
+          });
+        };
+
+        // Try optimized query first
+        const unsubscribe = tryOptimizedOrdersQuery();
 
         setIsLoading(false);
-        return () => unsubscribe();
+        return () => {
+          if (unsubscribe) unsubscribe();
+        };
       } catch (error) {
         console.error('Error loading customer data:', error);
         toast({
@@ -222,9 +223,155 @@ export default function CustomerDashboard() {
     loadCustomerData();
   }, [user, loading, router, toast]);
 
+  // Load products from Firestore
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setProductsLoading(true);
+        
+        // Try the optimized query first, fall back to simple query
+        const tryOptimizedQuery = () => {
+          const productsQuery = query(
+            collection(db, 'products'),
+            where('status', '==', 'active'),
+            orderBy('createdAt', 'desc')
+          );
+
+          return onSnapshot(productsQuery, (snapshot) => {
+            const productsList = snapshot.docs.map(doc => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                name: data.name || 'Unnamed Product',
+                price: Number(data.price) || 0,
+                image: data.image || '📦',
+                stock: Number(data.stock) || 0,
+                description: data.description || 'No description available',
+                rating: Number(data.rating) || 4.0,
+                category: data.category || 'General'
+              } as Product;
+            });
+            
+            setProducts(productsList);
+            setProductsLoading(false);
+          }, (error) => {
+            console.error('Optimized query failed, trying fallback:', error);
+            
+            if (error.code === 'failed-precondition') {
+              // Use fallback query without orderBy
+              tryFallbackQuery();
+            } else if (error.code === 'permission-denied') {
+              toast({
+                title: 'Access Denied',
+                description: 'You don\'t have permission to view products. Please contact support.',
+                variant: 'destructive',
+              });
+              setProductsLoading(false);
+            } else {
+              toast({
+                title: 'Error Loading Products',
+                description: 'Failed to load products. Please refresh the page.',
+                variant: 'destructive',
+              });
+              setProductsLoading(false);
+            }
+          });
+        };
+
+        const tryFallbackQuery = () => {
+          console.log('Using fallback query for products...');
+          const fallbackQuery = query(
+            collection(db, 'products'),
+            where('status', '==', 'active')
+          );
+
+          return onSnapshot(fallbackQuery, (snapshot) => {
+            const productsList = snapshot.docs.map(doc => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                name: data.name || 'Unnamed Product',
+                price: Number(data.price) || 0,
+                image: data.image || '📦',
+                stock: Number(data.stock) || 0,
+                description: data.description || 'No description available',
+                rating: Number(data.rating) || 4.0,
+                category: data.category || 'General'
+              } as Product;
+            });
+            
+            // Sort manually by createdAt
+            productsList.sort((a, b) => {
+              const aDoc = snapshot.docs.find(doc => doc.id === a.id);
+              const bDoc = snapshot.docs.find(doc => doc.id === b.id);
+              const aDate = aDoc?.data().createdAt?.toDate?.() || new Date(0);
+              const bDate = bDoc?.data().createdAt?.toDate?.() || new Date(0);
+              return bDate.getTime() - aDate.getTime();
+            });
+            
+            setProducts(productsList);
+            setProductsLoading(false);
+            
+            toast({
+              title: 'Products Loaded',
+              description: 'Products loaded using fallback method. Consider creating database indexes for better performance.',
+            });
+          }, (error) => {
+            console.error('Fallback query also failed:', error);
+            toast({
+              title: 'Error Loading Products',
+              description: 'Unable to load products. Please check your connection and try again.',
+              variant: 'destructive',
+            });
+            setProductsLoading(false);
+          });
+        };
+
+        // Start with optimized query
+        const unsubscribe = tryOptimizedQuery();
+        return () => {
+          if (unsubscribe) unsubscribe();
+        };
+
+      } catch (error) {
+        console.error('Error setting up products listener:', error);
+        toast({
+          title: 'Setup Error',
+          description: 'Failed to initialize products. Please refresh the page.',
+          variant: 'destructive',
+        });
+        setProductsLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, [toast]);
+
   // Cart functions
   const addToCart = (product: Product) => {
+    // Check if product is in stock
+    if (product.stock <= 0) {
+      toast({
+        title: 'Out of Stock',
+        description: `${product.name} is currently out of stock.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const existingItem = cart.find(item => item.id === product.id);
+    const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
+    
+    // Check if adding one more would exceed stock
+    if (currentQuantityInCart >= product.stock) {
+      toast({
+        title: 'Stock Limit Reached',
+        description: `Only ${product.stock} items available for ${product.name}.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (existingItem) {
       setCart(cart.map(item =>
         item.id === product.id
@@ -234,6 +381,7 @@ export default function CustomerDashboard() {
     } else {
       setCart([...cart, { ...product, quantity: 1 }]);
     }
+    
     toast({
       title: 'Added to Cart',
       description: `${product.name} added to your cart.`,
@@ -241,9 +389,23 @@ export default function CustomerDashboard() {
   };
 
   const updateCartQuantity = (productId: string, change: number) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
     setCart(cart.map(item => {
       if (item.id === productId) {
         const newQuantity = item.quantity + change;
+        
+        // Check stock limits when increasing quantity
+        if (change > 0 && newQuantity > product.stock) {
+          toast({
+            title: 'Stock Limit Reached',
+            description: `Only ${product.stock} items available for ${product.name}.`,
+            variant: 'destructive',
+          });
+          return item;
+        }
+        
         return newQuantity > 0 ? { ...item, quantity: newQuantity } : item;
       }
       return item;
@@ -433,6 +595,7 @@ export default function CustomerDashboard() {
                 products={products} 
                 addToCart={addToCart}
                 cart={cart}
+                isLoading={productsLoading}
               />
             )}
             {activeTab === 'cart' && (
@@ -530,7 +693,7 @@ function DashboardTab({ customerData, orders, cart, trackingStages }: {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Spent</p>
-                <p className="text-2xl font-bold">${totalSpent.toFixed(2)}</p>
+                <p className="text-2xl font-bold">KSH {totalSpent.toFixed(2)}</p>
               </div>
               <DollarSign className="w-8 h-8 text-purple-600" />
             </div>
@@ -584,27 +747,67 @@ function DashboardTab({ customerData, orders, cart, trackingStages }: {
 }
 
 // Products Tab Component
-function ProductsTab({ products, addToCart, cart }: {
+function ProductsTab({ products, addToCart, cart, isLoading }: {
   products: Product[];
   addToCart: (product: Product) => void;
   cart: CartItem[];
+  isLoading: boolean;
 }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const categories = ['All', ...Array.from(new Set(products.map(p => p.category)))];
+  const categories = ['All', ...Array.from(new Set(products.map(p => p.category || 'General')))];
 
   const filteredProducts = selectedCategory === 'All' 
     ? products 
-    : products.filter(product => product.category === selectedCategory);
+    : products.filter(product => (product.category || 'General') === selectedCategory);
 
   const getCartItemQuantity = (productId: string) => {
     const item = cart.find(item => item.id === productId);
     return item ? item.quantity : 0;
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Products</h1>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="overflow-hidden">
+              <CardContent className="p-6">
+                <div className="animate-pulse">
+                  <div className="w-16 h-16 bg-gray-200 rounded mx-auto mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded mb-4"></div>
+                  <div className="h-8 bg-gray-200 rounded"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Products</h1>
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No products available</h3>
+            <p className="text-gray-600">Products will appear here once they are added by the admin.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Products</h1>
+        <h1 className="text-2xl font-bold">Products ({products.length})</h1>
         <div className="flex space-x-2">
           {categories.map(category => (
             <Button
@@ -646,7 +849,7 @@ function ProductsTab({ products, addToCart, cart }: {
               
               <div className="flex items-center justify-between mb-4">
                 <span className="text-2xl font-bold text-blue-600">
-                  ${product.price.toFixed(2)}
+                  KSH {product.price.toFixed(2)}
                 </span>
                 <Badge variant={product.stock > 0 ? "default" : "destructive"}>
                   {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
@@ -667,7 +870,7 @@ function ProductsTab({ products, addToCart, cart }: {
                   className="w-full"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add to Cart
+                  {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
                 </Button>
               </div>
             </CardContent>
@@ -720,7 +923,7 @@ function CartTab({ cart, updateCartQuantity, removeFromCart, getCartTotal, place
                     <h3 className="font-semibold">{item.name}</h3>
                     <p className="text-sm text-gray-600">{item.description}</p>
                     <p className="text-lg font-bold text-blue-600">
-                      ${item.price.toFixed(2)}
+                      KSH {item.price.toFixed(2)}
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -742,7 +945,7 @@ function CartTab({ cart, updateCartQuantity, removeFromCart, getCartTotal, place
                   </div>
                   <div className="text-right">
                     <p className="font-semibold">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      KSH {(item.price * item.quantity).toFixed(2)}
                     </p>
                     <Button
                       variant="ghost"
@@ -767,7 +970,7 @@ function CartTab({ cart, updateCartQuantity, removeFromCart, getCartTotal, place
             <CardContent className="space-y-4">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
-                <span>${getCartTotal().toFixed(2)}</span>
+                <span>KSH {getCartTotal().toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Shipping:</span>
@@ -775,7 +978,7 @@ function CartTab({ cart, updateCartQuantity, removeFromCart, getCartTotal, place
               </div>
               <div className="flex justify-between">
                 <span>Tax:</span>
-                <span>${(getCartTotal() * 0.1).toFixed(2)}</span>
+                <span>KSH {(getCartTotal() * 0.1).toFixed(2)}</span>
               </div>
               <div className="border-t pt-4">
                 <div className="flex justify-between font-bold text-lg">
@@ -873,12 +1076,12 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
                           <div>
                             <p className="font-medium">{item.name}</p>
                             <p className="text-sm text-gray-600">
-                              Qty: {item.quantity} × ${item.price.toFixed(2)}
+                              Qty: {item.quantity} × KSH {item.price.toFixed(2)}
                             </p>
                           </div>
                         </div>
                         <p className="font-semibold">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          KSH {(item.price * item.quantity).toFixed(2)}
                         </p>
                       </div>
                     ))}

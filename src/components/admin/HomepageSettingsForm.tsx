@@ -1,10 +1,9 @@
-
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useFormStatus, useActionState } from 'react-dom'; // Keep useFormStatus from react-dom
-// Import useActionState from 'react' directly for newer React/Next.js versions if issues persist with react-dom export
-// For now, assuming Next.js handles the react-dom export correctly for useActionState
+import { useFormStatus } from 'react-dom';
+// Import useActionState from 'react' for newer versions
+import { useActionState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,11 +35,7 @@ function SubmitButton() {
 
 export function HomepageSettingsForm({ initialSettings }: HomepageSettingsFormProps) {
   const { toast } = useToast();
-  // Corrected: useActionState should be imported from 'react' in modern Next.js/React
-  // However, the error message points to ReactDOM.useFormState being renamed, 
-  // and Next.js sometimes aliases React.useActionState through react-dom for server actions.
-  // Let's try importing directly from 'react' for useActionState.
-  const [state, formAction] = React.useActionState(updateHomepageSettingsAction, initialFormState);
+  const [state, formAction] = useActionState(updateHomepageSettingsAction, initialFormState);
   const formRef = useRef<HTMLFormElement>(null);
   const imageUrlRef = useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(initialSettings?.heroImageUrl || null);
@@ -95,35 +90,46 @@ export function HomepageSettingsForm({ initialSettings }: HomepageSettingsFormPr
     }
   };
 
+  const handleImageUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const url = event.target.value;
+    setImagePreview(url || null);
+  };
+
+  const handleImageError = () => {
+    setImagePreview('https://placehold.co/300x200.png?text=Invalid+Image');
+  };
+
   return (
     <form action={formAction} ref={formRef}>
       <CardContent className="space-y-6 p-0 md:p-6">
         <h3 className="text-lg font-medium text-foreground">Hero Section</h3>
         
         <div className="space-y-2">
-            <Label htmlFor="imageFile">Upload Hero Image (Optional)</Label>
-            <Input 
-                id="imageFile" 
-                name="imageFile" 
-                type="file" 
-                accept="image/*" 
-                onChange={handleImageChange}
-                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-            />
-            <p className="text-xs text-muted-foreground">Upload an image or provide a URL below. Upload will populate URL field.</p>
+          <Label htmlFor="imageFile">Upload Hero Image (Optional)</Label>
+          <Input 
+            id="imageFile" 
+            name="imageFile" 
+            type="file" 
+            accept="image/*" 
+            onChange={handleImageChange}
+            className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+          />
+          <p className="text-xs text-muted-foreground">Upload an image or provide a URL below. Upload will populate URL field.</p>
         </div>
 
-        {imagePreview && (
+        {imagePreview && imagePreview !== 'https://placehold.co/300x200.png?text=Invalid+Image' && (
           <div className="space-y-2">
             <Label>Hero Image Preview</Label>
-            <Image 
-              src={imagePreview} 
-              alt="Hero image preview" 
-              width={300} 
-              height={200} // Assuming a 3:2 aspect ratio for preview
-              className="rounded-md border object-contain bg-muted"
-              onError={() => setImagePreview('https://placehold.co/300x200.png?text=Invalid+Image')}
-            />
+            <div className="relative w-[300px] h-[200px] border rounded-md overflow-hidden bg-muted">
+              <Image 
+                src={imagePreview} 
+                alt="Hero image preview" 
+                fill
+                sizes="300px"
+                className="object-cover"
+                onError={handleImageError}
+              />
+            </div>
           </div>
         )}
         
@@ -137,9 +143,11 @@ export function HomepageSettingsForm({ initialSettings }: HomepageSettingsFormPr
               placeholder="https://example.com/hero.png or populated by upload" 
               defaultValue={initialSettings?.heroImageUrl || ''}
               ref={imageUrlRef}
-              onChange={(e) => setImagePreview(e.target.value)} 
+              onChange={handleImageUrlChange} 
             />
-            {state.fields?.heroImageUrl && <p className="text-sm text-destructive mt-1">{state.fields.heroImageUrl.join(', ')}</p>}
+            {state.fields?.heroImageUrl && (
+              <p className="text-sm text-destructive mt-1">{state.fields.heroImageUrl.join(', ')}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="heroImageHint">Hero Image AI Hint</Label>
@@ -150,7 +158,9 @@ export function HomepageSettingsForm({ initialSettings }: HomepageSettingsFormPr
               defaultValue={initialSettings?.heroImageHint || ''} 
             />
             <p className="text-xs text-muted-foreground">Optional. One or two keywords for AI image search.</p>
-            {state.fields?.heroImageHint && <p className="text-sm text-destructive mt-1">{state.fields.heroImageHint.join(', ')}</p>}
+            {state.fields?.heroImageHint && (
+              <p className="text-sm text-destructive mt-1">{state.fields.heroImageHint.join(', ')}</p>
+            )}
           </div>
         </div>
         

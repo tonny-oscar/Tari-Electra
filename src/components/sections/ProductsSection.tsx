@@ -9,9 +9,9 @@ import type { Product } from "@/lib/types";
 import Image from "next/image";
 import { Button } from "../ui/button";
 import Link from "next/link";
-import { useCart } from "@/context/CartContext"; // ✅ Import the cart hook
+import { useCart } from "@/context/CartContext";
 import { toast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth"; // ✅ Proper path to your hook
+import { useAuth } from "@/hooks/useAuth";
 
 type ProductsSectionProps = {
   products: Product[];
@@ -30,17 +30,17 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
+const DEFAULT_IMAGE = 'https://placehold.co/600x400.png';
+
 export function ProductsSection({ products }: ProductsSectionProps) {
-  const hasProducts = products && products.length > 0;
+  const hasProducts = products?.length > 0;
   const { addToCart } = useCart();
-  const { user } = useAuth(); // ✅ Check if user is logged in
+  const { user } = useAuth();
 
   const getCategoryIcon = (category: string) => {
-    if (category.toLowerCase().includes('meter')) {
-      return <Gauge className="h-10 w-10 text-primary" />;
-    } else if (category.toLowerCase().includes('service')) {
-      return <SplitSquareHorizontal className="h-10 w-10 text-primary" />;
-    }
+    const lower = category.toLowerCase();
+    if (lower.includes('meter')) return <Gauge className="h-10 w-10 text-primary" />;
+    if (lower.includes('service')) return <SplitSquareHorizontal className="h-10 w-10 text-primary" />;
     return <ShoppingBag className="h-10 w-10 text-primary" />;
   };
 
@@ -86,10 +86,11 @@ export function ProductsSection({ products }: ProductsSectionProps) {
                 <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full bg-background overflow-hidden">
                   <div className="aspect-[3/2] w-full relative bg-muted">
                     <Image
-                      src={product.imageUrl || 'https://placehold.co/600x400.png'}
-                      alt={product.name}
+                      src={product.imageUrl || DEFAULT_IMAGE}
+                      alt={product.name || "Product Image"}
                       fill
                       className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 33vw"
                     />
                   </div>
                   <CardHeader className="items-center text-center pt-6">
@@ -98,11 +99,13 @@ export function ProductsSection({ products }: ProductsSectionProps) {
                     </div>
                     <CardTitle className="text-2xl font-semibold">{product.name}</CardTitle>
                   </CardHeader>
+
                   <CardContent className="flex-grow">
                     <CardDescription className="text-base text-muted-foreground mb-6 text-center h-20 overflow-hidden line-clamp-4">
                       {product.description}
                     </CardDescription>
-                    {product.features && product.features.length > 0 && (
+
+                    {Array.isArray(product.features) && product.features.length > 0 && (
                       <div className="space-y-2 mb-4">
                         <h4 className="text-sm font-semibold text-foreground text-center mb-2">Key Features:</h4>
                         {product.features.slice(0, 3).map((feature, index) => (
@@ -114,6 +117,7 @@ export function ProductsSection({ products }: ProductsSectionProps) {
                       </div>
                     )}
                   </CardContent>
+
                   <CardFooter className="flex-col items-center pt-4 border-t">
                     <p className="text-center text-primary font-bold text-2xl mb-4">
                       {product.price > 0 ? `KES ${product.price.toFixed(2)}` : 'Request Quote'}
@@ -141,3 +145,5 @@ export function ProductsSection({ products }: ProductsSectionProps) {
     </motion.section>
   );
 }
+
+
