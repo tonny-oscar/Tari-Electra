@@ -31,14 +31,14 @@ const mainNavItems = [
 ];
 
 export function Header() {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, isAdmin, isCustomer } = useAuth();
   const { cartItems } = useCart();
 
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   const cartTotal = cartItems.reduce((total, item) => total + item.quantity * item.price, 0);
 
   const handleLogout = async () => {
-    await logout(); // ✅ Corrected here
+    await logout();
   };
 
   return (
@@ -56,7 +56,7 @@ export function Header() {
             </Button>
           ))}
 
-          {user && (
+          {isAdmin && (
             <Button variant="ghost" asChild className="text-muted-foreground hover:text-primary hover:bg-primary/10 px-2 lg:px-3">
               <Link href="/admin">
                 <Settings className="h-4 w-4 mr-1 lg:mr-2" />
@@ -69,35 +69,39 @@ export function Header() {
         <div className="flex items-center gap-2 md:gap-3">
           <ThemeToggle />
 
-          <Link href="/cart">
-            <Button variant="outline" size="icon" className="relative">
-              <ShoppingBag className="h-5 w-5" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-4 w-4 text-xs rounded-full bg-primary text-white flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </Button>
-          </Link>
+          {isCustomer && (
+            <Link href="/cart">
+              <Button variant="outline" size="icon" className="relative">
+                <ShoppingBag className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-4 w-4 text-xs rounded-full bg-primary text-white flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
+          )}
 
           {loading ? (
             <Button variant="outline" size="sm" disabled>Loading...</Button>
           ) : user ? (
             <>
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button size="sm" className="hidden sm:flex">Get a Free Estimate</Button>
-                </SheetTrigger>
-                <SheetContent className="sm:max-w-lg w-[90vw] overflow-y-auto">
-                  <SheetHeader className="mb-4">
-                    <SheetTitle>Request a Free Estimate</SheetTitle>
-                    <SheetDescription>
-                      Fill out the form below and we&apos;ll get back to you as soon as possible.
-                    </SheetDescription>
-                  </SheetHeader>
-                  <ContactSection />
-                </SheetContent>
-              </Sheet>
+              {isCustomer && (
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button size="sm" className="hidden sm:flex">Get a Free Estimate</Button>
+                  </SheetTrigger>
+                  <SheetContent className="sm:max-w-lg w-[90vw] overflow-y-auto">
+                    <SheetHeader className="mb-4">
+                      <SheetTitle>Request a Free Estimate</SheetTitle>
+                      <SheetDescription>
+                        Fill out the form below and we&apos;ll get back to you as soon as possible.
+                      </SheetDescription>
+                    </SheetHeader>
+                    <ContactSection />
+                  </SheetContent>
+                </Sheet>
+              )}
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -115,8 +119,9 @@ export function Header() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/admin">
-                      <Settings className="mr-2 h-4 w-4" />Admin Dashboard
+                    <Link href={isAdmin ? '/admin' : '/customer/dashboard'}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      {isAdmin ? 'Admin Dashboard' : 'My Dashboard'}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -137,6 +142,7 @@ export function Header() {
             </div>
           )}
 
+          {/* Mobile Navigation */}
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
@@ -155,14 +161,18 @@ export function Header() {
                     </Button>
                   ))}
 
-                  <Button asChild variant="ghost" className="text-lg justify-start px-3 py-2">
-                    <Link href="/cart">
-                      <ShoppingBag className="h-5 w-5 mr-3" />
-                      Cart ({cartCount})
-                    </Link>
-                  </Button>
+                  {isCustomer && (
+                    <Button asChild variant="ghost" className="text-lg justify-start px-3 py-2">
+                      <Link href="/cart">
+                        <ShoppingBag className="h-5 w-5 mr-3" />
+                        Cart ({cartCount})
+                      </Link>
+                    </Button>
+                  )}
 
-                  <p className="text-sm px-3 py-1 text-muted-foreground">Total: KES {cartTotal}</p>
+                  {isCustomer && (
+                    <p className="text-sm px-3 py-1 text-muted-foreground">Total: KES {cartTotal}</p>
+                  )}
 
                   <hr className="my-3" />
 
@@ -171,8 +181,9 @@ export function Header() {
                   ) : user ? (
                     <>
                       <Button variant="ghost" asChild className="text-lg justify-start px-3 py-2">
-                        <Link href="/admin">
-                          <Settings className="h-5 w-5 mr-3" />Admin
+                        <Link href={isAdmin ? '/admin' : '/customer/dashboard'}>
+                          <Settings className="h-5 w-5 mr-3" />
+                          {isAdmin ? 'Admin Dashboard' : 'My Dashboard'}
                         </Link>
                       </Button>
                       <Button onClick={handleLogout} variant="ghost" className="text-lg text-destructive justify-start px-3 py-2">
@@ -194,11 +205,13 @@ export function Header() {
                     </>
                   )}
 
-                  <Button asChild className="mt-4 text-lg justify-start px-3 py-2">
-                    <Link href="/contact">Get a Free Estimate</Link>
-                  </Button>
+                  {isCustomer && (
+                    <Button asChild className="mt-4 text-lg justify-start px-3 py-2">
+                      <Link href="/contact">Get a Free Estimate</Link>
+                    </Button>
+                  )}
 
-                  {cartCount > 0 && (
+                  {isCustomer && cartCount > 0 && (
                     <Link href="/checkout">
                       <Button className="mt-2 w-full">Proceed to Payment</Button>
                     </Link>

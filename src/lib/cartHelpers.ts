@@ -14,7 +14,12 @@ export async function getUserCart(uid: string) {
 
 export async function saveUserCart(uid: string, items: Product[]) {
   const cartDocRef = doc(db, 'carts', uid);
-  await setDoc(cartDocRef, { items });
+  try {
+    await setDoc(cartDocRef, { items });
+  } catch (error) {
+    console.error('Error saving user cart:', error);
+    throw error;
+  }
 }
 
 export async function addToUserCart(uid: string, product: Product) {
@@ -24,7 +29,9 @@ export async function addToUserCart(uid: string, product: Product) {
 
   if (existing) {
     updatedCart = currentCart.map((item) =>
-      item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+      item.id === product.id
+        ? { ...item, quantity: (item.quantity ?? 1) + 1 }
+        : item
     );
   } else {
     updatedCart = [...currentCart, { ...product, quantity: 1 }];
@@ -36,5 +43,15 @@ export async function addToUserCart(uid: string, product: Product) {
 
 export async function clearUserCart(uid: string) {
   const cartDocRef = doc(db, 'carts', uid);
-  await updateDoc(cartDocRef, { items: [] });
+  try {
+    const cartSnap = await getDoc(cartDocRef);
+    if (cartSnap.exists()) {
+      await updateDoc(cartDocRef, { items: [] });
+    } else {
+      await setDoc(cartDocRef, { items: [] });
+    }
+  } catch (error) {
+    console.error('Error clearing user cart:', error);
+    throw error;
+  }
 }
