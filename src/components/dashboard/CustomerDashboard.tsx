@@ -26,18 +26,24 @@ import {
   DollarSign,
   Zap
 } from 'lucide-react';
+import { doc, getDoc, collection, query, where, orderBy, onSnapshot, updateDoc } from 'firebase/firestore';
+import {
+  getCustomerDashboardStats,
+  getProducts,
+  createOrder,
+  updateOrderStatus,
+  saveCart,
+  type Product,
+  type CartItem,
+  type Order
+} from '@/lib/firebase/store';
 import { auth, db } from '@/lib/firebase/client';
-import { 
-  doc, 
-  getDoc, 
-  updateDoc, 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  orderBy, 
-  onSnapshot 
-} from 'firebase/firestore';
+import {
+  getCustomerData,
+  updateCustomerProfile,
+  type CustomerData,
+  type SubmeterApplication
+} from '@/lib/firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -50,44 +56,7 @@ import { SubmeterApplicationDialog } from './SubmeterDialog';
 import { SubmeterTab } from './SubmeterTab';
 import { format } from 'date-fns';
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  stock: number;
-  description?: string;
-  rating?: number;
-  category?: string;
-}
 
-interface CartItem extends Product {
-  quantity: number;
-}
-
-interface Order {
-  id: string;
-  items: CartItem[];
-  total: number;
-  status: number;
-  createdAt: string;
-  estimatedDelivery: string;
-  trackingNumber?: string;
-}
-
-interface CustomerData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-  orders: Order[];
-  profile: {
-    phone: string;
-    address: string;
-    city: string;
-    country: string;
-  };
-}
 
 interface TrackingStage {
   id: number;
@@ -102,14 +71,12 @@ export function CustomerDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [submeterApplications, setSubmeterApplications] = useState<any[]>([]);
+  const [submeterApplications, setSubmeterApplications] = useState<SubmeterApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
-  const { toast } = useToast();
-
-  // Products from Firestore
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
+  const router = useRouter();
+  const { toast } = useToast();
 
   // Load submeter applications
   useEffect(() => {
@@ -125,7 +92,7 @@ export function CustomerDashboard() {
       const apps = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as SubmeterApplication[];
       setSubmeterApplications(apps);
     });
 
@@ -142,6 +109,9 @@ export function CustomerDashboard() {
 
   // Authentication check and data loading
   useEffect(() => {
+    let isSubscribed = true;
+    let unsubscribeOrders: (() => void) | undefined;
+
     if (loading) return;
     
     if (!user) {
@@ -154,45 +124,56 @@ export function CustomerDashboard() {
         const customerDoc = await getDoc(doc(db, 'customers', user.uid));
         
         if (!customerDoc.exists()) {
-          toast({
-            title: 'Account Not Found',
-            description: 'Customer account not found. Please sign up.',
-            variant: 'destructive',
-          });
-          await signOut(auth);
-          router.push('/signup');
+          if (isSubscribed) {
+            toast({
+              title: 'Account Not Found',
+              description: 'Customer account not found. Please sign up.',
+              variant: 'destructive',
+            });
+            await signOut(auth);
+            router.push('/signup');
+          }
           return;
         }
+
+        if (!isSubscribed) return;
 
         const data = customerDoc.data() as CustomerData;
         setCustomerData(data);
 
-        // Load orders from Firestore
+        // Try optimized orders query first
         const tryOptimizedOrdersQuery = () => {
           const ordersQuery = query(
             collection(db, 'orders'),
             where('customerId', '==', user.uid),
             orderBy('createdAt', 'desc')
           );
-
+          
           return onSnapshot(ordersQuery, (snapshot) => {
+            if (!isSubscribed) return;
+            
             const ordersList = snapshot.docs.map(doc => ({
               id: doc.id,
               ...doc.data()
             })) as Order[];
             setOrders(ordersList);
+            setIsLoading(false);
           }, (error) => {
-            console.error('Optimized orders query failed, trying fallback:', error);
+            console.error('Optimized query failed, trying fallback:', error);
             
             if (error.code === 'failed-precondition') {
               // Use fallback query without orderBy
               tryFallbackOrdersQuery();
-            } else if (error.code === 'permission-denied') {
-              toast({
-                title: 'Access Denied',
-                description: 'Unable to load your orders. Please contact support.',
-                variant: 'destructive',
-              });
+            } else {
+              console.error('Error fetching orders:', error);
+              if (isSubscribed) {
+                toast({
+                  title: 'Error',
+                  description: 'Failed to load orders. Please try again.',
+                  variant: 'destructive',
+                });
+                setIsLoading(false);
+              }
             }
           });
         };
@@ -205,6 +186,8 @@ export function CustomerDashboard() {
           );
           
           return onSnapshot(simpleOrdersQuery, (snapshot) => {
+            if (!isSubscribed) return;
+            
             const ordersList = snapshot.docs.map(doc => ({
               id: doc.id,
               ...doc.data()
@@ -213,6 +196,7 @@ export function CustomerDashboard() {
             // Sort manually by createdAt
             ordersList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             setOrders(ordersList);
+            setIsLoading(false);
             
             toast({
               title: 'Orders Loaded',
@@ -220,50 +204,63 @@ export function CustomerDashboard() {
             });
           }, (error) => {
             console.error('Fallback orders query also failed:', error);
-            toast({
-              title: 'Error Loading Orders',
-              description: 'Unable to load your orders. Please try again later.',
-              variant: 'destructive',
-            });
+            if (isSubscribed) {
+              toast({
+                title: 'Error Loading Orders',
+                description: 'Unable to load your orders. Please try again later.',
+                variant: 'destructive',
+              });
+              setIsLoading(false);
+            }
           });
         };
 
-        // Try optimized query first
-        const unsubscribe = tryOptimizedOrdersQuery();
+        // Set up orders listener
+        unsubscribeOrders = tryOptimizedOrdersQuery();
 
-        setIsLoading(false);
-        return () => {
-          if (unsubscribe) unsubscribe();
-        };
+
       } catch (error) {
         console.error('Error loading customer data:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load customer data.',
-          variant: 'destructive',
-        });
-        setIsLoading(false);
+        if (isSubscribed) {
+          toast({
+            title: 'Error',
+            description: 'Failed to load customer data.',
+            variant: 'destructive',
+          });
+          setIsLoading(false);
+        }
       }
     };
 
     loadCustomerData();
+
+    return () => {
+      isSubscribed = false;
+      if (unsubscribeOrders) {
+        unsubscribeOrders();
+      }
+    };
   }, [user, loading, router, toast]);
 
   // Load products from Firestore
   useEffect(() => {
+    let isSubscribed = true;
+    let unsubscribe: (() => void) | undefined;
+
     const loadProducts = async () => {
       try {
         setProductsLoading(true);
         
-        // Try the optimized query first, fall back to simple query
         const tryOptimizedQuery = () => {
           const productsQuery = query(
             collection(db, 'products'),
             where('status', '==', 'active'),
             orderBy('createdAt', 'desc')
           );
-
+          
           return onSnapshot(productsQuery, (snapshot) => {
+            if (!isSubscribed) return;
+            
             const productsList = snapshot.docs.map(doc => {
               const data = doc.data();
               return {
@@ -287,19 +284,23 @@ export function CustomerDashboard() {
               // Use fallback query without orderBy
               tryFallbackQuery();
             } else if (error.code === 'permission-denied') {
-              toast({
-                title: 'Access Denied',
-                description: 'You don\'t have permission to view products. Please contact support.',
-                variant: 'destructive',
-              });
-              setProductsLoading(false);
+              if (isSubscribed) {
+                toast({
+                  title: 'Access Denied',
+                  description: 'You don\'t have permission to view products. Please contact support.',
+                  variant: 'destructive',
+                });
+                setProductsLoading(false);
+              }
             } else {
-              toast({
-                title: 'Error Loading Products',
-                description: 'Failed to load products. Please refresh the page.',
-                variant: 'destructive',
-              });
-              setProductsLoading(false);
+              if (isSubscribed) {
+                toast({
+                  title: 'Error Loading Products',
+                  description: 'Failed to load products. Please refresh the page.',
+                  variant: 'destructive',
+                });
+                setProductsLoading(false);
+              }
             }
           });
         };
@@ -312,6 +313,8 @@ export function CustomerDashboard() {
           );
 
           return onSnapshot(fallbackQuery, (snapshot) => {
+            if (!isSubscribed) return;
+            
             const productsList = snapshot.docs.map(doc => {
               const data = doc.data();
               return {
@@ -338,39 +341,49 @@ export function CustomerDashboard() {
             setProducts(productsList);
             setProductsLoading(false);
             
-            toast({
-              title: 'Products Loaded',
-              description: 'Products loaded using fallback method. Consider creating database indexes for better performance.',
-            });
+            if (isSubscribed) {
+              toast({
+                title: 'Products Loaded',
+                description: 'Products loaded using fallback method. Consider creating database indexes for better performance.',
+              });
+            }
           }, (error) => {
             console.error('Fallback query also failed:', error);
-            toast({
-              title: 'Error Loading Products',
-              description: 'Unable to load products. Please check your connection and try again.',
-              variant: 'destructive',
-            });
-            setProductsLoading(false);
+            if (isSubscribed) {
+              toast({
+                title: 'Error Loading Products',
+                description: 'Unable to load products. Please check your connection and try again.',
+                variant: 'destructive',
+              });
+              setProductsLoading(false);
+            }
           });
         };
 
         // Start with optimized query
-        const unsubscribe = tryOptimizedQuery();
-        return () => {
-          if (unsubscribe) unsubscribe();
-        };
+        unsubscribe = tryOptimizedQuery();
 
       } catch (error) {
         console.error('Error setting up products listener:', error);
-        toast({
-          title: 'Setup Error',
-          description: 'Failed to initialize products. Please refresh the page.',
-          variant: 'destructive',
-        });
-        setProductsLoading(false);
+        if (isSubscribed) {
+          toast({
+            title: 'Setup Error',
+            description: 'Failed to initialize products. Please refresh the page.',
+            variant: 'destructive',
+          });
+          setProductsLoading(false);
+        }
       }
     };
 
     loadProducts();
+    
+    return () => {
+      isSubscribed = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [toast]);
 
   // Cart functions
@@ -452,7 +465,7 @@ export function CustomerDashboard() {
     try {
       const orderData = {
         customerId: user.uid,
-        customerEmail: user.email,
+        customerEmail: user.email || '',
         items: cart,
         total: getCartTotal(),
         status: 1,
@@ -461,20 +474,20 @@ export function CustomerDashboard() {
         trackingNumber: `TRK${Date.now()}`
       };
 
-      const docRef = await addDoc(collection(db, 'orders'), orderData);
+      const { orderId } = await createOrder(orderData);
       
       toast({
         title: 'Order Placed!',
-        description: `Order #${docRef.id} has been placed successfully.`,
+        description: `Order #${orderId} has been placed successfully.`,
       });
 
       setCart([]);
       setActiveTab('orders');
 
       // Simulate order status updates (in production, this would be handled by backend)
-      setTimeout(() => updateOrderStatus(docRef.id, 2), 3000);
-      setTimeout(() => updateOrderStatus(docRef.id, 3), 8000);
-      setTimeout(() => updateOrderStatus(docRef.id, 4), 15000);
+      setTimeout(() => updateOrderStatusLocal(orderId, 2), 3000);
+      setTimeout(() => updateOrderStatusLocal(orderId, 3), 8000);
+      setTimeout(() => updateOrderStatusLocal(orderId, 4), 15000);
 
     } catch (error) {
       console.error('Error placing order:', error);
@@ -486,7 +499,7 @@ export function CustomerDashboard() {
     }
   };
 
-  const updateOrderStatus = async (orderId: string, newStatus: number) => {
+  const updateOrderStatusLocal = async (orderId: string, newStatus: number) => {
     try {
       await updateDoc(doc(db, 'orders', orderId), {
         status: newStatus,
@@ -754,7 +767,7 @@ function DashboardTab({ customerData, orders, cart, trackingStages }: {
                     <div>
                       <p className="font-medium">Order #{order.id.slice(-8)}</p>
                       <p className="text-sm text-gray-600">
-                        {order.items.length} items • ${order.total.toFixed(2)}
+                        {order.items.length} items • KSH {order.total.toFixed(2)}
                       </p>
                       <p className="text-xs text-gray-500">
                         {new Date(order.createdAt).toLocaleDateString()}
@@ -1015,7 +1028,7 @@ function CartTab({ cart, updateCartQuantity, removeFromCart, getCartTotal, place
               <div className="border-t pt-4">
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total:</span>
-                  <span>${(getCartTotal() * 1.1).toFixed(2)}</span>
+                  <span>KSH {(getCartTotal() * 1.1).toFixed(2)}</span>
                 </div>
               </div>
               <Button onClick={placeOrder} className="w-full" size="lg">
@@ -1077,7 +1090,7 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
                         {new Date(order.createdAt).toLocaleDateString()}
                       </span>
                       <span>•</span>
-                      <span>${order.total.toFixed(2)}</span>
+                      <span>KSH {order.total.toFixed(2)}</span>
                       <span>•</span>
                       <span>{order.items.length} items</span>
                     </div>
@@ -1404,7 +1417,7 @@ function ProfileTab({ customerData, user }: {
               </div>
               <p className="text-sm text-gray-600">Customer Status</p>
               <p className="font-semibold">
-                {customerData.role === 'customer' ? 'Regular' : customerData.role}
+                {customerData.role ? (customerData.role === 'customer' ? 'Regular Customer' : customerData.role.charAt(0).toUpperCase() + customerData.role.slice(1)) : 'Regular Customer'}
               </p>
             </div>
           </div>
