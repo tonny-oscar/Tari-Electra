@@ -1,52 +1,70 @@
 // homepageSettings.ts
 import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import type { HomepageSettings } from '@/lib/types';
 
-export async function getHomepageSettings(): Promise<HomepageSettings | null> {
+const DEFAULT_SETTINGS: HomepageSettings = {
+  heroTitle: 'Welcome to Tari Electra',
+  heroSubtitle: 'Your trusted partner for electrical solutions',
+  heroImageUrl: '',
+  heroImageHint: 'electrical services hero image',
+  aboutTitle: 'About Us',
+  aboutContent: 'We are committed to providing reliable electrical services.',
+  aboutImageUrl: '',
+  servicesTitle: 'Our Services',
+  servicesSubtitle: 'Discover our comprehensive range of electrical services',
+  contactTitle: 'Contact Us',
+  contactSubtitle: 'Get in touch with our expert team',
+};
+
+export async function getHomepageSettings(): Promise<HomepageSettings> {
   console.log('[getHomepageSettings] Fetching homepage settings...');
   
   try {
-    // Match your existing Firestore rules structure
-    const docRef = doc(db, 'homepageSettings', 'main');
+    const docRef = doc(db, 'settings', 'homepage');
     const docSnap = await getDoc(docRef);
     
     if (docSnap.exists()) {
       const data = docSnap.data() as HomepageSettings;
       console.log('[getHomepageSettings] Settings retrieved successfully');
-      return data;
+      return { ...DEFAULT_SETTINGS, ...data };
     } else {
-      console.log('[getHomepageSettings] No settings found, returning defaults');
-      // Return default settings instead of null
-      return {
-        heroImageUrl: '',
-        heroImageHint: '',
-        // Add other default properties as needed
-      };
+      console.log('[getHomepageSettings] No settings found, initializing defaults');
+      // Initialize with default settings
+      await updateDoc(docRef, DEFAULT_SETTINGS);
+      return DEFAULT_SETTINGS;
     }
   } catch (error) {
     console.error('[getHomepageSettings] Error:', error);
-    
-    // Return default settings instead of throwing
-    // This prevents the entire page from failing
-    return {
-      heroImageUrl: '',
-      heroImageHint: '',
-      // Add other default properties as needed
-    };
+    return DEFAULT_SETTINGS;
   }
 }
 
-// Alternative: Client-side version
-export async function getHomepageSettingsClient(): Promise<HomepageSettings | null> {
+export async function updateHomepageSettings(settings: Partial<HomepageSettings>): Promise<void> {
   try {
-    const response = await fetch('/api/homepage-settings');
+    const docRef = doc(db, 'settings', 'homepage');
+    await updateDoc(docRef, {
+      ...settings,
+      updatedAt: new Date().toISOString(),
+    });
+    console.log('[updateHomepageSettings] Settings updated successfully');
+  } catch (error) {
+    console.error('[updateHomepageSettings] Error:', error);
+    throw error;
+  }
+}
+
+// Client-side version (if needed for SSR/CSR hybrid pages)
+export async function getHomepageSettingsClient(): Promise<HomepageSettings> {
+  try {
+    const response = await fetch('/api/settings/homepage');
     if (!response.ok) {
       throw new Error('Failed to fetch settings');
     }
-    return await response.json();
+    const data = await response.json();
+    return { ...DEFAULT_SETTINGS, ...data };
   } catch (error) {
     console.error('Error fetching homepage settings:', error);
-    return null;
+    return DEFAULT_SETTINGS;
   }
 }

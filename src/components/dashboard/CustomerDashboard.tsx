@@ -378,6 +378,7 @@ export function CustomerDashboard() {
 
     loadProducts();
     
+    
     return () => {
       isSubscribed = false;
       if (unsubscribe) {
@@ -546,6 +547,41 @@ export function CustomerDashboard() {
       </div>
     );
   }
+<div className="p-4">
+  <h2 className="text-2xl font-bold mb-4">Available Products</h2>
+
+  {productsLoading ? (
+    <p className="text-muted-foreground">Loading products...</p>
+  ) : products.length === 0 ? (
+    <p className="text-muted-foreground">No products available right now.</p>
+  ) : (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {products.map((product) => (
+        <div key={product.id} className="border rounded-lg p-4 shadow-sm bg-white">
+          <div className="mb-2">
+            <p className="text-lg font-semibold">{product.name}</p>
+            <p className="text-sm text-muted-foreground mb-1">
+              {product.category}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {product.description}
+            </p>
+          </div>
+          <p className="text-primary font-bold text-xl mb-4">
+            KES {product.price.toLocaleString()}
+          </p>
+          <Button
+            disabled={product.stock <= 0}
+            onClick={() => addToCart(product)}
+            className="w-full"
+          >
+            {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+          </Button>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
 
   // Navigation tabs
   const tabs = [

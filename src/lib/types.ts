@@ -81,7 +81,16 @@ export type ContactFormState = Omit<FormState<ContactMessage>, 'fields'> & {
 export type HomepageSettings = {
   heroImageUrl?: string;
   heroImageHint?: string;
-  // Potentially other settings can be added here
+  heroTitle: string;
+  heroSubtitle: string;
+  aboutTitle: string;
+  aboutContent: string;
+  aboutImageUrl?: string;
+  servicesTitle: string;
+  servicesSubtitle: string;
+  contactTitle: string;
+  contactSubtitle: string;
+  updatedAt?: string | Timestamp;
 };
 
 export type HomepageSettingsFormState = FormState<HomepageSettings>;
@@ -92,4 +101,36 @@ export type BlogSubscriber = {
 };
 
 export type BlogSubscriptionFormState = FormState<BlogSubscriber>;
+
+export type SubmeterDocument = {
+  name: string;
+  url: string;
+  type: string;
+  uploadedAt: string | Timestamp;
+};
+
+export type SubmeterApplication = {
+  id: string;
+  userId: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  propertyType: 'residential' | 'commercial' | 'industrial';
+  applicationType: 'new' | 'transfer' | 'upgrade';
+  documents: SubmeterDocument[];
+  status: 'pending' | 'approved' | 'rejected';
+  submissionDate: string | Timestamp;
+  approvalDate?: string | Timestamp;
+  approvalNotes?: string;
+  approvalDocumentUrl?: string;
+  rejectionDate?: string | Timestamp;
+  rejectionNotes?: string;
+  updatedAt?: string | Timestamp;
+  meterNumber?: string;
+  meterType?: string;
+  monthlyConsumption?: number;
+};
+
+export type SubmeterApplicationFormState = FormState<SubmeterApplication>;
 

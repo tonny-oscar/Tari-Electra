@@ -1,3 +1,5 @@
+// src/components/public/ProductsSection.tsx
+
 'use client';
 
 import {
@@ -9,11 +11,8 @@ import type { Product } from "@/lib/types";
 import Image from "next/image";
 import { Button } from "../ui/button";
 import Link from "next/link";
-import { useCart } from "@/context/CartContext";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
-import { useProductStore, initializeProductListeners } from "@/store/products";
 
 const sectionVariants = {
   hidden: { opacity: 0 },
@@ -30,18 +29,9 @@ const itemVariants = {
 
 const DEFAULT_IMAGE = 'https://placehold.co/600x400.png';
 
-export function ProductsSection() {
-  const { products, isLoading } = useProductStore();
+export function ProductsSection({ products }: { products: Product[] }) {
   const hasProducts = products?.length > 0;
-  const { addToCart } = useCart();
   const { user } = useAuth();
-
-  useEffect(() => {
-    const unsubscribe = initializeProductListeners();
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, []);
 
   const getCategoryIcon = (category: string) => {
     const lower = category.toLowerCase();
@@ -59,11 +49,12 @@ export function ProductsSection() {
       return;
     }
 
-    addToCart(product);
     toast({
       title: "Added to Cart",
       description: `${product.name} has been added to your cart.`,
     });
+
+    // Optionally add to cart context if needed
   };
 
   return (
@@ -145,5 +136,3 @@ export function ProductsSection() {
     </motion.section>
   );
 }
-
-
