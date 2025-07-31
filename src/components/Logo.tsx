@@ -21,6 +21,7 @@ export function Logo({ className = '', showLabel = true }: LogoProps) {
           src="/tari-logo.png"
           alt="Tari Electra Logo"
           fill
+          sizes="(max-width: 48px) 100vw, 48px"
           className="object-contain p-1"
           priority
         />

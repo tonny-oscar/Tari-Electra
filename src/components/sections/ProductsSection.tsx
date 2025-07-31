@@ -12,10 +12,8 @@ import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-
-type ProductsSectionProps = {
-  products: Product[];
-};
+import { useEffect } from "react";
+import { useProductStore, initializeProductListeners } from "@/store/products";
 
 const sectionVariants = {
   hidden: { opacity: 0 },
@@ -32,10 +30,18 @@ const itemVariants = {
 
 const DEFAULT_IMAGE = 'https://placehold.co/600x400.png';
 
-export function ProductsSection({ products }: ProductsSectionProps) {
+export function ProductsSection() {
+  const { products, isLoading } = useProductStore();
   const hasProducts = products?.length > 0;
   const { addToCart } = useCart();
   const { user } = useAuth();
+
+  useEffect(() => {
+    const unsubscribe = initializeProductListeners();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
 
   const getCategoryIcon = (category: string) => {
     const lower = category.toLowerCase();
@@ -122,15 +128,9 @@ export function ProductsSection({ products }: ProductsSectionProps) {
                     <p className="text-center text-primary font-bold text-2xl mb-4">
                       {product.price > 0 ? `KES ${product.price.toFixed(2)}` : 'Request Quote'}
                     </p>
-                    {product.price > 0 ? (
-                      <Button className="w-full" onClick={() => handleAddToCart(product)}>
-                        Add to Cart
-                      </Button>
-                    ) : (
-                      <Button asChild className="w-full">
-                        <Link href="/contact">Inquire Now</Link>
-                      </Button>
-                    )}
+                    <Button asChild className="w-full">
+                      <Link href="/contact">Inquire Now</Link>
+                    </Button>
                   </CardFooter>
                 </Card>
               </motion.div>

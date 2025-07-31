@@ -23,7 +23,8 @@ import {
   Phone,
   Mail,
   Calendar,
-  DollarSign
+  DollarSign,
+  Zap
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase/client';
 import { 
@@ -45,6 +46,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { SubmeterApplicationDialog } from './SubmeterDialog';
+import { SubmeterTab } from './SubmeterTab';
+import { format } from 'date-fns';
 
 interface Product {
   id: string;
@@ -92,12 +96,13 @@ interface TrackingStage {
   color: string;
 }
 
-export default function CustomerDashboard() {
+export function CustomerDashboard() {
   const [user, loading, error] = useAuthState(auth);
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [submeterApplications, setSubmeterApplications] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
@@ -105,6 +110,27 @@ export default function CustomerDashboard() {
   // Products from Firestore
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
+
+  // Load submeter applications
+  useEffect(() => {
+    if (!user) return;
+
+    const q = query(
+      collection(db, 'submeterApplications'),
+      where('userId', '==', user.uid),
+      orderBy('submissionDate', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const apps = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setSubmeterApplications(apps);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   // Order tracking stages
   const trackingStages: TrackingStage[] = [
@@ -511,6 +537,7 @@ export default function CustomerDashboard() {
   // Navigation tabs
   const tabs = [
     { id: 'dashboard', name: 'Dashboard', icon: Home },
+    { id: 'submeters', name: 'Sub-Meters', icon: Zap },
     { id: 'products', name: 'Products', icon: Package },
     { id: 'cart', name: 'Cart', icon: ShoppingCart, badge: cart.length },
     { id: 'orders', name: 'Orders', icon: Truck },
@@ -619,6 +646,11 @@ export default function CustomerDashboard() {
               <ProfileTab 
                 customerData={customerData}
                 user={user}
+              />
+            )}
+            {activeTab === 'submeters' && (
+              <SubmeterTab 
+                applications={submeterApplications}
               />
             )}
           </div>

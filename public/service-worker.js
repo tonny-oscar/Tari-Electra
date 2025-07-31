@@ -1,92 +1,39 @@
-// const CACHE_NAME = 'tari-cache-v1';
-// const STATIC_ASSETS = [
-//   '/',
-//   '/index.html',
-//   '/favicon.ico',
-//   '/manifest.webmanifest',
-//   // add more static files as needed
-// ];
-
-// // Install event: pre-cache static assets
-// self.addEventListener('install', (event) => {
-//   console.log('[SW] Install');
-//   event.waitUntil(
-//     caches.open(CACHE_NAME).then((cache) => {
-//       return cache.addAll(STATIC_ASSETS);
-//     })
-//   );
-//   self.skipWaiting();
-// });
-
-// // Activate event: clean up old caches
-// self.addEventListener('activate', (event) => {
-//   console.log('[SW] Activate');
-//   event.waitUntil(
-//     caches.keys().then((cacheNames) =>
-//       Promise.all(
-//         cacheNames.map((cache) => {
-//           if (cache !== CACHE_NAME) {
-//             console.log('[SW] Deleting old cache:', cache);
-//             return caches.delete(cache);
-//           }
-//         })
-//       )
-//     )
-//   );
-//   self.clients.claim();
-// });
-
-// // Fetch event: handle only GET requests
-// self.addEventListener('fetch', (event) => {
-//   if (event.request.method !== 'GET') {
-//     console.log(`[SW] Skipping non-GET request: ${event.request.method} ${event.request.url}`);
-//     return;
-//   }
-
-//   event.respondWith(
-//     caches.match(event.request).then((cachedResponse) => {
-//       if (cachedResponse) {
-//         return cachedResponse;
-//       }
-
-//       return fetch(event.request)
-//         .then((networkResponse) => {
-//           return caches.open(CACHE_NAME).then((cache) => {
-//             // Only cache same-origin responses with status 200
-//             if (
-//               event.request.url.startsWith(self.location.origin) &&
-//               networkResponse.status === 200 &&
-//               networkResponse.type === 'basic'
-//             ) {
-//               cache.put(event.request, networkResponse.clone());
-//             }
-//             return networkResponse;
-//           });
-//         })
-//         .catch((err) => {
-//           console.error('[SW] Fetch failed:', err);
-//           throw err;
-//         });
-//     })
-//   );
-// });
-
-
-const CACHE_NAME = 'tari-cache-v1';
-
+const CACHE_NAME = 'tari-cache-v2';
 const STATIC_ASSETS = [
   '/',
   '/favicon.ico',
-  '/manifest.webmanifest',
-  // ✅ Add any other real static assets from the `public/` folder
+  '/tari-logo.png',
+  '/manifest.webmanifest'
 ];
+
+// Firebase and API domains to bypass caching
+const BYPASS_URLS = [
+  'identitytoolkit.googleapis.com',
+  'firestore.googleapis.com',
+  'firebase-settings.crashlytics.com',
+  'firebase.googleapis.com',
+  'fcmregistrations.googleapis.com',
+  'cloudconfig.googleapis.com'
+];
+
+// Helper function to check if URL should bypass cache
+function shouldBypassCache(url) {
+  return BYPASS_URLS.some(domain => url.includes(domain));
+}
 
 // ✅ Install event – cache defined assets
 self.addEventListener('install', (event) => {
   console.log('[SW] Install');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
+      return Promise.all(
+        STATIC_ASSETS.map(url =>
+          cache.add(url).catch(err => {
+            console.warn(`[SW] Failed to cache ${url}:`, err);
+            return null;
+          })
+        )
+      );
     })
   );
   self.skipWaiting();
@@ -110,39 +57,37 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// ✅ Fetch event – cache-first strategy for GET requests
+// ✅ Fetch event – network-first strategy for dynamic content
 self.addEventListener('fetch', (event) => {
+  // Bypass service worker for Firebase and API requests
+  if (shouldBypassCache(event.request.url)) {
+    return;
+  }
+
+  // Handle only GET requests
   if (event.request.method !== 'GET') {
-    console.log(`[SW] Skipping non-GET request: ${event.request.method} ${event.request.url}`);
     return;
   }
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-
-      return fetch(event.request)
-        .then((networkResponse) => {
-          // Cache only same-origin successful responses
-          if (
-            event.request.url.startsWith(self.location.origin) &&
-            networkResponse.status === 200 &&
-            networkResponse.type === 'basic'
-          ) {
-            return caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse.clone());
-              return networkResponse;
-            });
-          }
-
-          return networkResponse;
-        })
-        .catch((err) => {
-          console.error('[SW] Fetch failed:', err);
-          throw err;
-        });
-    })
+    fetch(event.request)
+      .then((networkResponse) => {
+        // Cache same-origin successful responses
+        if (
+          event.request.url.startsWith(self.location.origin) &&
+          networkResponse.status === 200 &&
+          networkResponse.type === 'basic'
+        ) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      })
+      .catch((error) => {
+        console.log('[SW] Network request failed, trying cache...', error);
+        return caches.match(event.request);
+      })
   );
 });

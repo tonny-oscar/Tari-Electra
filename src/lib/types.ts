@@ -29,14 +29,16 @@ export type BlogPost = {
   content: string;
 };
 
-export type BlogFormState = {
+export type FormState<T> = {
   message: string;
   fields?: Record<string, string[] | undefined>;
   isError?: boolean;
   isSuccess?: boolean;
-  updatedPost?: Partial<BlogPost>;
-  createdPost?: Partial<BlogPost>;
+  updatedItem?: Partial<T>;
+  createdItem?: Partial<T>;
 };
+
+export type BlogFormState = FormState<BlogPost>;
 
 export type Product = {
   id: string; // Firestore document ID
@@ -47,16 +49,12 @@ export type Product = {
   imageUrl?: string;
   imageHint?: string;
   features: string[];
+  stock: number;
+  rating: number;
+  status: 'active' | 'inactive' | 'draft';
 };
 
-export type ProductFormState = {
-  message: string;
-  fields?: Record<string, string[] | undefined>;
-  isError?: boolean;
-  isSuccess?: boolean;
-  updatedProduct?: Partial<Product>;
-  createdProduct?: Partial<Product>;
-};
+export type ProductFormState = FormState<Product>;
 
 
 export type ContactMessage = {
@@ -76,11 +74,8 @@ export type ContactMessageActionState = {
   updatedMessageId?: string;
 };
 
-export type ContactFormState = {
-  message: string;
+export type ContactFormState = Omit<FormState<ContactMessage>, 'fields'> & {
   fields?: Record<string, string>;
-  isError?: boolean;
-  isSuccess?: boolean;
 };
 
 export type HomepageSettings = {
@@ -89,23 +84,12 @@ export type HomepageSettings = {
   // Potentially other settings can be added here
 };
 
-export type HomepageSettingsFormState = {
-  message: string;
-  fields?: Record<string, string[] | undefined>;
-  isError?: boolean;
-  isSuccess?: boolean;
-  updatedSettings?: HomepageSettings;
-};
+export type HomepageSettingsFormState = FormState<HomepageSettings>;
 
 export type BlogSubscriber = {
   email: string; // Document ID in Firestore
   subscribedAt: Timestamp;
 };
 
-export type BlogSubscriptionFormState = {
-  message: string;
-  fields?: Record<string, string[] | undefined>;
-  isError?: boolean;
-  isSuccess?: boolean;
-};
+export type BlogSubscriptionFormState = FormState<BlogSubscriber>;
 
