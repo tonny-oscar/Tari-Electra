@@ -37,6 +37,7 @@ const navLinks = [
   { href: '/admin/products', label: 'Product Management', icon: ShoppingBag },
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
   { href: '/admin/homepage', label: 'Homepage Settings', icon: ImageIcon },
+  { href: '/admin/submeter-requests', label: 'Submeter Requests', icon: CircleUser },
 ];
 
 export default function AdminLayout({

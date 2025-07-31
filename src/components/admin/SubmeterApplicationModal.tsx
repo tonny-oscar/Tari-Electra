@@ -17,6 +17,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { Timestamp } from 'firebase/firestore'; 
+
 
 interface SubmeterApplicationModalProps {
   application: SubmeterApplication | null;
@@ -105,6 +107,25 @@ export default function SubmeterApplicationModal({
 
   if (!application) return null;
 
+const formattedSubmissionDate = (() => {
+  const date = application?.submissionDate;
+
+  if (!date) return 'N/A';
+
+  let jsDate: Date;
+
+  // ✅ Safe check for Firestore Timestamp (has .toDate function)
+  if (typeof date === 'object' && date !== null && typeof (date as any).toDate === 'function') {
+    jsDate = (date as any).toDate();
+  } else if (typeof date === 'string' || typeof date === 'number') {
+    jsDate = new Date(date);
+  } else {
+    return 'N/A';
+  }
+
+  return format(jsDate, 'PPP');
+})();
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl">
@@ -118,7 +139,7 @@ export default function SubmeterApplicationModal({
             <div className="space-y-2">
               <div>
                 <span className="text-sm text-muted-foreground">Submission Date:</span>
-                <p>{application.submissionDate ? format(new Date(application.submissionDate), 'PPP') : 'N/A'}</p>
+                <p>{formattedSubmissionDate}</p>
               </div>
               <div>
                 <span className="text-sm text-muted-foreground">Full Name:</span>

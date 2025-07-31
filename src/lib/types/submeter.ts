@@ -1,6 +1,12 @@
+export interface SubmeterDocument {
+  name: string;
+  url: string;
+  type: string;
+}
+
 export interface SubmeterApplication {
   id?: string;
-  propertyType: 'residential' | 'commercial';
+  propertyType: 'residential' | 'commercial' | 'industrial';
   utilityServices: ('electricity' | 'water')[];
   applicationType: 'new' | 'existing';
   fullName: string;
@@ -17,4 +23,12 @@ export interface SubmeterApplication {
   signature?: string;
   submissionDate: string;
   status: 'pending' | 'approved' | 'rejected';
+  // Additional fields for document management and approval process
+  documents?: SubmeterDocument[];
+  approvalDocumentUrl?: string;
+  approvalDate?: string;
+  approvalNotes?: string;
+  rejectionDate?: string;
+  rejectionNotes?: string;
+  updatedAt?: string;
 }

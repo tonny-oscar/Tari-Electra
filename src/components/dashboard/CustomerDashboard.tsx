@@ -3,16 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useRouter } from 'next/navigation';
-import { 
-  ShoppingCart, 
-  Package, 
-  Truck, 
-  CheckCircle, 
-  Clock, 
-  User, 
-  LogOut, 
-  Plus, 
-  Minus, 
+import {
+  ShoppingCart,
+  Package,
+  Truck,
+  CheckCircle,
+  Clock,
+  User,
+  LogOut,
+  Plus,
+  Minus,
   Trash2,
   Home,
   Settings,
@@ -113,7 +113,7 @@ export function CustomerDashboard() {
     let unsubscribeOrders: (() => void) | undefined;
 
     if (loading) return;
-    
+
     if (!user) {
       router.push('/login');
       return;
@@ -122,7 +122,7 @@ export function CustomerDashboard() {
     const loadCustomerData = async () => {
       try {
         const customerDoc = await getDoc(doc(db, 'customers', user.uid));
-        
+
         if (!customerDoc.exists()) {
           if (isSubscribed) {
             toast({
@@ -148,10 +148,10 @@ export function CustomerDashboard() {
             where('customerId', '==', user.uid),
             orderBy('createdAt', 'desc')
           );
-          
+
           return onSnapshot(ordersQuery, (snapshot) => {
             if (!isSubscribed) return;
-            
+
             const ordersList = snapshot.docs.map(doc => ({
               id: doc.id,
               ...doc.data()
@@ -160,7 +160,7 @@ export function CustomerDashboard() {
             setIsLoading(false);
           }, (error) => {
             console.error('Optimized query failed, trying fallback:', error);
-            
+
             if (error.code === 'failed-precondition') {
               // Use fallback query without orderBy
               tryFallbackOrdersQuery();
@@ -184,20 +184,20 @@ export function CustomerDashboard() {
             collection(db, 'orders'),
             where('customerId', '==', user.uid)
           );
-          
+
           return onSnapshot(simpleOrdersQuery, (snapshot) => {
             if (!isSubscribed) return;
-            
+
             const ordersList = snapshot.docs.map(doc => ({
               id: doc.id,
               ...doc.data()
             })) as Order[];
-            
+
             // Sort manually by createdAt
             ordersList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             setOrders(ordersList);
             setIsLoading(false);
-            
+
             toast({
               title: 'Orders Loaded',
               description: 'Orders loaded using fallback method. Consider creating database indexes for better performance.',
@@ -250,17 +250,17 @@ export function CustomerDashboard() {
     const loadProducts = async () => {
       try {
         setProductsLoading(true);
-        
+
         const tryOptimizedQuery = () => {
           const productsQuery = query(
             collection(db, 'products'),
             where('status', '==', 'active'),
             orderBy('createdAt', 'desc')
           );
-          
+
           return onSnapshot(productsQuery, (snapshot) => {
             if (!isSubscribed) return;
-            
+
             const productsList = snapshot.docs.map(doc => {
               const data = doc.data();
               return {
@@ -274,12 +274,12 @@ export function CustomerDashboard() {
                 category: data.category || 'General'
               } as Product;
             });
-            
+
             setProducts(productsList);
             setProductsLoading(false);
           }, (error) => {
             console.error('Optimized query failed, trying fallback:', error);
-            
+
             if (error.code === 'failed-precondition') {
               // Use fallback query without orderBy
               tryFallbackQuery();
@@ -314,7 +314,7 @@ export function CustomerDashboard() {
 
           return onSnapshot(fallbackQuery, (snapshot) => {
             if (!isSubscribed) return;
-            
+
             const productsList = snapshot.docs.map(doc => {
               const data = doc.data();
               return {
@@ -328,7 +328,7 @@ export function CustomerDashboard() {
                 category: data.category || 'General'
               } as Product;
             });
-            
+
             // Sort manually by createdAt
             productsList.sort((a, b) => {
               const aDoc = snapshot.docs.find(doc => doc.id === a.id);
@@ -337,10 +337,10 @@ export function CustomerDashboard() {
               const bDate = bDoc?.data().createdAt?.toDate?.() || new Date(0);
               return bDate.getTime() - aDate.getTime();
             });
-            
+
             setProducts(productsList);
             setProductsLoading(false);
-            
+
             if (isSubscribed) {
               toast({
                 title: 'Products Loaded',
@@ -377,8 +377,8 @@ export function CustomerDashboard() {
     };
 
     loadProducts();
-    
-    
+
+
     return () => {
       isSubscribed = false;
       if (unsubscribe) {
@@ -401,7 +401,7 @@ export function CustomerDashboard() {
 
     const existingItem = cart.find(item => item.id === product.id);
     const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
-    
+
     // Check if adding one more would exceed stock
     if (currentQuantityInCart >= product.stock) {
       toast({
@@ -421,7 +421,7 @@ export function CustomerDashboard() {
     } else {
       setCart([...cart, { ...product, quantity: 1 }]);
     }
-    
+
     toast({
       title: 'Added to Cart',
       description: `${product.name} added to your cart.`,
@@ -435,7 +435,7 @@ export function CustomerDashboard() {
     setCart(cart.map(item => {
       if (item.id === productId) {
         const newQuantity = item.quantity + change;
-        
+
         // Check stock limits when increasing quantity
         if (change > 0 && newQuantity > product.stock) {
           toast({
@@ -445,7 +445,7 @@ export function CustomerDashboard() {
           });
           return item;
         }
-        
+
         return newQuantity > 0 ? { ...item, quantity: newQuantity } : item;
       }
       return item;
@@ -476,7 +476,7 @@ export function CustomerDashboard() {
       };
 
       const { orderId } = await createOrder(orderData);
-      
+
       toast({
         title: 'Order Placed!',
         description: `Order #${orderId} has been placed successfully.`,
@@ -547,41 +547,41 @@ export function CustomerDashboard() {
       </div>
     );
   }
-<div className="p-4">
-  <h2 className="text-2xl font-bold mb-4">Available Products</h2>
+  <div className="p-4">
+    <h2 className="text-2xl font-bold mb-4">Available Products</h2>
 
-  {productsLoading ? (
-    <p className="text-muted-foreground">Loading products...</p>
-  ) : products.length === 0 ? (
-    <p className="text-muted-foreground">No products available right now.</p>
-  ) : (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {products.map((product) => (
-        <div key={product.id} className="border rounded-lg p-4 shadow-sm bg-white">
-          <div className="mb-2">
-            <p className="text-lg font-semibold">{product.name}</p>
-            <p className="text-sm text-muted-foreground mb-1">
-              {product.category}
+    {productsLoading ? (
+      <p className="text-muted-foreground">Loading products...</p>
+    ) : products.length === 0 ? (
+      <p className="text-muted-foreground">No products available right now.</p>
+    ) : (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {products.map((product) => (
+          <div key={product.id} className="border rounded-lg p-4 shadow-sm bg-white">
+            <div className="mb-2">
+              <p className="text-lg font-semibold">{product.name}</p>
+              <p className="text-sm text-muted-foreground mb-1">
+                {product.category}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {product.description}
+              </p>
+            </div>
+            <p className="text-primary font-bold text-xl mb-4">
+              KES {product.price.toLocaleString()}
             </p>
-            <p className="text-sm text-muted-foreground">
-              {product.description}
-            </p>
+            <Button
+              disabled={product.stock <= 0}
+              onClick={() => addToCart(product)}
+              className="w-full"
+            >
+              {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+            </Button>
           </div>
-          <p className="text-primary font-bold text-xl mb-4">
-            KES {product.price.toLocaleString()}
-          </p>
-          <Button
-            disabled={product.stock <= 0}
-            onClick={() => addToCart(product)}
-            className="w-full"
-          >
-            {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
-          </Button>
-        </div>
-      ))}
-    </div>
-  )}
-</div>
+        ))}
+      </div>
+    )}
+  </div>
 
   // Navigation tabs
   const tabs = [
@@ -636,9 +636,8 @@ export function CustomerDashboard() {
                       <Button
                         key={tab.id}
                         variant={activeTab === tab.id ? "default" : "ghost"}
-                        className={`w-full justify-start ${
-                          activeTab === tab.id ? '' : 'hover:bg-gray-100'
-                        }`}
+                        className={`w-full justify-start ${activeTab === tab.id ? '' : 'hover:bg-gray-100'
+                          }`}
                         onClick={() => setActiveTab(tab.id)}
                       >
                         <TabIcon className="w-4 h-4 mr-3" />
@@ -659,23 +658,23 @@ export function CustomerDashboard() {
           {/* Main Content */}
           <div className="flex-1">
             {activeTab === 'dashboard' && (
-              <DashboardTab 
-                customerData={customerData} 
-                orders={orders} 
+              <DashboardTab
+                customerData={customerData}
+                orders={orders}
                 cart={cart}
                 trackingStages={trackingStages}
               />
             )}
             {activeTab === 'products' && (
-              <ProductsTab 
-                products={products} 
+              <ProductsTab
+                products={products}
                 addToCart={addToCart}
                 cart={cart}
                 isLoading={productsLoading}
               />
             )}
             {activeTab === 'cart' && (
-              <CartTab 
+              <CartTab
                 cart={cart}
                 updateCartQuantity={updateCartQuantity}
                 removeFromCart={removeFromCart}
@@ -685,20 +684,20 @@ export function CustomerDashboard() {
               />
             )}
             {activeTab === 'orders' && (
-              <OrdersTab 
+              <OrdersTab
                 orders={orders}
                 trackingStages={trackingStages}
                 setActiveTab={setActiveTab}
               />
             )}
             {activeTab === 'profile' && (
-              <ProfileTab 
+              <ProfileTab
                 customerData={customerData}
                 user={user}
               />
             )}
             {activeTab === 'submeters' && (
-              <SubmeterTab 
+              <SubmeterTab
                 applications={submeterApplications}
               />
             )}
@@ -837,8 +836,8 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const categories = ['All', ...Array.from(new Set(products.map(p => p.category || 'General')))];
 
-  const filteredProducts = selectedCategory === 'All' 
-    ? products 
+  const filteredProducts = selectedCategory === 'All'
+    ? products
     : products.filter(product => (product.category || 'General') === selectedCategory);
 
   const getCartItemQuantity = (productId: string) => {
@@ -915,11 +914,10 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-4 h-4 ${
-                        i < Math.floor(product.rating || 0)
-                          ? 'text-yellow-400 fill-current'
-                          : 'text-gray-300'
-                      }`}
+                      className={`w-4 h-4 ${i < Math.floor(product.rating || 0)
+                        ? 'text-yellow-400 fill-current'
+                        : 'text-gray-300'
+                        }`}
                     />
                   ))}
                   <span className="text-sm text-gray-600 ml-1">
@@ -927,7 +925,7 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
                   </span>
                 </div>
               </div>
-              
+
               <div className="flex items-center justify-between mb-4">
                 <span className="text-2xl font-bold text-blue-600">
                   KSH {product.price.toFixed(2)}
@@ -992,7 +990,7 @@ function CartTab({ cart, updateCartQuantity, removeFromCart, getCartTotal, place
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Shopping Cart ({cart.length} items)</h1>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           {cart.map((item) => (
@@ -1106,7 +1104,7 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Your Orders ({orders.length})</h1>
-      
+
       <div className="space-y-6">
         {orders.map((order) => {
           const currentStage = trackingStages.find(stage => stage.id === order.status);
@@ -1179,26 +1177,23 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
 
                         return (
                           <div key={stage.id} className="flex items-center">
-                            <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
-                              isCompleted 
-                                ? 'bg-blue-600 border-blue-600 text-white' 
-                                : isCurrent
+                            <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${isCompleted
+                              ? 'bg-blue-600 border-blue-600 text-white'
+                              : isCurrent
                                 ? 'border-blue-600 text-blue-600'
                                 : 'border-gray-300 text-gray-400'
-                            }`}>
+                              }`}>
                               <StageIcon className="w-4 h-4" />
                             </div>
                             <div className="ml-2 hidden sm:block">
-                              <p className={`text-xs font-medium ${
-                                isCompleted || isCurrent ? 'text-blue-600' : 'text-gray-400'
-                              }`}>
+                              <p className={`text-xs font-medium ${isCompleted || isCurrent ? 'text-blue-600' : 'text-gray-400'
+                                }`}>
                                 {stage.name}
                               </p>
                             </div>
                             {index < trackingStages.length - 1 && (
-                              <div className={`w-8 sm:w-16 h-0.5 mx-2 ${
-                                order.status > stage.id ? 'bg-blue-600' : 'bg-gray-300'
-                              }`} />
+                              <div className={`w-8 sm:w-16 h-0.5 mx-2 ${order.status > stage.id ? 'bg-blue-600' : 'bg-gray-300'
+                                }`} />
                             )}
                           </div>
                         );
@@ -1434,7 +1429,7 @@ function ProfileTab({ customerData, user }: {
               </div>
               <p className="text-sm text-gray-600">Member Since</p>
               <p className="font-semibold">
-                {user?.metadata?.creationTime 
+                {user?.metadata?.creationTime
                   ? new Date(user.metadata.creationTime).toLocaleDateString()
                   : 'N/A'
                 }
