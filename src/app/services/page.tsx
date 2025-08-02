@@ -11,11 +11,25 @@ export const metadata: Metadata = {
 
 // ✅ Firestore fetch (must be in async function)
 async function fetchProducts(): Promise<Product[]> {
-  const snapshot = await getDocs(collection(db, 'products'));
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as Product[];
+  try {
+    const snapshot = await getDocs(collection(db, 'products'));
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data?.name || 'Unnamed Product',
+        description: data?.description || 'No description available',
+        price: Number(data?.price) || 0,
+        category: data?.category || 'General',
+        features: Array.isArray(data?.features) ? data.features : [],
+        imageUrl: data?.imageUrl || 'https://placehold.co/600x400.png',
+        ...data,
+      };
+    }) as Product[];
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
 }
 
 export default async function ServicesPage() {
