@@ -16,14 +16,18 @@ export function Logo({ className = '', showLabel = true }: LogoProps) {
         className
       )}
     >
-      <div className="relative w-16 h-16 rounded-full overflow-hidden bg-primary/10 border-2 border-primary shadow-md group-hover:scale-105 transition-transform duration-300">
+      <div className="relative group-hover:scale-110 transition-all duration-300">
         <Image
           src="/tari-logo.png"
           alt="Tari Electra Logo"
-          fill
-          sizes="(max-width: 48px) 100vw, 48px"
-          className="object-contain p-1"
-          priority
+          width={80}
+          height={80}
+          className="object-contain drop-shadow-xl"
+          priority={true}
+          style={{
+            width: '80px',
+            height: '80px'
+          }}
         />
       </div>
       {showLabel && (

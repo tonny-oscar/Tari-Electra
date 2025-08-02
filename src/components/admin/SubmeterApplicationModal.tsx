@@ -59,7 +59,7 @@ export default function SubmeterApplicationModal({
 
       toast({
         title: 'Application Approved',
-        description: 'The submeter application has been approved successfully.',
+        description: 'The sub-meter application has been approved successfully.',
       });
 
       onClose();
@@ -89,7 +89,7 @@ export default function SubmeterApplicationModal({
 
       toast({
         title: 'Application Rejected',
-        description: 'The submeter application has been rejected.',
+        description: 'The sub-meter application has been rejected.',
       });
 
       onClose();
@@ -130,7 +130,7 @@ const formattedSubmissionDate = (() => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Submeter Application Details</DialogTitle>
+          <DialogTitle>Sub-Meter Application Form Details</DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-4 py-4">

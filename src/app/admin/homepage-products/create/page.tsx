@@ -1,4 +1,3 @@
-
 import { CreateProductForm } from '@/components/admin/CreateProductForm';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -7,18 +6,18 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Create Customer Product - Admin',
-  description: 'Add a new product for customer dashboard shopping.',
+  title: 'Create Homepage Product - Admin',
+  description: 'Add a new product to display on the homepage.',
 };
 
-export default function CreateProductPage() {
+export default function CreateHomepageProductPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-start mb-6">
         <Button asChild variant="outline" size="sm">
-          <Link href="/admin/products">
+          <Link href="/admin/homepage-products">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Product List
+            Back to Homepage Products
           </Link>
         </Button>
       </div>
@@ -26,12 +25,12 @@ export default function CreateProductPage() {
         <CardHeader>
           <div className="flex items-center gap-3">
             <PackagePlus className="h-6 w-6 text-primary" />
-            <CardTitle className="text-2xl">Create Customer Product</CardTitle>
+            <CardTitle className="text-2xl">Create Homepage Product</CardTitle>
           </div>
-          <CardDescription>Fill in the details for the new product or service. Data will be saved to customerProducts collection.</CardDescription>
+          <CardDescription>Add a new product to display on the homepage products section.</CardDescription>
         </CardHeader>
         <CardContent>
-          <CreateProductForm mode="create" />
+          <CreateProductForm mode="create" isHomepageProduct={true} />
         </CardContent>
       </Card>
     </div>

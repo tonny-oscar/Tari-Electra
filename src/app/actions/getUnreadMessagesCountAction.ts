@@ -6,7 +6,7 @@ import { getUnreadMessagesCount } from '@/data/contactMessages';
 export async function getUnreadMessagesCountAction(): Promise<number> {
   try {
     // console.log('[getUnreadMessagesCountAction] Fetching unread messages count.');
-    const count = getUnreadMessagesCount();
+    const count = await getUnreadMessagesCount();
     // console.log('[getUnreadMessagesCountAction] Unread count:', count);
     return count;
   } catch (error) {

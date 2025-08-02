@@ -1,22 +1,20 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { getCustomerProducts } from '@/data/customerProducts';
+import { getProducts } from '@/data/products';
 import { PlusCircle, ShoppingBag, Package } from 'lucide-react';
 import Image from 'next/image';
-import { ProductActionsCell } from '@/components/admin/ProductActionsCell';
+import { HomepageProductActionsCell } from '@/components/admin/HomepageProductActionsCell';
 import type { Metadata } from 'next';
 import type { Product } from '@/lib/types';
-import { unstable_noStore as noStore } from 'next/cache';
 
 export const metadata: Metadata = {
-  title: 'Customer Products - Admin',
-  description: 'Manage products for customer dashboard shopping.',
+  title: 'Homepage Products - Admin',
+  description: 'Manage products displayed on the public homepage.',
 };
 
-export default async function AdminProductsListPage() {
-  noStore();
-  const products: Product[] = await getCustomerProducts();
+export default async function AdminHomepageProductsPage() {
+  const products: Product[] = await getProducts();
 
   return (
     <div className="space-y-6">
@@ -24,12 +22,12 @@ export default async function AdminProductsListPage() {
         <div className="flex items-center gap-3">
           <ShoppingBag className="h-7 w-7 text-primary" />
           <div>
-            <h1 className="text-2xl font-semibold">Product Management</h1>
-            <p className="text-muted-foreground">Manage customer products and services. (Saved to customerProducts collection)</p>
+            <h1 className="text-2xl font-semibold">Homepage Products</h1>
+            <p className="text-muted-foreground">Manage products displayed on the public homepage (products collection)</p>
           </div>
         </div>
         <Button asChild>
-          <Link href="/admin/products/create">
+          <Link href="/admin/homepage-products/create">
             <PlusCircle className="mr-2 h-4 w-4" /> Create New Product
           </Link>
         </Button>
@@ -39,11 +37,11 @@ export default async function AdminProductsListPage() {
         <Card className="shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-muted-foreground" /> No Products Yet
+              <Package className="h-5 w-5 text-muted-foreground" /> No Homepage Products Yet
             </CardTitle>
           </CardHeader>
           <CardContent className="py-10 text-center">
-            <p className="text-muted-foreground">No products yet. Start by creating one!</p>
+            <p className="text-muted-foreground">No homepage products yet. Start by creating one!</p>
           </CardContent>
         </Card>
       ) : (
@@ -62,7 +60,7 @@ export default async function AdminProductsListPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-semibold line-clamp-2 leading-tight">{product.name}</CardTitle>
                 <CardDescription className="text-xs text-muted-foreground pt-1">
-                  <span className="font-medium text-primary">{product.category}</span> &bull; KES {product.price.toFixed(2)}
+                  <span className="font-medium text-primary">{product.category}</span> • KES {product.price.toFixed(2)}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-grow pt-0 text-sm">
@@ -82,7 +80,7 @@ export default async function AdminProductsListPage() {
                 )}
               </CardContent>
               <CardFooter className="gap-2 pt-4 items-center border-t mt-auto">
-                <ProductActionsCell productId={product.id} productName={product.name} />
+                <HomepageProductActionsCell productId={product.id} productName={product.name} />
               </CardFooter>
             </Card>
           ))}

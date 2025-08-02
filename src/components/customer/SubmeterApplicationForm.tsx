@@ -23,6 +23,7 @@ interface SubmeterApplicationFormData {
   areaTown: string;
   mainMeterAccountNumber: string;
   currentReading: number;
+  submetersRegistered?: string;
   suppliesOtherAreas: boolean;
   linkedMeterNumbers?: string;
   termsAccepted: boolean;
@@ -239,6 +240,20 @@ export default function SubmeterApplicationForm() {
             className="mt-2"
             placeholder="Enter current reading"
           />
+        </div>
+
+        {/* Sub-meters Registered */}
+        <div>
+          <Label>List of Sub-meters registered</Label>
+          <textarea
+            {...register('submetersRegistered')}
+            className="mt-2 w-full p-2 border border-gray-300 rounded-md"
+            rows={4}
+            placeholder="List all sub-meters registered (one per line or separated by commas)"
+          />
+          <p className="text-sm text-gray-500 mt-1">
+            Please list all sub-meters that are currently registered or will be registered
+          </p>
         </div>
 
         {/* Supplies Other Areas */}

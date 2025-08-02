@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { SubmeterApplicationDialog } from './SubmeterDialog';
+import { SubmeterApplicationDetailsModal } from './SubmeterApplicationDetailsModal';
 
 interface SubmeterApplication {
   id: string;
@@ -20,10 +22,18 @@ interface SubmeterTabProps {
 }
 
 export function SubmeterTab({ applications }: SubmeterTabProps) {
+  const [selectedApplication, setSelectedApplication] = useState<SubmeterApplication | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
+  const handleViewDetails = (application: SubmeterApplication) => {
+    setSelectedApplication(application);
+    setIsDetailsModalOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Sub-Meter Applications</h2>
+        <h2 className="text-2xl font-bold">Submeter Application Forms</h2>
         <SubmeterApplicationDialog />
       </div>
 
@@ -33,7 +43,7 @@ export function SubmeterTab({ applications }: SubmeterTabProps) {
             <CardContent className="py-6">
               <div className="text-center space-y-4">
                 <p className="text-muted-foreground">
-                  You haven't submitted any sub-meter applications yet.
+                  You haven't submitted any sub-meter application forms yet.
                 </p>
                 <SubmeterApplicationDialog />
               </div>
@@ -71,10 +81,7 @@ export function SubmeterTab({ applications }: SubmeterTabProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      // TODO: Implement view details modal
-                      console.log('View application details:', app.id);
-                    }}
+                    onClick={() => handleViewDetails(app)}
                   >
                     View Details
                   </Button>
@@ -84,6 +91,15 @@ export function SubmeterTab({ applications }: SubmeterTabProps) {
           ))
         )}
       </div>
+
+      <SubmeterApplicationDetailsModal
+        application={selectedApplication}
+        isOpen={isDetailsModalOpen}
+        onClose={() => {
+          setIsDetailsModalOpen(false);
+          setSelectedApplication(null);
+        }}
+      />
     </div>
   );
 }

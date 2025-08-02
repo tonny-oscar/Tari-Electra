@@ -12,8 +12,8 @@ import { AlertCircle, Loader2, Save, Edit3, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { ProductFormState, Product } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { createProductAction } from '@/app/actions/createProductAction';
-import { updateProductAction } from '@/app/actions/updateProductAction';
+import { addCustomerProductAction, updateCustomerProductAction } from '@/app/actions/customerProductActions';
+import { addHomepageProductAction, updateHomepageProductAction } from '@/app/actions/homepageProductActions';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
@@ -21,6 +21,7 @@ type CreateProductFormProps = {
   initialData?: Partial<Product>;
   currentId?: string;
   mode?: 'create' | 'edit';
+  isHomepageProduct?: boolean;
 };
 
 const initialFormState: ProductFormState = {
@@ -40,7 +41,7 @@ function SubmitButton({ mode }: { mode: 'create' | 'edit' }) {
   );
 }
 
-export function CreateProductForm({ initialData, currentId, mode = 'create' }: CreateProductFormProps) {
+export function CreateProductForm({ initialData, currentId, mode = 'create', isHomepageProduct = false }: CreateProductFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [formState, setFormState] = useState<ProductFormState>(initialFormState);
@@ -53,11 +54,47 @@ export function CreateProductForm({ initialData, currentId, mode = 'create' }: C
     console.log('[CreateProductForm] FormData entries:', Array.from(formData.entries()));
     setFormState(prev => ({ ...prev, message: '', fields: undefined, isError: false, isSuccess: false })); 
 
-    let result: ProductFormState;
+    const productData = {
+      name: formData.get('name') as string,
+      description: formData.get('description') as string,
+      price: parseFloat(formData.get('price') as string),
+      category: formData.get('category') as string,
+      features: (formData.get('features') as string)?.split(',').map(f => f.trim()).filter(Boolean) || [],
+      imageUrl: formData.get('imageUrl') as string,
+      imageHint: formData.get('imageHint') as string,
+    };
+
+    let result;
     if (mode === 'edit' && currentId) {
-      result = await updateProductAction(currentId, initialFormState, formData);
+      if (isHomepageProduct) {
+        result = await updateHomepageProductAction(currentId, productData);
+      } else {
+        result = await updateCustomerProductAction(currentId, productData);
+      }
     } else {
-      result = await createProductAction(initialFormState, formData);
+      if (isHomepageProduct) {
+        result = await addHomepageProductAction(productData);
+      } else {
+        result = await addCustomerProductAction(productData);
+      }
+    }
+    
+    if (result.isSuccess) {
+      setFormState({
+        message: result.message,
+        isSuccess: true,
+        isError: false,
+      });
+      if (mode === 'create') {
+        formRef.current?.reset();
+        setImagePreview(null);
+      }
+    } else {
+      setFormState({
+        message: result.message,
+        isSuccess: false,
+        isError: true,
+      });
     }
     console.log('[CreateProductForm] Server action result:', result);
     setFormState(result);

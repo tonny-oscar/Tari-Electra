@@ -24,7 +24,7 @@ export async function deleteProductAction(
   }
 
   try {
-    const success = deleteProductFromData(id);
+    const success = await deleteProductFromData(id);
 
     if (success) {
       console.log('[deleteProductAction] Product Deleted (In-Memory):', id);

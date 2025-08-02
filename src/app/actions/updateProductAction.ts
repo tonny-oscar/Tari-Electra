@@ -49,7 +49,7 @@ export async function updateProductAction(
   console.log('[updateProductAction] Validation successful. Validated data:', validatedFields.data);
 
   try {
-    const productToUpdate = findProduct(currentId);
+    const productToUpdate = await findProduct(currentId);
     if (!productToUpdate) {
       console.error('[updateProductAction] Product not found with ID:', currentId);
       return {
@@ -71,7 +71,7 @@ export async function updateProductAction(
     };
     console.log('[updateProductAction] Data for updateProduct:', dataToUpdate);
         
-    const updatedProduct = updateProduct(currentId, dataToUpdate);
+    const updatedProduct = await updateProduct(currentId, dataToUpdate);
 
     if (!updatedProduct) {
         console.error('[updateProductAction] updateProduct returned null for ID:', currentId);

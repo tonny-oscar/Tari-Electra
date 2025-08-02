@@ -22,7 +22,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { FileText, Eye, Filter } from 'lucide-react';
+import { FileText, Eye, Filter, Download } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   DropdownMenu,
@@ -79,6 +79,45 @@ export default function SubmeterApplicationsTable() {
     setIsDocumentModalOpen(true);
   };
 
+  const generatePDF = (application: SubmeterApplication) => {
+    const content = `
+SUB-METER APPLICATION FORM
+
+Submission Date: ${format(typeof application.submissionDate?.toDate === 'function' ? application.submissionDate.toDate() : new Date(application.submissionDate), 'PPP')}
+Application ID: ${application.id}
+
+APPLICANT INFORMATION:
+Full Name: ${application.fullName}
+Email: ${application.email}
+Phone Number: ${application.phoneNumber}
+
+PROPERTY DETAILS:
+Property Type: ${application.propertyType}
+Application Type: ${application.applicationType}
+Physical Location: ${application.physicalLocation}
+Area/Town: ${application.areaTown}
+
+STATUS:
+Current Status: ${application.status}
+${application.approvalDate ? `Approval Date: ${format(new Date(application.approvalDate), 'PPP')}` : ''}
+${application.approvalNotes ? `Admin Notes: ${application.approvalNotes}` : ''}
+${application.rejectionDate ? `Rejection Date: ${format(new Date(application.rejectionDate), 'PPP')}` : ''}
+${application.rejectionNotes ? `Rejection Notes: ${application.rejectionNotes}` : ''}
+
+Generated on: ${format(new Date(), 'PPP')}
+    `;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sub-meter-application-${application.id}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const getBadgeColor = (status: string) => {
     switch (status) {
       case 'approved':
@@ -102,7 +141,7 @@ export default function SubmeterApplicationsTable() {
   if (applications.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">No submeter applications found.</p>
+        <p className="text-gray-500">No sub-meter applications found.</p>
       </div>
     );
   }
@@ -231,17 +270,27 @@ export default function SubmeterApplicationsTable() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedApplication(app);
-                              setIsDetailsModalOpen(true);
-                            }}
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Details
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedApplication(app);
+                                setIsDetailsModalOpen(true);
+                              }}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Details
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => generatePDF(app)}
+                              title="Download Application"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );

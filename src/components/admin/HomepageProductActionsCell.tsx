@@ -1,9 +1,9 @@
-
 'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Loader2, AlertCircle } from 'lucide-react';
+import { Edit, Trash2, Loader2, AlertCircle, ShoppingCart } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,31 +16,32 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { deleteCustomerProductAction } from '@/app/actions/customerProductActions';
+import { deleteHomepageProductAction } from '@/app/actions/homepageProductActions';
 import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
-type ProductActionsCellProps = {
+type HomepageProductActionsCellProps = {
   productId: string;
   productName: string;
 };
 
-export function ProductActionsCell({ productId, productName }: ProductActionsCellProps) {
+export function HomepageProductActionsCell({ productId, productName }: HomepageProductActionsCellProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useAuth();
   const [isDeletePending, startDeleteTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   const handleDelete = async () => {
     setError(null);
     startDeleteTransition(async () => {
-      const result = await deleteCustomerProductAction(productId);
+      const result = await deleteHomepageProductAction(productId);
       if (result.isSuccess) {
         toast({
           title: 'Success!',
           description: result.message,
         });
-        router.refresh(); // Re-fetches data for the current route
+        router.refresh();
       } else {
         setError(result.message);
         toast({
@@ -52,14 +53,30 @@ export function ProductActionsCell({ productId, productName }: ProductActionsCel
     });
   };
 
+  const handleBuyNow = () => {
+    if (!user) {
+      window.location.href = '/login';
+    } else {
+      window.location.href = '/contact';
+    }
+  };
+
   return (
-    <div className="flex items-center gap-2 justify-end w-full">
-      <Button variant="outline" size="sm" asChild className="flex-1 min-w-[80px]">
-        <Link href={`/admin/products/edit/${productId}`}>
-          <Edit className="mr-2 h-4 w-4" /> Edit
-        </Link>
+    <div className="flex flex-col gap-2 w-full">
+      <Button 
+        size="sm" 
+        onClick={handleBuyNow}
+        className="w-full"
+      >
+        <ShoppingCart className="mr-2 h-4 w-4" /> Buy Now
       </Button>
-      <AlertDialog>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" asChild className="flex-1 min-w-[80px]">
+          <Link href={`/admin/homepage-products/edit/${productId}`}>
+            <Edit className="mr-2 h-4 w-4" /> Edit
+          </Link>
+        </Button>
+        <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button variant="outline" size="sm" className="text-destructive hover:text-destructive-foreground hover:bg-destructive/90 border-destructive/50 flex-1 min-w-[80px]">
             {isDeletePending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
@@ -70,7 +87,7 @@ export function ProductActionsCell({ productId, productName }: ProductActionsCel
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the product titled &quot;{productName}&quot;.
+              This action cannot be undone. This will permanently delete the homepage product titled "{productName}".
             </AlertDialogDescription>
           </AlertDialogHeader>
           {error && (
@@ -86,6 +103,7 @@ export function ProductActionsCell({ productId, productName }: ProductActionsCel
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   );
 }

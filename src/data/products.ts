@@ -1,5 +1,5 @@
 
-import { db } from '@/lib/firebase/client'; // Ensure db is correctly imported
+import { db } from '@/lib/firebase'; // Ensure db is correctly imported
 import type { Product } from '@/lib/types';
 import {
   collection,
@@ -154,3 +154,6 @@ export async function deleteProduct(id: string): Promise<boolean> {
     return false;
   }
 }
+
+// Alias for findProduct to match expected function name
+export const getProduct = findProduct;

@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase/client';
+import { auth, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
 interface CustomerData {

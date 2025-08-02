@@ -14,7 +14,7 @@ export async function markMessageReadAction(
 ): Promise<ContactMessageActionState> {
   console.log(`[markMessageReadAction] Action invoked for ID: ${id}, Mark as Read: ${isRead}`);
   try {
-    const updatedMessage = markAsReadInData(id, isRead);
+    const updatedMessage = await markAsReadInData(id, isRead);
     if (updatedMessage) {
       revalidatePath('/admin/messages');
       return {
@@ -40,7 +40,7 @@ export async function markMessageReadAction(
 export async function deleteMessageAction(id: string): Promise<ContactMessageActionState> {
   console.log('[deleteMessageAction] Action invoked for ID:', id);
   try {
-    const success = deleteMessageInData(id);
+    const success = await deleteMessageInData(id);
     if (success) {
       revalidatePath('/admin/messages');
       return {

@@ -12,6 +12,7 @@ import {
   MessageSquare,
   ShoppingBag,
   Settings as SettingsIcon, // Renamed to avoid conflict with component
+  Settings,
   ImageIcon,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -34,10 +35,12 @@ import { useToast } from '@/hooks/use-toast';
 const navLinks = [
   { href: '/admin', label: 'Dashboard', icon: Home },
   { href: '/admin/blog', label: 'Blog Management', icon: Newspaper },
-  { href: '/admin/products', label: 'Product Management', icon: ShoppingBag },
+  { href: '/admin/products', label: 'Customer Products', icon: ShoppingBag },
+  { href: '/admin/homepage-products', label: 'Homepage Products', icon: ImageIcon },
+  { href: '/admin/orders', label: 'Orders Management', icon: ShoppingBag },
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
-  { href: '/admin/homepage', label: 'Homepage Settings', icon: ImageIcon },
-  { href: '/admin/submeter-requests', label: 'Submeter Requests', icon: CircleUser },
+  { href: '/admin/homepage', label: 'Homepage Settings', icon: SettingsIcon },
+  { href: '/admin/submeter-requests', label: 'Sub-Meter Applications', icon: CircleUser },
 ];
 
 export default function AdminLayout({

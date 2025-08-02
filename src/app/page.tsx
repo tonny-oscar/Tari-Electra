@@ -11,7 +11,10 @@ import { unstable_noStore as noStore } from 'next/cache';
 export default async function HomePage() {
   noStore();
   
-  const homepageSettings = await getHomepageSettings();
+  const [homepageSettings, products] = await Promise.all([
+    getHomepageSettings(),
+    getProducts()
+  ]);
 
   if (!homepageSettings) {
     throw new Error('Failed to load homepage settings');
@@ -24,7 +27,7 @@ export default async function HomePage() {
         imageHint={homepageSettings.heroImageHint}
       />
       <ServiceHighlightsSection />
-      <ProductsSection />
+      <ProductsSection products={products} />
       <TestimonialSection />
       <CallToActionStripSection />
       <ContactSection />

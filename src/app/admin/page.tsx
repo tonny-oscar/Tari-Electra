@@ -85,6 +85,22 @@ export default function AdminDashboardPage() {
                 </Button>
               </CardContent>
             </Card>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <MessageSquare className="h-5 w-5 text-primary" />
+                  Sub-Meter Applications
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Review and approve sub-meter application forms.
+                </p>
+                <Button asChild>
+                  <Link href="/admin/submeter-requests">Manage Applications</Link>
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </CardContent>
       </Card>

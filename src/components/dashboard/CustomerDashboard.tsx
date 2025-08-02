@@ -88,6 +88,8 @@ export function CustomerDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
+  const [meters, setMeters] = useState<any[]>([]);
+  const [metersLoading, setMetersLoading] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -272,105 +274,36 @@ export function CustomerDashboard() {
         setProductsLoading(true);
 
         const tryOptimizedQuery = () => {
-          const productsQuery = query(
-            collection(db, 'products'),
-            where('status', '==', 'active'),
-            orderBy('createdAt', 'desc')
-          );
+          const productsQuery = collection(db, 'customerProducts');
 
           return onSnapshot(productsQuery, (snapshot) => {
             if (!isSubscribed) return;
 
+            console.log('Products snapshot received:', snapshot.size, 'documents');
             const productsList = snapshot.docs.map(doc => {
               const data = doc.data();
+              console.log('Product data:', doc.id, data);
               return {
                 id: doc.id,
                 name: sanitizeUserInput(data.name || 'Unnamed Product'),
                 price: Number(data.price) || 0,
-                image: sanitizeUserInput(data.image || '📦'),
-                stock: Number(data.stock) || 0,
+                image: sanitizeUserInput(data.image || data.imageUrl || '📦'),
+                stock: Number(data.stock) || 100,
                 description: sanitizeUserInput(data.description || 'No description available'),
                 rating: Number(data.rating) || 4.0,
                 category: sanitizeUserInput(data.category || 'General')
               } as Product;
             });
 
+            console.log('Processed products:', productsList);
             setProducts(productsList);
             setProductsLoading(false);
           }, (error) => {
-            console.error('Optimized query failed, trying fallback:', sanitizeForLog(error.message));
-
-            if (error.code === 'failed-precondition') {
-              tryFallbackQuery();
-            } else if (error.code === 'permission-denied') {
-              if (isSubscribed) {
-                toast({
-                  title: 'Access Denied',
-                  description: 'You do not have permission to view products. Please contact support.',
-                  variant: 'destructive',
-                });
-                setProductsLoading(false);
-              }
-            } else {
-              if (isSubscribed) {
-                toast({
-                  title: 'Error Loading Products',
-                  description: 'Failed to load products. Please refresh the page.',
-                  variant: 'destructive',
-                });
-                setProductsLoading(false);
-              }
-            }
-          });
-        };
-
-        const tryFallbackQuery = () => {
-          console.log('Using fallback query for products');
-          const fallbackQuery = query(
-            collection(db, 'products'),
-            where('status', '==', 'active')
-          );
-
-          return onSnapshot(fallbackQuery, (snapshot) => {
-            if (!isSubscribed) return;
-
-            const productsList = snapshot.docs.map(doc => {
-              const data = doc.data();
-              return {
-                id: doc.id,
-                name: sanitizeUserInput(data.name || 'Unnamed Product'),
-                price: Number(data.price) || 0,
-                image: sanitizeUserInput(data.image || '📦'),
-                stock: Number(data.stock) || 0,
-                description: sanitizeUserInput(data.description || 'No description available'),
-                rating: Number(data.rating) || 4.0,
-                category: sanitizeUserInput(data.category || 'General')
-              } as Product;
-            });
-
-            productsList.sort((a, b) => {
-              const aDoc = snapshot.docs.find(doc => doc.id === a.id);
-              const bDoc = snapshot.docs.find(doc => doc.id === b.id);
-              const aDate = aDoc?.data().createdAt?.toDate?.() || new Date(0);
-              const bDate = bDoc?.data().createdAt?.toDate?.() || new Date(0);
-              return bDate.getTime() - aDate.getTime();
-            });
-
-            setProducts(productsList);
-            setProductsLoading(false);
-
-            if (isSubscribed) {
-              toast({
-                title: 'Products Loaded',
-                description: 'Products loaded using fallback method.',
-              });
-            }
-          }, (error) => {
-            console.error('Fallback query failed:', sanitizeForLog(error.message));
+            console.error('Error loading products:', sanitizeForLog(error.message));
             if (isSubscribed) {
               toast({
                 title: 'Error Loading Products',
-                description: 'Unable to load products. Please check your connection and try again.',
+                description: 'Failed to load products. Please refresh the page.',
                 variant: 'destructive',
               });
               setProductsLoading(false);
@@ -378,7 +311,13 @@ export function CustomerDashboard() {
           });
         };
 
+        // Remove fallback query since we're using simple collection query
+        const tryFallbackQuery = () => {
+          console.log('Fallback not needed with simple collection query');
+        };
+
         unsubscribe = tryOptimizedQuery();
+        console.log('Products listener set up for customerProducts collection');
 
       } catch (error) {
         console.error('Error setting up products listener:', sanitizeForLog(String(error)));
@@ -403,6 +342,50 @@ export function CustomerDashboard() {
       }
     };
   }, [toast]);
+
+  // Load meters from Firestore
+  useEffect(() => {
+    let isSubscribed = true;
+    let unsubscribe: (() => void) | undefined;
+
+    const loadMeters = async () => {
+      try {
+        setMetersLoading(true);
+        const metersQuery = query(collection(db, 'meters'));
+
+        unsubscribe = onSnapshot(metersQuery, (snapshot) => {
+          if (!isSubscribed) return;
+
+          const metersList = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+
+          setMeters(metersList);
+          setMetersLoading(false);
+        }, (error) => {
+          console.error('Error loading meters:', sanitizeForLog(error.message));
+          if (isSubscribed) {
+            setMetersLoading(false);
+          }
+        });
+      } catch (error) {
+        console.error('Error setting up meters listener:', sanitizeForLog(String(error)));
+        if (isSubscribed) {
+          setMetersLoading(false);
+        }
+      }
+    };
+
+    loadMeters();
+
+    return () => {
+      isSubscribed = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, []);
 
   // Cart functions
  
@@ -570,7 +553,7 @@ export function CustomerDashboard() {
   // Navigation tabs
   const tabs = [
     { id: 'dashboard', name: 'Dashboard', icon: Home },
-    { id: 'submeters', name: 'Sub-Meters', icon: Zap },
+    { id: 'submeters', name: 'Submeter Application Form', icon: Zap },
     { id: 'products', name: 'Products', icon: Package },
     { id: 'cart', name: 'Cart', icon: ShoppingCart, badge: cart.length },
     { id: 'orders', name: 'Orders', icon: Truck },
@@ -647,6 +630,10 @@ export function CustomerDashboard() {
                 orders={orders}
                 cart={cart}
                 trackingStages={trackingStages}
+                products={products}
+                addToCart={addToCart}
+                meters={meters}
+                metersLoading={metersLoading}
               />
             )}
             {activeTab === 'products' && (
@@ -693,14 +680,20 @@ export function CustomerDashboard() {
 }
 
 // Dashboard Tab Component
-function DashboardTab({ customerData, orders, cart, trackingStages }: {
+function DashboardTab({ customerData, orders, cart, trackingStages, products, addToCart, meters, metersLoading }: {
   customerData: CustomerData;
   orders: Order[];
   cart: CartItem[];
   trackingStages: TrackingStage[];
+  products: Product[];
+  addToCart: (product: Product) => void;
+  meters: any[];
+  metersLoading: boolean;
 }) {
   const recentOrders = orders.slice(0, 3);
   const totalSpent = orders.reduce((sum, order) => sum + order.total, 0);
+  const featuredProducts = products.slice(0, 4);
+  const { toast } = useToast();
 
   return (
     <div className="space-y-6">
@@ -806,6 +799,109 @@ function DashboardTab({ customerData, orders, cart, trackingStages }: {
           )}
         </CardContent>
       </Card>
+
+      {/* Featured Products */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Featured Products ({products.length} total products)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {featuredProducts.length === 0 ? (
+            <div className="text-center py-8">
+              <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">No products available</p>
+              <p className="text-sm text-gray-500">Products will appear when added by admin</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {featuredProducts.map((product) => (
+                <div key={product.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="aspect-square w-full bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                    {product.image && product.image !== '📦' ? (
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover rounded-lg"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className={`text-4xl text-gray-400 ${product.image && product.image !== '📦' ? 'hidden' : ''}`}>📦</div>
+                  </div>
+                  <h4 className="font-medium text-sm mb-1 truncate">{sanitizeUserInput(product.name)}</h4>
+                  <p className="text-lg font-bold text-blue-600 mb-2">KSH {product.price.toFixed(2)}</p>
+                  <Button
+                    onClick={() => addToCart(product)}
+                    disabled={product.stock === 0}
+                    size="sm"
+                    className="w-full"
+                  >
+                    {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Meters */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Meters ({meters.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {metersLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading meters...</p>
+            </div>
+          ) : meters.length === 0 ? (
+            <div className="text-center py-8">
+              <Zap className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">No meters available</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {meters.map((meter) => (
+                <div key={meter.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-center mb-3">
+                    <Zap className="w-8 h-8 text-blue-600 mr-3" />
+                    <div>
+                      <h4 className="font-medium">{sanitizeUserInput(meter.name || meter.id)}</h4>
+                      <p className="text-sm text-gray-600">{sanitizeUserInput(meter.type || 'Meter')}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    {meter.reading && (
+                      <div className="flex justify-between">
+                        <span>Reading:</span>
+                        <span className="font-medium">{meter.reading} kWh</span>
+                      </div>
+                    )}
+                    {meter.status && (
+                      <div className="flex justify-between">
+                        <span>Status:</span>
+                        <Badge variant={meter.status === 'active' ? 'default' : 'secondary'}>
+                          {sanitizeUserInput(meter.status)}
+                        </Badge>
+                      </div>
+                    )}
+                    {meter.location && (
+                      <div className="flex justify-between">
+                        <span>Location:</span>
+                        <span className="font-medium">{sanitizeUserInput(meter.location)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -818,11 +914,60 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
   isLoading: boolean;
 }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  
   const categories = ['All', ...Array.from(new Set(products.map(p => p.category || 'General')))];
 
-  const filteredProducts = selectedCategory === 'All'
-    ? products
-    : products.filter(product => (product.category || 'General') === selectedCategory);
+  // Filter and sort products
+  const filteredAndSortedProducts = React.useMemo(() => {
+    let filtered = products;
+
+    // Filter by category
+    if (selectedCategory !== 'All') {
+      filtered = filtered.filter(product => (product.category || 'General') === selectedCategory);
+    }
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(product => 
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Sort products
+    filtered.sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (sortBy) {
+        case 'price':
+          aValue = a.price;
+          bValue = b.price;
+          break;
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'stock':
+          aValue = a.stock;
+          bValue = b.stock;
+          break;
+        default:
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+      }
+
+      if (sortOrder === 'asc') {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+
+    return filtered;
+  }, [products, selectedCategory, searchTerm, sortBy, sortOrder]);
 
   const getCartItemQuantity = (productId: string) => {
     const item = cart.find(item => item.id === productId);
@@ -840,7 +985,7 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
             <Card key={i} className="overflow-hidden">
               <CardContent className="p-6">
                 <div className="animate-pulse">
-                  <div className="w-16 h-16 bg-gray-200 rounded mx-auto mb-4"></div>
+                  <div className="w-full h-48 bg-gray-200 rounded mb-4"></div>
                   <div className="h-4 bg-gray-200 rounded mb-2"></div>
                   <div className="h-3 bg-gray-200 rounded mb-4"></div>
                   <div className="h-8 bg-gray-200 rounded"></div>
@@ -852,6 +997,8 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
       </div>
     );
   }
+
+  const { toast } = useToast();
 
   if (products.length === 0) {
     return (
@@ -870,76 +1017,134 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Products ({products.length})</h1>
-        <div className="flex space-x-2">
-          {categories.map(category => (
-            <Button
-              key={category}
-              variant={selectedCategory === category ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedCategory(category)}
-            >
-              {category}
-            </Button>
-          ))}
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+        <h1 className="text-2xl font-bold">Products ({filteredAndSortedProducts.length})</h1>
+        
+        {/* Search and Filters */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Input
+            placeholder="Search products..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full sm:w-64"
+          />
+          
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="name">Sort by Name</option>
+            <option value="price">Sort by Price</option>
+            <option value="stock">Sort by Stock</option>
+          </select>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+          >
+            {sortOrder === 'asc' ? '↑' : '↓'}
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredProducts.map((product) => (
-          <Card key={product.id} className="overflow-hidden">
-            <CardContent className="p-6">
-              <div className="text-center mb-4">
-                <div className="text-4xl mb-2">{product.image}</div>
-                <h3 className="font-semibold text-lg">{product.name}</h3>
-                <p className="text-sm text-gray-600 mb-2">{product.description}</p>
-                <div className="flex items-center justify-center space-x-1 mb-2">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-4 h-4 ${i < Math.floor(product.rating || 0)
-                        ? 'text-yellow-400 fill-current'
-                        : 'text-gray-300'
-                        }`}
-                    />
-                  ))}
-                  <span className="text-sm text-gray-600 ml-1">
-                    ({product.rating || 0})
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-2xl font-bold text-blue-600">
-                  KSH {product.price.toFixed(2)}
-                </span>
-                <Badge variant={product.stock > 0 ? "default" : "destructive"}>
-                  {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
-                </Badge>
-              </div>
-
-              <div className="space-y-2">
-                {getCartItemQuantity(product.id) > 0 && (
-                  <div className="text-center">
-                    <Badge variant="secondary">
-                      {getCartItemQuantity(product.id)} in cart
-                    </Badge>
-                  </div>
-                )}
-                <Button
-                  onClick={() => addToCart(product)}
-                  disabled={product.stock === 0}
-                  className="w-full"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Category Filter */}
+      <div className="flex flex-wrap gap-2">
+        {categories.map(category => (
+          <Button
+            key={category}
+            variant={selectedCategory === category ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategory(category)}
+          >
+            {category}
+          </Button>
         ))}
       </div>
+
+      {/* Products Grid */}
+      {filteredAndSortedProducts.length === 0 ? (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No products found</h3>
+            <p className="text-gray-600">Try adjusting your search or filter criteria.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredAndSortedProducts.map((product) => (
+            <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              {/* Product Image */}
+              <div className="aspect-video w-full relative bg-gray-100">
+                {product.image && product.image !== '📦' ? (
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <div className={`w-full h-full flex items-center justify-center ${product.image && product.image !== '📦' ? 'hidden' : ''}`}>
+                  <div className="text-6xl text-gray-400">📦</div>
+                </div>
+              </div>
+              
+              <CardContent className="p-6">
+                <div className="mb-4">
+                  <h3 className="font-semibold text-lg mb-2">{sanitizeUserInput(product.name)}</h3>
+                  <p className="text-sm text-gray-600 mb-2 line-clamp-3">{sanitizeUserInput(product.description)}</p>
+                  <div className="flex items-center justify-center space-x-1 mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-4 h-4 ${i < Math.floor(product.rating || 0)
+                          ? 'text-yellow-400 fill-current'
+                          : 'text-gray-300'
+                          }`}
+                      />
+                    ))}
+                    <span className="text-sm text-gray-600 ml-1">
+                      ({product.rating || 0})
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-2xl font-bold text-blue-600">
+                    KSH {product.price.toFixed(2)}
+                  </span>
+                  <Badge variant={product.stock > 0 ? "default" : "destructive"}>
+                    {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+                  </Badge>
+                </div>
+
+                <div className="space-y-2">
+                  {getCartItemQuantity(product.id) > 0 && (
+                    <div className="text-center">
+                      <Badge variant="secondary">
+                        {getCartItemQuantity(product.id)} in cart
+                      </Badge>
+                    </div>
+                  )}
+                  <Button
+                    onClick={() => addToCart(product)}
+                    disabled={product.stock === 0}
+                    className="w-full"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
