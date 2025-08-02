@@ -18,7 +18,6 @@ import {
   Settings,
   CreditCard,
   Star,
-  Eye,
   MapPin,
   Phone,
   Mail,
@@ -28,19 +27,13 @@ import {
 } from 'lucide-react';
 import { doc, getDoc, collection, query, where, orderBy, onSnapshot, updateDoc } from 'firebase/firestore';
 import {
-  getCustomerDashboardStats,
-  getProducts,
   createOrder,
-  updateOrderStatus,
-  saveCart,
   type Product,
   type CartItem,
   type Order
 } from '@/lib/firebase/store';
 import { auth, db } from '@/lib/firebase/client';
 import {
-  getCustomerData,
-  updateCustomerProfile,
   type CustomerData,
   type SubmeterApplication
 } from '@/lib/firebase/firestore';
@@ -52,11 +45,31 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { SubmeterApplicationDialog } from './SubmeterDialog';
 import { SubmeterTab } from './SubmeterTab';
-import { format } from 'date-fns';
 
+// Utility function to sanitize strings for logging
+const sanitizeForLog = (str: string): string => {
+  return str.replace(/[\r\n\t]/g, ' ').substring(0, 100);
+};
 
+// Utility function to sanitize user input for display
+const sanitizeUserInput = (input: string): string => {
+  return input.replace(/[<>"'&]/g, (match) => {
+    const entities: { [key: string]: string } = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#x27;',
+      '&': '&amp;'
+    };
+    return entities[match] || match;
+  });
+};
+
+// Validate user ID format
+const isValidUserId = (uid: string): boolean => {
+  return /^[a-zA-Z0-9_-]+$/.test(uid) && uid.length > 0 && uid.length < 128;
+};
 
 interface TrackingStage {
   id: number;
@@ -80,7 +93,7 @@ export function CustomerDashboard() {
 
   // Load submeter applications
   useEffect(() => {
-    if (!user) return;
+    if (!user?.uid || !isValidUserId(user.uid)) return;
 
     const q = query(
       collection(db, 'submeterApplications'),
@@ -94,10 +107,17 @@ export function CustomerDashboard() {
         ...doc.data()
       })) as SubmeterApplication[];
       setSubmeterApplications(apps);
+    }, (error) => {
+      console.error('Error loading submeter applications:', sanitizeForLog(error.message));
+      toast({
+        title: 'Error',
+        description: 'Failed to load submeter applications.',
+        variant: 'destructive',
+      });
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, toast]);
 
   // Order tracking stages
   const trackingStages: TrackingStage[] = [
@@ -121,6 +141,10 @@ export function CustomerDashboard() {
 
     const loadCustomerData = async () => {
       try {
+        if (!isValidUserId(user.uid)) {
+          throw new Error('Invalid user ID');
+        }
+
         const customerDoc = await getDoc(doc(db, 'customers', user.uid));
 
         if (!customerDoc.exists()) {
@@ -159,13 +183,12 @@ export function CustomerDashboard() {
             setOrders(ordersList);
             setIsLoading(false);
           }, (error) => {
-            console.error('Optimized query failed, trying fallback:', error);
+            console.error('Optimized query failed, trying fallback:', sanitizeForLog(error.message));
 
             if (error.code === 'failed-precondition') {
-              // Use fallback query without orderBy
               tryFallbackOrdersQuery();
             } else {
-              console.error('Error fetching orders:', error);
+              console.error('Error fetching orders:', sanitizeForLog(error.message));
               if (isSubscribed) {
                 toast({
                   title: 'Error',
@@ -179,7 +202,7 @@ export function CustomerDashboard() {
         };
 
         const tryFallbackOrdersQuery = () => {
-          console.log('Using fallback query for orders...');
+          console.log('Using fallback query for orders');
           const simpleOrdersQuery = query(
             collection(db, 'orders'),
             where('customerId', '==', user.uid)
@@ -193,17 +216,16 @@ export function CustomerDashboard() {
               ...doc.data()
             })) as Order[];
 
-            // Sort manually by createdAt
             ordersList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             setOrders(ordersList);
             setIsLoading(false);
 
             toast({
               title: 'Orders Loaded',
-              description: 'Orders loaded using fallback method. Consider creating database indexes for better performance.',
+              description: 'Orders loaded using fallback method.',
             });
           }, (error) => {
-            console.error('Fallback orders query also failed:', error);
+            console.error('Fallback orders query failed:', sanitizeForLog(error.message));
             if (isSubscribed) {
               toast({
                 title: 'Error Loading Orders',
@@ -215,12 +237,10 @@ export function CustomerDashboard() {
           });
         };
 
-        // Set up orders listener
         unsubscribeOrders = tryOptimizedOrdersQuery();
 
-
       } catch (error) {
-        console.error('Error loading customer data:', error);
+        console.error('Error loading customer data:', sanitizeForLog(String(error)));
         if (isSubscribed) {
           toast({
             title: 'Error',
@@ -265,29 +285,28 @@ export function CustomerDashboard() {
               const data = doc.data();
               return {
                 id: doc.id,
-                name: data.name || 'Unnamed Product',
+                name: sanitizeUserInput(data.name || 'Unnamed Product'),
                 price: Number(data.price) || 0,
-                image: data.image || '📦',
+                image: sanitizeUserInput(data.image || '📦'),
                 stock: Number(data.stock) || 0,
-                description: data.description || 'No description available',
+                description: sanitizeUserInput(data.description || 'No description available'),
                 rating: Number(data.rating) || 4.0,
-                category: data.category || 'General'
+                category: sanitizeUserInput(data.category || 'General')
               } as Product;
             });
 
             setProducts(productsList);
             setProductsLoading(false);
           }, (error) => {
-            console.error('Optimized query failed, trying fallback:', error);
+            console.error('Optimized query failed, trying fallback:', sanitizeForLog(error.message));
 
             if (error.code === 'failed-precondition') {
-              // Use fallback query without orderBy
               tryFallbackQuery();
             } else if (error.code === 'permission-denied') {
               if (isSubscribed) {
                 toast({
                   title: 'Access Denied',
-                  description: 'You don\'t have permission to view products. Please contact support.',
+                  description: 'You do not have permission to view products. Please contact support.',
                   variant: 'destructive',
                 });
                 setProductsLoading(false);
@@ -306,7 +325,7 @@ export function CustomerDashboard() {
         };
 
         const tryFallbackQuery = () => {
-          console.log('Using fallback query for products...');
+          console.log('Using fallback query for products');
           const fallbackQuery = query(
             collection(db, 'products'),
             where('status', '==', 'active')
@@ -319,17 +338,16 @@ export function CustomerDashboard() {
               const data = doc.data();
               return {
                 id: doc.id,
-                name: data.name || 'Unnamed Product',
+                name: sanitizeUserInput(data.name || 'Unnamed Product'),
                 price: Number(data.price) || 0,
-                image: data.image || '📦',
+                image: sanitizeUserInput(data.image || '📦'),
                 stock: Number(data.stock) || 0,
-                description: data.description || 'No description available',
+                description: sanitizeUserInput(data.description || 'No description available'),
                 rating: Number(data.rating) || 4.0,
-                category: data.category || 'General'
+                category: sanitizeUserInput(data.category || 'General')
               } as Product;
             });
 
-            // Sort manually by createdAt
             productsList.sort((a, b) => {
               const aDoc = snapshot.docs.find(doc => doc.id === a.id);
               const bDoc = snapshot.docs.find(doc => doc.id === b.id);
@@ -344,11 +362,11 @@ export function CustomerDashboard() {
             if (isSubscribed) {
               toast({
                 title: 'Products Loaded',
-                description: 'Products loaded using fallback method. Consider creating database indexes for better performance.',
+                description: 'Products loaded using fallback method.',
               });
             }
           }, (error) => {
-            console.error('Fallback query also failed:', error);
+            console.error('Fallback query failed:', sanitizeForLog(error.message));
             if (isSubscribed) {
               toast({
                 title: 'Error Loading Products',
@@ -360,11 +378,10 @@ export function CustomerDashboard() {
           });
         };
 
-        // Start with optimized query
         unsubscribe = tryOptimizedQuery();
 
       } catch (error) {
-        console.error('Error setting up products listener:', error);
+        console.error('Error setting up products listener:', sanitizeForLog(String(error)));
         if (isSubscribed) {
           toast({
             title: 'Setup Error',
@@ -378,7 +395,7 @@ export function CustomerDashboard() {
 
     loadProducts();
 
-
+    
     return () => {
       isSubscribed = false;
       if (unsubscribe) {
@@ -388,8 +405,9 @@ export function CustomerDashboard() {
   }, [toast]);
 
   // Cart functions
-  const addToCart = (product: Product) => {
-    // Check if product is in stock
+ 
+ 
+ const addToCart = (product: Product) => {
     if (product.stock <= 0) {
       toast({
         title: 'Out of Stock',
@@ -402,7 +420,7 @@ export function CustomerDashboard() {
     const existingItem = cart.find(item => item.id === product.id);
     const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
 
-    // Check if adding one more would exceed stock
+
     if (currentQuantityInCart >= product.stock) {
       toast({
         title: 'Stock Limit Reached',
@@ -436,7 +454,6 @@ export function CustomerDashboard() {
       if (item.id === productId) {
         const newQuantity = item.quantity + change;
 
-        // Check stock limits when increasing quantity
         if (change > 0 && newQuantity > product.stock) {
           toast({
             title: 'Stock Limit Reached',
@@ -461,7 +478,7 @@ export function CustomerDashboard() {
   };
 
   const placeOrder = async () => {
-    if (cart.length === 0 || !user) return;
+    if (cart.length === 0 || !user?.uid || !isValidUserId(user.uid)) return;
 
     try {
       const orderData = {
@@ -479,19 +496,19 @@ export function CustomerDashboard() {
 
       toast({
         title: 'Order Placed!',
-        description: `Order #${orderId} has been placed successfully.`,
+        description: `Order has been placed successfully.`,
       });
 
       setCart([]);
       setActiveTab('orders');
 
-      // Simulate order status updates (in production, this would be handled by backend)
+     
       setTimeout(() => updateOrderStatusLocal(orderId, 2), 3000);
       setTimeout(() => updateOrderStatusLocal(orderId, 3), 8000);
       setTimeout(() => updateOrderStatusLocal(orderId, 4), 15000);
 
     } catch (error) {
-      console.error('Error placing order:', error);
+      console.error('Error placing order:', sanitizeForLog(String(error)));
       toast({
         title: 'Order Failed',
         description: 'Failed to place order. Please try again.',
@@ -502,12 +519,13 @@ export function CustomerDashboard() {
 
   const updateOrderStatusLocal = async (orderId: string, newStatus: number) => {
     try {
+      if (!orderId || typeof newStatus !== 'number') return;
       await updateDoc(doc(db, 'orders', orderId), {
         status: newStatus,
         updatedAt: new Date().toISOString()
       });
     } catch (error) {
-      console.error('Error updating order status:', error);
+      console.error('Error updating order status:', sanitizeForLog(String(error)));
     }
   };
 
@@ -520,7 +538,7 @@ export function CustomerDashboard() {
         description: 'You have been successfully logged out.',
       });
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Logout error:', sanitizeForLog(String(error)));
     }
   };
 
@@ -547,42 +565,8 @@ export function CustomerDashboard() {
       </div>
     );
   }
-  <div className="p-4">
-    <h2 className="text-2xl font-bold mb-4">Available Products</h2>
 
-    {productsLoading ? (
-      <p className="text-muted-foreground">Loading products...</p>
-    ) : products.length === 0 ? (
-      <p className="text-muted-foreground">No products available right now.</p>
-    ) : (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((product) => (
-          <div key={product.id} className="border rounded-lg p-4 shadow-sm bg-white">
-            <div className="mb-2">
-              <p className="text-lg font-semibold">{product.name}</p>
-              <p className="text-sm text-muted-foreground mb-1">
-                {product.category}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {product.description}
-              </p>
-            </div>
-            <p className="text-primary font-bold text-xl mb-4">
-              KES {product.price.toLocaleString()}
-            </p>
-            <Button
-              disabled={product.stock <= 0}
-              onClick={() => addToCart(product)}
-              className="w-full"
-            >
-              {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
-            </Button>
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-
+  
   // Navigation tabs
   const tabs = [
     { id: 'dashboard', name: 'Dashboard', icon: Home },
@@ -600,14 +584,14 @@ export function CustomerDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
+              <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Zap className="w-12 h-12 text-white" />
               </div>
-              <span className="font-semibold text-gray-800">Customer Portal</span>
+              <span className="font-bold text-xl text-gray-800">Tari Electra</span>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
-                Welcome, {customerData.firstName} {customerData.lastName}
+                Welcome, {sanitizeUserInput(customerData.firstName)} {sanitizeUserInput(customerData.lastName)}
               </span>
               <Button
                 variant="outline"
@@ -723,7 +707,7 @@ function DashboardTab({ customerData, orders, cart, trackingStages }: {
       <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <CardContent className="p-6">
           <h1 className="text-2xl font-bold mb-2">
-            Welcome back, {customerData.firstName}!
+            Welcome back, {sanitizeUserInput(customerData.firstName)}!
           </h1>
           <p className="text-blue-100">Here's what's happening with your orders</p>
         </CardContent>
@@ -1153,7 +1137,7 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
                         <div className="flex items-center space-x-3">
                           <span className="text-2xl">{item.image}</span>
                           <div>
-                            <p className="font-medium">{item.name}</p>
+                            <p className="font-medium">{sanitizeUserInput(item.name)}</p>
                             <p className="text-sm text-gray-600">
                               Qty: {item.quantity} × KSH {item.price.toFixed(2)}
                             </p>
@@ -1256,7 +1240,7 @@ function ProfileTab({ customerData, user }: {
       });
       setIsEditing(false);
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Error updating profile:', sanitizeForLog(String(error)));
       toast({
         title: 'Update Failed',
         description: 'Failed to update profile. Please try again.',
@@ -1315,7 +1299,7 @@ function ProfileTab({ customerData, user }: {
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                   />
                 ) : (
-                  <p className="p-2 bg-gray-50 rounded">{customerData.firstName}</p>
+                  <p className="p-2 bg-gray-50 rounded">{sanitizeUserInput(customerData.firstName)}</p>
                 )}
               </div>
               <div>
@@ -1327,7 +1311,7 @@ function ProfileTab({ customerData, user }: {
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   />
                 ) : (
-                  <p className="p-2 bg-gray-50 rounded">{customerData.lastName}</p>
+                  <p className="p-2 bg-gray-50 rounded">{sanitizeUserInput(customerData.lastName)}</p>
                 )}
               </div>
             </div>
@@ -1336,7 +1320,7 @@ function ProfileTab({ customerData, user }: {
               <Label>Email Address</Label>
               <div className="flex items-center p-2 bg-gray-50 rounded">
                 <Mail className="w-4 h-4 mr-2 text-gray-500" />
-                <span>{customerData.email}</span>
+                <span>{sanitizeUserInput(customerData.email)}</span>
               </div>
               <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
             </div>
@@ -1353,7 +1337,7 @@ function ProfileTab({ customerData, user }: {
               ) : (
                 <div className="flex items-center p-2 bg-gray-50 rounded">
                   <Phone className="w-4 h-4 mr-2 text-gray-500" />
-                  <span>{customerData.profile?.phone || 'Not provided'}</span>
+                  <span>{sanitizeUserInput(customerData.profile?.phone || 'Not provided')}</span>
                 </div>
               )}
             </div>
@@ -1379,7 +1363,7 @@ function ProfileTab({ customerData, user }: {
               ) : (
                 <div className="flex items-start p-2 bg-gray-50 rounded">
                   <MapPin className="w-4 h-4 mr-2 text-gray-500 mt-0.5" />
-                  <span>{customerData.profile?.address || 'Not provided'}</span>
+                  <span>{sanitizeUserInput(customerData.profile?.address || 'Not provided')}</span>
                 </div>
               )}
             </div>
@@ -1395,7 +1379,7 @@ function ProfileTab({ customerData, user }: {
                     placeholder="Enter your city"
                   />
                 ) : (
-                  <p className="p-2 bg-gray-50 rounded">{customerData.profile?.city || 'Not provided'}</p>
+                  <p className="p-2 bg-gray-50 rounded">{sanitizeUserInput(customerData.profile?.city || 'Not provided')}</p>
                 )}
               </div>
               <div>
@@ -1408,7 +1392,7 @@ function ProfileTab({ customerData, user }: {
                     placeholder="Enter your country"
                   />
                 ) : (
-                  <p className="p-2 bg-gray-50 rounded">{customerData.profile?.country || 'Not provided'}</p>
+                  <p className="p-2 bg-gray-50 rounded">{sanitizeUserInput(customerData.profile?.country || 'Not provided')}</p>
                 )}
               </div>
             </div>

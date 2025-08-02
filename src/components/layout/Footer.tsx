@@ -12,7 +12,7 @@ export function Footer() {
               Empowering properties with smart sub-metering solutions.
             </p>
             <p className="text-sm mt-2">
-             1st Floor, Coloho Mall, Mavoko, Athi River
+             Ramcocot, South C
             </p>
           </div>
           <div>

@@ -16,7 +16,7 @@ export function Logo({ className = '', showLabel = true }: LogoProps) {
         className
       )}
     >
-      <div className="relative w-12 h-12 rounded-full overflow-hidden bg-primary/10 border-2 border-primary shadow-md group-hover:scale-105 transition-transform duration-300">
+      <div className="relative w-16 h-16 rounded-full overflow-hidden bg-primary/10 border-2 border-primary shadow-md group-hover:scale-105 transition-transform duration-300">
         <Image
           src="/tari-logo.png"
           alt="Tari Electra Logo"
@@ -28,7 +28,7 @@ export function Logo({ className = '', showLabel = true }: LogoProps) {
       </div>
       {showLabel && (
         <span className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors duration-300">
-          Tari Electra
+          
         </span>
       )}
     </Link>

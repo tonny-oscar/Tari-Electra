@@ -119,8 +119,17 @@ export function ProductsSection({ products }: { products: Product[] }) {
                     <p className="text-center text-primary font-bold text-2xl mb-4">
                       {product.price > 0 ? `KES ${product.price.toFixed(2)}` : 'Request Quote'}
                     </p>
-                    <Button asChild className="w-full">
-                      <Link href="/contact">Inquire Now</Link>
+                    <Button 
+                      className="w-full" 
+                      onClick={() => {
+                        if (!user) {
+                          window.location.href = '/login';
+                        } else {
+                          window.location.href = '/contact';
+                        }
+                      }}
+                    >
+                      Inquire Now
                     </Button>
                   </CardFooter>
                 </Card>

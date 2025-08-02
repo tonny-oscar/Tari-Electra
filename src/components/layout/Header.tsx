@@ -26,6 +26,7 @@ const mainNavItems = [
   { href: '/', label: 'Home', icon: HomeIcon },
   { href: '/products', label: 'Products', icon: ShoppingBag },
   { href: '/about', label: 'About', icon: NewspaperIcon },
+  { href: '/faq', label: 'FAQ', icon: NewspaperIcon },
   { href: '/contact', label: 'Contact', icon: UserCircle },
   { href: '/blog', label: 'Blog', icon: NewspaperIcon },
 ];

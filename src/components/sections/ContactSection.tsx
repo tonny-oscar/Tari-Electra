@@ -216,7 +216,7 @@ export function ContactSection() {
                   <PhoneIcon className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
                   <div>
                     <h3 className="font-semibold text-foreground">Call Us</h3>
-                    <a href="tel:+254758424283" className="text-muted-foreground hover:text-primary">+254 758 424 283</a>
+                    <a href="tel:0717777668" className="text-muted-foreground hover:text-primary">0717777668</a>
                   </div>
                 </div>
                 <div className="flex items-start">
@@ -226,15 +226,50 @@ export function ContactSection() {
                     <p className="text-muted-foreground">9:00 AM – 5:00 PM (Mon–Fri)</p>
                   </div>
                 </div>
-                <div className="aspect-video w-full overflow-hidden rounded-lg border mt-6">
-                  <Image
-                      src="/8e8f8290-9ac0-4a92-a18c-cd3e69b35d03.jpeg"
-                      alt="Athi River Location"
-                      width={800}
-                      height={500}
-                      className="object-cover"
-                      data-ai-hint="Athi River"
-                    />
+                <div className="aspect-video w-full overflow-hidden rounded-lg border mt-6 bg-gradient-to-br from-blue-50 to-indigo-100 relative">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center space-y-4">
+                      <div className="relative">
+                        <div className="w-24 h-24 mx-auto bg-white rounded-full shadow-lg flex items-center justify-center border-4 border-blue-200">
+                          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H5C3.9 1 3 1.9 3 3V21C3 22.1 3.9 23 5 23H19C20.1 23 21 22.1 21 21V9M19 9H14V4H19V9Z"/>
+                            </svg>
+                          </div>
+                        </div>
+                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-gray-800">Customer Support Agent</h4>
+                        <p className="text-sm text-gray-600">Ready to assist you 24/7</p>
+                        <div className="flex justify-center space-x-2">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <PhoneIcon className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <Mail className="w-4 h-4 text-green-600" />
+                          </div>
+                          <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12,3C17.5,3 22,6.58 22,11C22,15.42 17.5,19 12,19C10.76,19 9.57,18.82 8.47,18.5C5.55,21 2,21 2,21C4.33,18.67 4.7,17.1 4.75,16.5C3.05,15.07 2,13.13 2,11C2,6.58 6.5,3 12,3Z"/>
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute top-4 left-4 opacity-20">
+                    <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/>
+                    </svg>
+                  </div>
+                  <div className="absolute bottom-4 right-4 opacity-20">
+                    <svg className="w-8 h-8 text-indigo-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6Z"/>
+                    </svg>
+                  </div>
                 </div>
               </CardContent>
             </Card>
