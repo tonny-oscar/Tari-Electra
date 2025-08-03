@@ -18,6 +18,7 @@ export interface SubmeterApplication {
   areaTown: string;
   mainMeterAccountNumber?: string;
   currentReading?: number;
+  submeterAccountNumber?: string;
   submetersRegistered?: string;
   suppliesOtherAreas?: boolean;
   linkedMeterNumbers?: string;

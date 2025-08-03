@@ -111,19 +111,21 @@ export function OrderUpdateModal({ order, isOpen, onClose, trackingStages }: Ord
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Update Order #{order.id.slice(-8)}</DialogTitle>
-          <DialogDescription>
-            Update the order status and add tracking information.
+      <DialogContent className="sm:max-w-lg bg-gradient-to-br from-white to-blue-50/30 border-0 shadow-2xl">
+        <DialogHeader className="text-center pb-2">
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+            Update Order #{order.id.slice(-8)}
+          </DialogTitle>
+          <DialogDescription className="text-gray-600">
+            Update status and tracking information
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">
-          <div>
-            <Label htmlFor="status">Order Status</Label>
+          <div className="bg-white/70 rounded-xl p-4 border border-blue-100">
+            <Label htmlFor="status" className="text-sm font-semibold text-gray-700">Order Status</Label>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger>
+              <SelectTrigger className="mt-2 border-blue-200 focus:border-blue-400">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
@@ -136,32 +138,43 @@ export function OrderUpdateModal({ order, isOpen, onClose, trackingStages }: Ord
             </Select>
           </div>
 
-          <div>
-            <Label htmlFor="tracking">Tracking Number (Optional)</Label>
+          <div className="bg-white/70 rounded-xl p-4 border border-green-100">
+            <Label htmlFor="tracking" className="text-sm font-semibold text-gray-700">Tracking Number</Label>
             <Input
               id="tracking"
               value={trackingNumber}
               onChange={(e) => setTrackingNumber(e.target.value)}
               placeholder="Enter tracking number"
+              className="mt-2 border-green-200 focus:border-green-400"
             />
           </div>
 
-          <div>
-            <Label htmlFor="notes">Update Notes (Optional)</Label>
+          <div className="bg-white/70 rounded-xl p-4 border border-purple-100">
+            <Label htmlFor="notes" className="text-sm font-semibold text-gray-700">Update Notes</Label>
             <Textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add notes about this status update..."
               rows={3}
+              className="mt-2 border-purple-200 focus:border-purple-400 resize-none"
             />
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" onClick={onClose} disabled={isUpdating}>
+          <div className="flex gap-3 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={onClose} 
+              disabled={isUpdating}
+              className="flex-1 border-gray-300 hover:bg-gray-50"
+            >
               Cancel
             </Button>
-            <Button onClick={handleUpdate} disabled={isUpdating}>
+            <Button 
+              onClick={handleUpdate} 
+              disabled={isUpdating}
+              className="flex-1 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 shadow-lg"
+            >
               {isUpdating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Update Order
             </Button>

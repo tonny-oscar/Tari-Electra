@@ -112,90 +112,171 @@ export default function SubmeterApplicationModal({
     const pageWidth = doc.internal.pageSize.width;
     let yPosition = 20;
 
-    // Header
-    doc.setFontSize(20);
+    // Add logo (you'll need to convert the logo to base64 or use a different approach)
+    // For now, we'll create a professional header
+    
+    // Header background
+    doc.setFillColor(59, 130, 246); // Blue color
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    
+    // Company name in header
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
-    doc.text('Tari Electra - Sub-Meter Application', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 20;
-
-    // Application details
+    doc.text('TARI ELECTRA', pageWidth / 2, 20, { align: 'center' });
+    
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Application ID: ${application.id}`, 20, yPosition);
-    yPosition += 10;
-    doc.text(`Submitted: ${formattedSubmissionDate}`, 20, yPosition);
-    yPosition += 10;
-    doc.text(`Status: ${application.status.toUpperCase()}`, 20, yPosition);
-    yPosition += 20;
+    doc.text('Sub-Meter Application Form', pageWidth / 2, 30, { align: 'center' });
+    
+    yPosition = 55;
+    doc.setTextColor(0, 0, 0);
 
-    // Personal Information
+    // Application details box
+    doc.setFillColor(240, 248, 255);
+    doc.rect(15, yPosition - 5, pageWidth - 30, 25, 'F');
+    doc.setDrawColor(59, 130, 246);
+    doc.rect(15, yPosition - 5, pageWidth - 30, 25, 'S');
+    
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('Personal Information', 20, yPosition);
-    yPosition += 10;
+    doc.text('APPLICATION DETAILS', 20, yPosition + 5);
+    
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
+    doc.text(`Application ID: ${application.id}`, 20, yPosition + 12);
+    doc.text(`Submitted: ${formattedSubmissionDate}`, 20, yPosition + 18);
+    doc.text(`Status: ${application.status.toUpperCase()}`, pageWidth - 80, yPosition + 12);
+    
+    yPosition += 35;
+
+    // Personal Information Section
+    doc.setFillColor(34, 197, 94); // Green color
+    doc.rect(15, yPosition - 3, pageWidth - 30, 8, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('👤 APPLICANT INFORMATION', 20, yPosition + 2);
+    
+    yPosition += 15;
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    
+    // Create a bordered section
+    doc.setDrawColor(34, 197, 94);
+    doc.rect(15, yPosition - 5, pageWidth - 30, 45, 'S');
+    
     doc.text(`Full Name: ${application.fullName}`, 20, yPosition);
-    yPosition += 8;
+    yPosition += 7;
     doc.text(`Email: ${application.email}`, 20, yPosition);
-    yPosition += 8;
+    yPosition += 7;
     doc.text(`Phone: ${application.phoneNumber}`, 20, yPosition);
-    yPosition += 8;
+    yPosition += 7;
     if (application.idNumber) {
       doc.text(`ID/Registration Number: ${application.idNumber}`, 20, yPosition);
-      yPosition += 8;
+      yPosition += 7;
     }
     if (application.utilityServices) {
       const services = Array.isArray(application.utilityServices) ? application.utilityServices.join(', ') : application.utilityServices;
       doc.text(`Utility Services: ${services}`, 20, yPosition);
-      yPosition += 8;
+      yPosition += 7;
     }
-    yPosition += 10;
+    yPosition += 15;
 
-    // Property Details
+    // Property Details Section
+    doc.setFillColor(168, 85, 247); // Purple color
+    doc.rect(15, yPosition - 3, pageWidth - 30, 8, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('Property Details', 20, yPosition);
-    yPosition += 10;
+    doc.text('🏢 PROPERTY DETAILS', 20, yPosition + 2);
+    
+    yPosition += 15;
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
+    
+    doc.setDrawColor(168, 85, 247);
+    doc.rect(15, yPosition - 5, pageWidth - 30, 35, 'S');
+    
     doc.text(`Property Type: ${application.propertyType}`, 20, yPosition);
-    yPosition += 8;
+    yPosition += 7;
     doc.text(`Application Type: ${application.applicationType}`, 20, yPosition);
-    yPosition += 8;
+    yPosition += 7;
     doc.text(`Physical Location: ${application.physicalLocation}`, 20, yPosition);
-    yPosition += 8;
+    yPosition += 7;
     doc.text(`Area & Town: ${application.areaTown}`, 20, yPosition);
     yPosition += 15;
 
-    // Meter Information
+    // Meter Information Section
     if (application.mainMeterAccountNumber) {
+      doc.setFillColor(245, 158, 11); // Orange color
+      doc.rect(15, yPosition - 3, pageWidth - 30, 8, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text('Meter Information', 20, yPosition);
-      yPosition += 10;
+      doc.text('⚡ METER INFORMATION', 20, yPosition + 2);
+      
+      yPosition += 15;
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
+      
+      let sectionHeight = 28;
+      if (application.currentReading !== undefined) sectionHeight += 7;
+      if (application.suppliesOtherAreas !== undefined) sectionHeight += 7;
+      if (application.linkedMeterNumbers) sectionHeight += 7;
+      
+      doc.setDrawColor(245, 158, 11);
+      doc.rect(15, yPosition - 5, pageWidth - 30, sectionHeight, 'S');
+      
       doc.text(`Main Meter Account: ${application.mainMeterAccountNumber}`, 20, yPosition);
-      yPosition += 8;
+      yPosition += 7;
+      if (application.submeterAccountNumber) {
+        doc.text(`Sub-meter Account: ${application.submeterAccountNumber}`, 20, yPosition);
+        yPosition += 7;
+      }
       if (application.currentReading !== undefined) {
-        doc.text(`Current Reading: ${application.currentReading}`, 20, yPosition);
-        yPosition += 8;
+        doc.text(`Current Reading: ${application.currentReading} kWh`, 20, yPosition);
+        yPosition += 7;
       }
       if (application.suppliesOtherAreas !== undefined) {
         doc.text(`Supplies Other Areas: ${application.suppliesOtherAreas ? 'Yes' : 'No'}`, 20, yPosition);
-        yPosition += 8;
+        yPosition += 7;
       }
       if (application.linkedMeterNumbers) {
         doc.text(`Linked Meters: ${application.linkedMeterNumbers}`, 20, yPosition);
-        yPosition += 8;
+        yPosition += 7;
       }
-      yPosition += 10;
+      yPosition += 15;
     }
 
-    // Sub-meters Registered
+    // Sub-meters Registered Section
     if (application.submetersRegistered) {
+      doc.setFillColor(239, 68, 68); // Red color
+      doc.rect(15, yPosition - 3, pageWidth - 30, 8, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text('Sub-meters Registered', 20, yPosition);
-      yPosition += 10;
+      doc.text('📋 SUB-METERS REGISTERED', 20, yPosition + 2);
+      
+      yPosition += 15;
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      const lines = doc.splitTextToSize(application.submetersRegistered, pageWidth - 40);
+      
+      const lines = doc.splitTextToSize(application.submetersRegistered, pageWidth - 50);
+      const sectionHeight = lines.length * 5 + 10;
+      
+      doc.setDrawColor(239, 68, 68);
+      doc.rect(15, yPosition - 5, pageWidth - 30, sectionHeight, 'S');
+      doc.setFillColor(254, 242, 242);
+      doc.rect(15, yPosition - 5, pageWidth - 30, sectionHeight, 'F');
+      
+      doc.setTextColor(0, 0, 0);
       doc.text(lines, 20, yPosition);
-      yPosition += lines.length * 6 + 10;
+      yPosition += lines.length * 5 + 15;
     }
 
     // Admin Notes
@@ -221,9 +302,16 @@ export default function SubmeterApplicationModal({
     }
 
     // Footer
-    yPosition += 10;
+    yPosition += 20;
+    doc.setFillColor(59, 130, 246);
+    doc.rect(0, yPosition - 5, pageWidth, 20, 'F');
+    
+    doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
-    doc.text(`Generated on: ${format(new Date(), 'PPP')}`, 20, yPosition);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Tari Electra - Electrical Solutions', 20, yPosition + 5);
+    doc.text(`Generated on: ${format(new Date(), 'PPP')}`, pageWidth - 80, yPosition + 5);
+    doc.text('Ramcocot, South C | 0717777668 | hello@tari.africa', pageWidth / 2, yPosition + 12, { align: 'center' });
 
     // Save PDF
     doc.save(`submeter-application-${application.id}.pdf`);
@@ -263,117 +351,131 @@ const formattedSubmissionDate = (() => {
           </div>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-4 py-4">
-          <div>
-            <h3 className="font-semibold mb-2">Applicant Info</h3>
-            <div className="space-y-2">
-              <div>
-                <span className="text-sm text-muted-foreground">Submission Date:</span>
-                <p>{formattedSubmissionDate}</p>
-              </div>
-              <div>
-                <span className="text-sm text-muted-foreground">Full Name:</span>
-                <p>{application.fullName}</p>
-              </div>
-              <div>
-                <span className="text-sm text-muted-foreground">Email:</span>
-                <p>{application.email}</p>
-              </div>
-              <div>
-                <span className="text-sm text-muted-foreground">Phone:</span>
-                <p>{application.phoneNumber}</p>
-              </div>
-              {application.idNumber && (
-                <div>
-                  <span className="text-sm text-muted-foreground">ID/Registration Number:</span>
-                  <p>{application.idNumber}</p>
+        <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-xl p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm">
+              <h3 className="font-bold text-lg mb-4 text-blue-700 border-b border-blue-200 pb-2">👤 Applicant Information</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-gray-600">Submission Date:</span>
+                  <span className="text-sm font-semibold">{formattedSubmissionDate}</span>
                 </div>
-              )}
-              {application.utilityServices && (
-                <div>
-                  <span className="text-sm text-muted-foreground">Utility Services:</span>
-                  <p>{Array.isArray(application.utilityServices) ? application.utilityServices.join(', ') : application.utilityServices}</p>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-gray-600">Full Name:</span>
+                  <span className="text-sm font-semibold">{application.fullName}</span>
                 </div>
-              )}
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-gray-600">Email:</span>
+                  <span className="text-sm font-semibold text-blue-600">{application.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-gray-600">Phone:</span>
+                  <span className="text-sm font-semibold">{application.phoneNumber}</span>
+                </div>
+                {application.idNumber && (
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-gray-600">ID/Registration:</span>
+                    <span className="text-sm font-semibold">{application.idNumber}</span>
+                  </div>
+                )}
+                {application.utilityServices && (
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-gray-600">Services:</span>
+                    <span className="text-sm font-semibold capitalize">{Array.isArray(application.utilityServices) ? application.utilityServices.join(', ') : application.utilityServices}</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          <div>
-            <h3 className="font-semibold mb-2">Property Details</h3>
-            <div className="space-y-2">
-              <div>
-                <span className="text-sm text-muted-foreground">Property Type:</span>
-                <p className="capitalize">{application.propertyType}</p>
-              </div>
-              <div>
-                <span className="text-sm text-muted-foreground">Application Type:</span>
-                <p className="capitalize">{application.applicationType}</p>
-              </div>
-              <div>
-                <span className="text-sm text-muted-foreground">Address:</span>
-                <p>{application.physicalLocation}, {application.areaTown}</p>
-              </div>
-              <div>
-                <span className="text-sm text-muted-foreground">Current Status:</span>
-                <p className={`capitalize font-medium ${
-                  application.status === 'approved'
-                    ? 'text-green-600'
-                    : application.status === 'rejected'
-                    ? 'text-red-600'
-                    : 'text-yellow-600'
-                }`}>
-                  {application.status}
-                </p>
+            <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm">
+              <h3 className="font-bold text-lg mb-4 text-green-700 border-b border-green-200 pb-2">🏢 Property Details</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-gray-600">Property Type:</span>
+                  <span className="text-sm font-semibold capitalize">{application.propertyType}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-gray-600">Application Type:</span>
+                  <span className="text-sm font-semibold capitalize">{application.applicationType}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-gray-600">Location:</span>
+                  <span className="text-sm font-semibold">{application.physicalLocation}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-gray-600">Area & Town:</span>
+                  <span className="text-sm font-semibold">{application.areaTown}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-gray-600">Status:</span>
+                  <span className={`text-sm font-bold px-2 py-1 rounded-full ${
+                    application.status === 'approved'
+                      ? 'bg-green-100 text-green-700'
+                      : application.status === 'rejected'
+                      ? 'bg-red-100 text-red-700'
+                      : 'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {application.status.toUpperCase()}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 py-4 border-t">
-          <div>
-            <h3 className="font-semibold mb-2">Meter Information</h3>
-            <div className="space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-4">
+            <h3 className="font-bold text-lg mb-4 text-purple-700 border-b border-purple-200 pb-2">⚡ Meter Information</h3>
+            <div className="space-y-3">
               {application.mainMeterAccountNumber && (
-                <div>
-                  <span className="text-sm text-muted-foreground">Main Meter Account:</span>
-                  <p>{application.mainMeterAccountNumber}</p>
+                <div className="bg-white/70 rounded p-2">
+                  <span className="text-sm font-medium text-gray-600">Main Meter Account:</span>
+                  <p className="font-semibold text-purple-700">{application.mainMeterAccountNumber}</p>
                 </div>
               )}
               {application.currentReading !== undefined && (
-                <div>
-                  <span className="text-sm text-muted-foreground">Current Reading:</span>
-                  <p>{application.currentReading}</p>
+                <div className="bg-white/70 rounded p-2">
+                  <span className="text-sm font-medium text-gray-600">Current Reading:</span>
+                  <p className="font-semibold">{application.currentReading} kWh</p>
                 </div>
               )}
               {application.suppliesOtherAreas !== undefined && (
-                <div>
-                  <span className="text-sm text-muted-foreground">Supplies Other Areas:</span>
-                  <p>{application.suppliesOtherAreas ? 'Yes' : 'No'}</p>
+                <div className="bg-white/70 rounded p-2">
+                  <span className="text-sm font-medium text-gray-600">Supplies Other Areas:</span>
+                  <p className={`font-semibold ${application.suppliesOtherAreas ? 'text-green-600' : 'text-red-600'}`}>
+                    {application.suppliesOtherAreas ? '✓ Yes' : '✗ No'}
+                  </p>
+                </div>
+              )}
+              {application.submeterAccountNumber && (
+                <div className="bg-white/70 rounded p-2">
+                  <span className="text-sm font-medium text-gray-600">Sub-meter Account:</span>
+                  <p className="font-semibold text-purple-700">{application.submeterAccountNumber}</p>
                 </div>
               )}
               {application.linkedMeterNumbers && (
-                <div>
-                  <span className="text-sm text-muted-foreground">Linked Meters:</span>
-                  <p>{application.linkedMeterNumbers}</p>
+                <div className="bg-white/70 rounded p-2">
+                  <span className="text-sm font-medium text-gray-600">Linked Meters:</span>
+                  <p className="font-semibold">{application.linkedMeterNumbers}</p>
                 </div>
               )}
             </div>
           </div>
 
-          <div>
-            <h3 className="font-semibold mb-2">Sub-meters Registered</h3>
-            <div className="space-y-2">
-              {application.submetersRegistered ? (
-                <div>
-                  <span className="text-sm text-muted-foreground">Registered Sub-meters:</span>
-                  <div className="mt-1 p-2 bg-gray-50 rounded text-sm">
-                    <pre className="whitespace-pre-wrap">{application.submetersRegistered}</pre>
-                  </div>
+          <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg p-4">
+            <h3 className="font-bold text-lg mb-4 text-orange-700 border-b border-orange-200 pb-2">📋 Sub-meters Registered</h3>
+            {application.submetersRegistered ? (
+              <div className="bg-white/80 rounded-lg p-3 shadow-sm">
+                <div className="text-sm font-medium text-gray-600 mb-2">Registered Sub-meters:</div>
+                <div className="bg-gray-50 rounded p-3 border-l-4 border-orange-400">
+                  <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono">{application.submetersRegistered}</pre>
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No sub-meters registered information provided</p>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="bg-white/80 rounded-lg p-3 text-center">
+                <p className="text-gray-500 italic">No sub-meters information provided</p>
+              </div>
+            )}
           </div>
         </div>
 

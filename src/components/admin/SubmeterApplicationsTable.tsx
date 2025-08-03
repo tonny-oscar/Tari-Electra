@@ -85,25 +85,44 @@ export default function SubmeterApplicationsTable() {
     const pageWidth = doc.internal.pageSize.width;
     let yPosition = 20;
 
-    // Header
-    doc.setFontSize(20);
+    // Header background
+    doc.setFillColor(59, 130, 246);
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    
+    // Company name in header
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
-    doc.text('Tari Electra - Sub-Meter Application', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 20;
-
-    // Application details
+    doc.text('TARI ELECTRA', pageWidth / 2, 20, { align: 'center' });
+    
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
+    doc.text('Sub-Meter Application Form', pageWidth / 2, 30, { align: 'center' });
+    
+    yPosition = 55;
+    doc.setTextColor(0, 0, 0);
+
+    // Application details box
     const submissionDate = typeof application.submissionDate?.toDate === 'function' 
       ? application.submissionDate.toDate() 
       : new Date(application.submissionDate);
     
-    doc.text(`Application ID: ${application.id}`, 20, yPosition);
-    yPosition += 10;
-    doc.text(`Submitted: ${format(submissionDate, 'PPP')}`, 20, yPosition);
-    yPosition += 10;
-    doc.text(`Status: ${application.status.toUpperCase()}`, 20, yPosition);
-    yPosition += 20;
+    doc.setFillColor(240, 248, 255);
+    doc.rect(15, yPosition - 5, pageWidth - 30, 25, 'F');
+    doc.setDrawColor(59, 130, 246);
+    doc.rect(15, yPosition - 5, pageWidth - 30, 25, 'S');
+    
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('APPLICATION DETAILS', 20, yPosition + 5);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Application ID: ${application.id}`, 20, yPosition + 12);
+    doc.text(`Submitted: ${format(submissionDate, 'PPP')}`, 20, yPosition + 18);
+    doc.text(`Status: ${application.status.toUpperCase()}`, pageWidth - 80, yPosition + 12);
+    
+    yPosition += 35;
 
     // Personal Information
     doc.setFont('helvetica', 'bold');
@@ -149,6 +168,10 @@ export default function SubmeterApplicationsTable() {
       doc.setFont('helvetica', 'normal');
       doc.text(`Main Meter Account: ${application.mainMeterAccountNumber}`, 20, yPosition);
       yPosition += 8;
+      if (application.submeterAccountNumber) {
+        doc.text(`Sub-meter Account: ${application.submeterAccountNumber}`, 20, yPosition);
+        yPosition += 8;
+      }
       if (application.currentReading) {
         doc.text(`Current Reading: ${application.currentReading}`, 20, yPosition);
         yPosition += 8;

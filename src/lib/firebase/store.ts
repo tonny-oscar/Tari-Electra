@@ -138,15 +138,52 @@ async function generateOrderNumber(): Promise<string> {
   }
 }
 
-export async function createOrder(data: Omit<Order, 'id' | 'orderNumber'> & { orderNumber?: string }): Promise<{ orderId: string; orderNumber: string }> {
+export async function createOrder(data: Omit<Order, 'id' | 'orderNumber'> & { orderNumber?: string; customerPhone?: string }): Promise<{ orderId: string; orderNumber: string }> {
   try {
     const orderNumber = await generateOrderNumber();
-    const docRef = await addDoc(collection(db, 'orders'), {
+    const orderData = {
       ...data,
       orderNumber,
       createdAt: new Date().toISOString(),
       status: 1
-    });
+    };
+    
+    const docRef = await addDoc(collection(db, 'orders'), orderData);
+    const order = { id: docRef.id, ...orderData } as Order;
+    
+    // Send notifications
+    try {
+      // Send email notification
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: data.customerEmail,
+          subject: `Order Confirmation - ${orderNumber}`,
+          orderData: order,
+          type: 'order_confirmation'
+        })
+      });
+      
+      // Send SMS notification if phone provided
+      if (data.customerPhone) {
+        const formattedPhone = data.customerPhone.startsWith('+') ? data.customerPhone : 
+                              data.customerPhone.startsWith('0') ? `+254${data.customerPhone.slice(1)}` : 
+                              `+254${data.customerPhone}`;
+        
+        await fetch('/api/send-sms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: formattedPhone,
+            message: `Hi! Your Tari Electra order ${orderNumber} for KES ${data.total} has been confirmed. We'll notify you when it ships. Track: tari.africa`
+          })
+        });
+      }
+    } catch (notificationError) {
+      console.error('Notification error:', notificationError);
+    }
+    
     return { orderId: docRef.id, orderNumber };
   } catch (error) {
     console.error('Error creating order:', error);
