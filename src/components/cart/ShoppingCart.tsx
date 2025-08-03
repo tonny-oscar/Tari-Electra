@@ -61,7 +61,7 @@ export function ShoppingCart() {
             {/* Product Image */}
             <div className="flex-shrink-0">
               <Image
-                src={(item as any).image || '/placeholder-product.jpg'}
+                src={item.image || '/placeholder-product.jpg'}
                 alt={item.name}
                 width={120}
                 height={120}

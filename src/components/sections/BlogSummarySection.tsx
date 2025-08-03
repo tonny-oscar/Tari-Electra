@@ -5,7 +5,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { getBlogPosts } from "@/data/blogPosts";
+import { blogPosts } from "@/data/blogPosts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, CalendarDays, UserCircle } from "lucide-react";
@@ -26,7 +26,7 @@ const itemVariants = {
 
 
 export function BlogSummarySection() {
-  const recentPosts: any[] = []; // Display latest 3 posts
+  const recentPosts = blogPosts.slice(0, 3); // Display latest 3 posts
 
   return (
     <section id="blog-summary" className="py-16 lg:py-24 bg-background">
@@ -52,7 +52,7 @@ export function BlogSummarySection() {
           </motion.p>
         </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {recentPosts.map((post: any) => (
+          {recentPosts.map((post) => (
              <motion.div key={post.slug} variants={itemVariants}>
               <Card className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 h-full">
                 <Link href={`/blog/${post.slug}`} className="block">
@@ -95,7 +95,7 @@ export function BlogSummarySection() {
             </motion.div>
           ))}
         </div>
-        {recentPosts.length > 3 && (
+        {blogPosts.length > 3 && (
           <motion.div className="mt-12 text-center" variants={itemVariants}>
             <Button asChild size="lg">
               <Link href="/blog">

@@ -99,7 +99,7 @@ export function LoginForm() {
       });
 
       // Get redirect URL from search params or default to dashboard
-      const redirectTo = searchParams.get('redirect') || '/customer/dashboard';
+      const redirectTo = searchParams?.get('redirect') || '/customer/dashboard';
       router.push(redirectTo);
 
     } catch (err: any) {

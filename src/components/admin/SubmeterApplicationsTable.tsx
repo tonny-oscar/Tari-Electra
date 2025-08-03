@@ -22,7 +22,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { toDate } from '@/lib/utils/date';
 import { FileText, Eye, Filter, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -104,7 +103,9 @@ export default function SubmeterApplicationsTable() {
     doc.setTextColor(0, 0, 0);
 
     // Application details box
-    const submissionDate = toDate(application.submissionDate);
+    const submissionDate = typeof application.submissionDate?.toDate === 'function' 
+      ? application.submissionDate.toDate() 
+      : new Date(application.submissionDate);
     
     doc.setFillColor(240, 248, 255);
     doc.rect(15, yPosition - 5, pageWidth - 30, 25, 'F');
@@ -132,14 +133,14 @@ export default function SubmeterApplicationsTable() {
     yPosition += 8;
     doc.text(`Email: ${application.email}`, 20, yPosition);
     yPosition += 8;
-    doc.text(`Phone: ${application.phone}`, 20, yPosition);
+    doc.text(`Phone: ${application.phoneNumber}`, 20, yPosition);
     yPosition += 8;
-    if ((application as any).idNumber) {
-      doc.text(`ID/Registration Number: ${(application as any).idNumber}`, 20, yPosition);
+    if (application.idNumber) {
+      doc.text(`ID/Registration Number: ${application.idNumber}`, 20, yPosition);
       yPosition += 8;
     }
-    if ((application as any).utilityServices) {
-      const services = Array.isArray((application as any).utilityServices) ? (application as any).utilityServices.join(', ') : (application as any).utilityServices;
+    if (application.utilityServices) {
+      const services = Array.isArray(application.utilityServices) ? application.utilityServices.join(', ') : application.utilityServices;
       doc.text(`Utility Services: ${services}`, 20, yPosition);
       yPosition += 8;
     }
@@ -154,45 +155,45 @@ export default function SubmeterApplicationsTable() {
     yPosition += 8;
     doc.text(`Application Type: ${application.applicationType}`, 20, yPosition);
     yPosition += 8;
-    doc.text(`Physical Location: ${(application as any).physicalLocation || application.address}`, 20, yPosition);
+    doc.text(`Physical Location: ${application.physicalLocation}`, 20, yPosition);
     yPosition += 8;
-    doc.text(`Area & Town: ${(application as any).areaTown || 'N/A'}`, 20, yPosition);
+    doc.text(`Area & Town: ${application.areaTown}`, 20, yPosition);
     yPosition += 15;
 
     // Meter Information
-    if ((application as any).mainMeterAccountNumber) {
+    if (application.mainMeterAccountNumber) {
       doc.setFont('helvetica', 'bold');
       doc.text('Meter Information', 20, yPosition);
       yPosition += 10;
       doc.setFont('helvetica', 'normal');
-      doc.text(`Main Meter Account: ${(application as any).mainMeterAccountNumber}`, 20, yPosition);
+      doc.text(`Main Meter Account: ${application.mainMeterAccountNumber}`, 20, yPosition);
       yPosition += 8;
-      if ((application as any).submeterAccountNumber) {
-        doc.text(`Sub-meter Account: ${(application as any).submeterAccountNumber}`, 20, yPosition);
+      if (application.submeterAccountNumber) {
+        doc.text(`Sub-meter Account: ${application.submeterAccountNumber}`, 20, yPosition);
         yPosition += 8;
       }
-      if ((application as any).currentReading) {
-        doc.text(`Current Reading: ${(application as any).currentReading}`, 20, yPosition);
+      if (application.currentReading) {
+        doc.text(`Current Reading: ${application.currentReading}`, 20, yPosition);
         yPosition += 8;
       }
-      if ((application as any).suppliesOtherAreas !== undefined) {
-        doc.text(`Supplies Other Areas: ${(application as any).suppliesOtherAreas ? 'Yes' : 'No'}`, 20, yPosition);
+      if (application.suppliesOtherAreas !== undefined) {
+        doc.text(`Supplies Other Areas: ${application.suppliesOtherAreas ? 'Yes' : 'No'}`, 20, yPosition);
         yPosition += 8;
       }
-      if ((application as any).linkedMeterNumbers) {
-        doc.text(`Linked Meters: ${(application as any).linkedMeterNumbers}`, 20, yPosition);
+      if (application.linkedMeterNumbers) {
+        doc.text(`Linked Meters: ${application.linkedMeterNumbers}`, 20, yPosition);
         yPosition += 8;
       }
       yPosition += 10;
     }
 
     // Sub-meters Registered
-    if ((application as any).submetersRegistered) {
+    if (application.submetersRegistered) {
       doc.setFont('helvetica', 'bold');
       doc.text('Sub-meters Registered', 20, yPosition);
       yPosition += 10;
       doc.setFont('helvetica', 'normal');
-      const lines = doc.splitTextToSize((application as any).submetersRegistered, pageWidth - 40);
+      const lines = doc.splitTextToSize(application.submetersRegistered, pageWidth - 40);
       doc.text(lines, 20, yPosition);
       yPosition += lines.length * 6 + 10;
     }
@@ -211,11 +212,11 @@ export default function SubmeterApplicationsTable() {
 
     // Status dates
     if (application.approvalDate) {
-      doc.text(`Approved on: ${format(toDate(application.approvalDate!), 'PPP')}`, 20, yPosition);
+      doc.text(`Approved on: ${format(new Date(application.approvalDate), 'PPP')}`, 20, yPosition);
       yPosition += 8;
     }
     if (application.rejectionDate) {
-      doc.text(`Rejected on: ${format(toDate(application.rejectionDate!), 'PPP')}`, 20, yPosition);
+      doc.text(`Rejected on: ${format(new Date(application.rejectionDate), 'PPP')}`, 20, yPosition);
       yPosition += 8;
     }
 
@@ -331,7 +332,10 @@ export default function SubmeterApplicationsTable() {
                 </TableHeader>
                 <TableBody>
                   {applications.map((app) => {
-                    const dateValue = toDate(app.submissionDate);
+                    const dateValue =
+                      typeof app.submissionDate?.toDate === 'function'
+                        ? app.submissionDate.toDate()
+                        : new Date(app.submissionDate);
 
                     return (
                       <TableRow key={app.id}>
@@ -347,8 +351,8 @@ export default function SubmeterApplicationsTable() {
                         <TableCell className="capitalize">{app.propertyType}</TableCell>
                         <TableCell className="capitalize">{app.applicationType}</TableCell>
                         <TableCell>
-                          {(app as any).utilityServices ? (
-                            Array.isArray((app as any).utilityServices) ? (app as any).utilityServices.join(', ') : (app as any).utilityServices
+                          {app.utilityServices ? (
+                            Array.isArray(app.utilityServices) ? app.utilityServices.join(', ') : app.utilityServices
                           ) : 'N/A'}
                         </TableCell>
                         <TableCell>
@@ -373,7 +377,7 @@ export default function SubmeterApplicationsTable() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleViewDocument(app.approvalDocumentUrl!)}
+                                onClick={() => handleViewDocument(app.approvalDocumentUrl)}
                                 className="text-green-600"
                                 title="Approval Document"
                               >
@@ -416,7 +420,7 @@ export default function SubmeterApplicationsTable() {
       </div>
 
       <SubmeterApplicationModal
-        application={selectedApplication as any}
+        application={selectedApplication}
         isOpen={isDetailsModalOpen}
         onClose={() => {
           setIsDetailsModalOpen(false);

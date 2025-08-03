@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
+import { db, storage } from '@/lib/firebase/client';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,9 +48,9 @@ export function ServiceRequestForm({ userId, customerName, customerEmail }: Serv
     if (!files || !userId) return [];
     
     const uploadPromises = Array.from(files).map(async (file) => {
-      // Storage disabled - return empty URL
-      return '';
-
+      const storageRef = ref(storage, `service-requests/${userId}/${Date.now()}-${file.name}`);
+      await uploadBytes(storageRef, file);
+      return getDownloadURL(storageRef);
     });
 
     return Promise.all(uploadPromises);

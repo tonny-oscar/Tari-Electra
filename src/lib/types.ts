@@ -59,7 +59,6 @@ export type Product = {
 
 export type ProductFormState = FormState<Product> & {
   createdProduct?: Product;
-  updatedProduct?: Product;
 };
 
 
@@ -99,9 +98,7 @@ export type HomepageSettings = {
   updatedAt?: string | Timestamp;
 };
 
-export type HomepageSettingsFormState = FormState<HomepageSettings> & {
-  updatedSettings?: HomepageSettings;
-};
+export type HomepageSettingsFormState = FormState<HomepageSettings>;
 
 export type BlogSubscriber = {
   email: string; // Document ID in Firestore
@@ -122,11 +119,8 @@ export type SubmeterApplication = {
   userId: string;
   fullName: string;
   email: string;
-  phoneNumber: string;
   phone: string;
   address: string;
-  physicalLocation: string;
-  areaTown: string;
   propertyType: 'residential' | 'commercial' | 'industrial';
   applicationType: 'new' | 'transfer' | 'upgrade';
   documents: SubmeterDocument[];
@@ -141,14 +135,6 @@ export type SubmeterApplication = {
   meterNumber?: string;
   meterType?: string;
   monthlyConsumption?: number;
-  idNumber?: string;
-  utilityServices?: string | string[];
-  mainMeterAccountNumber?: string;
-  submeterAccountNumber?: string;
-  currentReading?: number;
-  suppliesOtherAreas?: boolean;
-  linkedMeterNumbers?: string;
-  submetersRegistered?: string;
 };
 
 export type SubmeterApplicationFormState = FormState<SubmeterApplication>;
