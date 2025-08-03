@@ -47,6 +47,15 @@ export async function updateHomepageSettingsAction(
     
     const updatedSettings = await updateHomepageSettings(dataToUpdate); // Call Firestore version
     
+    if (!updatedSettings) {
+      console.error('[updateHomepageSettingsAction] Failed to update settings in Firestore.');
+      return {
+        message: 'Failed to update homepage settings. Please try again.',
+        isError: true,
+        isSuccess: false,
+      };
+    }
+    
     console.log('[updateHomepageSettingsAction] Homepage Settings Updated (Firestore):', updatedSettings);
     
     revalidatePath('/'); 

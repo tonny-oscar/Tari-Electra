@@ -40,14 +40,24 @@ export async function getHomepageSettings(): Promise<HomepageSettings> {
   }
 }
 
-export async function updateHomepageSettings(settings: Partial<HomepageSettings>): Promise<void> {
+export async function updateHomepageSettings(settings: Partial<HomepageSettings>): Promise<HomepageSettings> {
   try {
     const docRef = doc(db, 'settings', 'homepage');
-    await updateDoc(docRef, {
+    const updatedData = {
       ...settings,
       updatedAt: new Date().toISOString(),
-    });
+    };
+    
+    await updateDoc(docRef, updatedData);
     console.log('[updateHomepageSettings] Settings updated successfully');
+    
+    // Return the updated settings
+    const updatedDoc = await getDoc(docRef);
+    if (updatedDoc.exists()) {
+      return { ...DEFAULT_SETTINGS, ...updatedDoc.data() } as HomepageSettings;
+    }
+    
+    return { ...DEFAULT_SETTINGS, ...updatedData } as HomepageSettings;
   } catch (error) {
     console.error('[updateHomepageSettings] Error:', error);
     throw error;

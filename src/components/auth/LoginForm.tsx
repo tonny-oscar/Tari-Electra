@@ -28,7 +28,7 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@yourstore.com';
+const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@yourstore.com').split(',').map(email => email.trim());
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -55,7 +55,7 @@ export function LoginForm() {
       const user = userCredential.user;
 
       // Check if user is admin
-      if (data.email === ADMIN_EMAIL) {
+      if (ADMIN_EMAILS.includes(data.email.trim())) {
         toast({
           title: 'Admin Login Successful!',
           description: 'Redirecting to admin panel...',
@@ -98,8 +98,9 @@ export function LoginForm() {
         description: 'Redirecting to your dashboard...',
       });
 
-      // Redirect customer to dashboard
-      router.push('/customer/dashboard');
+      // Get redirect URL from search params or default to dashboard
+      const redirectTo = searchParams.get('redirect') || '/customer/dashboard';
+      router.push(redirectTo);
 
     } catch (err: any) {
       const message = err?.message || 'Failed to login. Please check your credentials.';

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getErrorMessage } from '@/lib/utils/error';
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,7 +8,7 @@ export async function POST(request: NextRequest) {
     const results = {
       sms: null,
       email: null,
-      errors: [],
+      errors: [] as string[],
       config: {
         twilioConfigured: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER),
         sendgridConfigured: !!process.env.SENDGRID_API_KEY
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
           results.errors.push(`SMS Error: ${errorText}`);
         }
       } catch (error) {
-        results.errors.push(`SMS Error: ${error.message}`);
+        results.errors.push(`SMS Error: ${getErrorMessage(error)}`);
       }
     }
 
@@ -69,12 +70,12 @@ export async function POST(request: NextRequest) {
           results.errors.push(`Email Error: ${errorText}`);
         }
       } catch (error) {
-        results.errors.push(`Email Error: ${error.message}`);
+        results.errors.push(`Email Error: ${getErrorMessage(error)}`);
       }
     }
 
     return NextResponse.json(results);
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }

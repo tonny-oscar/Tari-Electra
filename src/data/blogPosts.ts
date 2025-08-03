@@ -95,11 +95,7 @@ export async function updateBlogPost(slug: string, updatedPostData: Partial<Omit
   if (!postSnap.exists()) return null;
 
   const dataToUpdate: Record<string, any> = { ...updatedPostData };
-  if (updatedPostData.date && typeof updatedPostData.date === 'string') {
-    dataToUpdate.date = Timestamp.fromDate(new Date(updatedPostData.date));
-  } else {
-    delete dataToUpdate.date;
-  }
+  // Date handling removed as it's excluded from the type
 
   await setDoc(postDocRef, dataToUpdate, { merge: true });
 

@@ -101,8 +101,8 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
     if (result.isSuccess) {
         if(mode === 'create') {
           setImagePreview(null); 
-        } else if (result.updatedProduct?.imageUrl) {
-          setImagePreview(result.updatedProduct.imageUrl);
+        } else if (result.createdProduct?.imageUrl) {
+          setImagePreview(result.createdProduct.imageUrl);
         }
     }
   };

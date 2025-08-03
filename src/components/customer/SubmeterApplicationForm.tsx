@@ -7,13 +7,12 @@ import { createSubmeterApplication, type SubmeterApplication } from '@/lib/fireb
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 
 interface SubmeterApplicationFormData {
   propertyType: 'residential' | 'commercial';
-  utilityServices: ('electricity' | 'water')[];
+  utilityServices: Array<'electricity' | 'water'>;
   applicationType: 'new' | 'existing';
   fullName: string;
   phoneNumber: string;
@@ -52,6 +51,7 @@ export default function SubmeterApplicationForm() {
 
     try {
       setIsSubmitting(true);
+
       const submissionData: Omit<SubmeterApplication, 'id'> = {
         ...data,
         userId: auth.currentUser.uid,
@@ -85,20 +85,24 @@ export default function SubmeterApplicationForm() {
         {/* Property Type */}
         <div>
           <Label>Property Type</Label>
-          <RadioGroup defaultValue="residential" className="grid grid-cols-2 gap-4 mt-2">
+          <RadioGroup className="grid grid-cols-2 gap-4 mt-2">
             <div className="flex items-center space-x-2">
-              <RadioGroupItem
+              <input
+                type="radio"
                 value="residential"
                 {...register('propertyType', { required: true })}
+                id="propertyType-residential"
               />
-              <Label>Residential - House(s)</Label>
+              <Label htmlFor="propertyType-residential">Residential</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem
+              <input
+                type="radio"
                 value="commercial"
                 {...register('propertyType', { required: true })}
+                id="propertyType-commercial"
               />
-              <Label>Commercial - Shops & Offices</Label>
+              <Label htmlFor="propertyType-commercial">Commercial</Label>
             </div>
           </RadioGroup>
         </div>
@@ -112,7 +116,6 @@ export default function SubmeterApplicationForm() {
                 type="checkbox"
                 value="electricity"
                 {...register('utilityServices')}
-                className="form-checkbox"
                 id="electricity"
               />
               <Label htmlFor="electricity">Electricity</Label>
@@ -122,7 +125,6 @@ export default function SubmeterApplicationForm() {
                 type="checkbox"
                 value="water"
                 {...register('utilityServices')}
-                className="form-checkbox"
                 id="water"
               />
               <Label htmlFor="water">Water</Label>
@@ -133,25 +135,29 @@ export default function SubmeterApplicationForm() {
         {/* Application Type */}
         <div>
           <Label>Application Type</Label>
-          <RadioGroup defaultValue="new" className="grid grid-cols-2 gap-4 mt-2">
+          <RadioGroup className="grid grid-cols-2 gap-4 mt-2">
             <div className="flex items-center space-x-2">
-              <RadioGroupItem
+              <input
+                type="radio"
                 value="new"
                 {...register('applicationType', { required: true })}
+                id="applicationType-new"
               />
-              <Label>New</Label>
+              <Label htmlFor="applicationType-new">New</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem
+              <input
+                type="radio"
                 value="existing"
                 {...register('applicationType', { required: true })}
+                id="applicationType-existing"
               />
-              <Label>Existing / Addition</Label>
+              <Label htmlFor="applicationType-existing">Existing</Label>
             </div>
           </RadioGroup>
         </div>
 
-        {/* Name */}
+        {/* Full Name */}
         <div>
           <Label>Full Name / Organization Name</Label>
           <Input
@@ -174,7 +180,7 @@ export default function SubmeterApplicationForm() {
 
         {/* ID Number */}
         <div>
-          <Label>ID or Registration Number</Label>
+          <Label>ID / Registration Number</Label>
           <Input
             {...register('idNumber', { required: true })}
             className="mt-2"
@@ -184,7 +190,7 @@ export default function SubmeterApplicationForm() {
 
         {/* Email */}
         <div>
-          <Label>Email Address</Label>
+          <Label>Email</Label>
           <Input
             {...register('email', {
               required: true,
@@ -209,7 +215,7 @@ export default function SubmeterApplicationForm() {
           />
         </div>
 
-        {/* Area & Town */}
+        {/* Area Town */}
         <div>
           <Label>Area & Town</Label>
           <Input
@@ -219,7 +225,7 @@ export default function SubmeterApplicationForm() {
           />
         </div>
 
-        {/* Main Meter Account */}
+        {/* Main Meter Account Number */}
         <div>
           <Label>Main Meter Account Number</Label>
           <Input
@@ -233,17 +239,14 @@ export default function SubmeterApplicationForm() {
         <div>
           <Label>Current Reading</Label>
           <Input
-            {...register('currentReading', {
-              required: true,
-              valueAsNumber: true,
-            })}
+            {...register('currentReading', { required: true, valueAsNumber: true })}
             type="number"
             className="mt-2"
             placeholder="Enter current reading"
           />
         </div>
 
-        {/* Sub-meter Account Number */}
+        {/* Submeter Account Number */}
         <div>
           <Label>Sub-meter Account Number</Label>
           <Input
@@ -253,28 +256,23 @@ export default function SubmeterApplicationForm() {
           />
         </div>
 
-        {/* Sub-meters Registered */}
+        {/* Registered Submeters */}
         <div>
-          <Label>List of Sub-meters registered</Label>
+          <Label>Sub-meters Registered</Label>
           <textarea
             {...register('submetersRegistered')}
             className="mt-2 w-full p-2 border border-gray-300 rounded-md"
-            rows={4}
-            placeholder="List all sub-meters registered (one per line or separated by commas)"
+            placeholder="List sub-meters (comma-separated)"
           />
-          <p className="text-sm text-gray-500 mt-1">
-            Please list all sub-meters that are currently registered or will be registered
-          </p>
         </div>
 
         {/* Supplies Other Areas */}
         <div>
-          <Label>Is main meter supplying other areas?</Label>
+          <Label>Main meter supplies other areas?</Label>
           <div className="flex items-center space-x-2 mt-2">
             <input
               type="checkbox"
               {...register('suppliesOtherAreas')}
-              className="form-checkbox"
               id="suppliesOtherAreas"
             />
             <Label htmlFor="suppliesOtherAreas">Yes</Label>
@@ -283,7 +281,7 @@ export default function SubmeterApplicationForm() {
 
         {/* Linked Meter Numbers */}
         <div>
-          <Label>Meter Numbers linked to main meter (optional)</Label>
+          <Label>Linked Meter Numbers (optional)</Label>
           <Input
             {...register('linkedMeterNumbers')}
             className="mt-2"
@@ -291,21 +289,22 @@ export default function SubmeterApplicationForm() {
           />
         </div>
 
-        {/* Terms & Conditions */}
+        {/* Terms */}
         <div>
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
               {...register('termsAccepted', { required: true })}
-              className="form-checkbox"
               id="termsAccepted"
             />
             <Label htmlFor="termsAccepted">
-              I confirm that I have read and accept the terms and conditions
+              I accept the terms and conditions
             </Label>
           </div>
           {errors.termsAccepted && (
-            <p className="text-sm text-red-500 mt-1">You must accept the terms to proceed.</p>
+            <p className="text-sm text-red-500 mt-1">
+              You must accept the terms to continue.
+            </p>
           )}
         </div>
       </div>

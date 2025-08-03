@@ -1,16 +1,14 @@
-// // lib/firebase-admin.ts
-// import { initializeApp, getApps, cert } from 'firebase-admin/app';
-// import { getFirestore } from 'firebase-admin/firestore';
+import admin from 'firebase-admin';
 
-// const firebaseAdminConfig = {
-//   credential: cert({
-//     projectId: process.env.FIREBASE_PROJECT_ID!,
-//     clientEmail: process.env.FIREBASE_CLIENT_EMAIL!,
-//     privateKey: process.env.FIREBASE_PRIVATE_KEY!.replace(/\\n/g, '\n'),
-//   }),
-// };
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
 
-// const app = getApps().length === 0 ? initializeApp(firebaseAdminConfig) : getApps()[0];
-// const adminDb = getFirestore(app);
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+}
 
-// export { adminDb };s
+const db = admin.firestore();
+const auth = admin.auth();
+
+export { admin, db, auth };

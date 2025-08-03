@@ -7,6 +7,7 @@ import { PlusCircle, ExternalLink, Newspaper } from 'lucide-react';
 import Image from 'next/image';
 import { BlogActionsCell } from '@/components/admin/BlogActionsCell';
 import type { BlogPost } from '@/lib/types';
+import { formatDate } from '@/lib/utils/date';
 
 export default async function AdminBlogListPage() {
   const posts: BlogPost[] = await getBlogPosts(); 
@@ -50,7 +51,7 @@ export default async function AdminBlogListPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-semibold line-clamp-2 leading-tight">{post.title}</CardTitle>
                 <CardDescription className="text-xs text-muted-foreground pt-1">
-                  {new Date(post.date).toLocaleDateString()} &bull; {post.category}
+                  {formatDate(post.date)} &bull; {post.category}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-grow pt-0">

@@ -654,7 +654,7 @@ export function CustomerDashboard() {
             )}
             {activeTab === 'submeters' && (
               <SubmeterTab
-                applications={submeterApplications}
+                applications={submeterApplications as any}
               />
             )}
           </div>
@@ -918,7 +918,7 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
     if (searchTerm) {
       filtered = filtered.filter(product => 
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchTerm.toLowerCase())
+        product.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -1082,7 +1082,7 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
               <CardContent className="p-6">
                 <div className="mb-4">
                   <h3 className="font-semibold text-lg mb-2">{sanitizeUserInput(product.name)}</h3>
-                  <p className="text-sm text-gray-600 mb-2 line-clamp-3">{sanitizeUserInput(product.description)}</p>
+                  <p className="text-sm text-gray-600 mb-2 line-clamp-3">{sanitizeUserInput(product.description || '')}</p>
                   <div className="flex items-center justify-center space-x-1 mb-2">
                     {[...Array(5)].map((_, i) => (
                       <Star
@@ -1644,7 +1644,7 @@ function ProfileTab({ customerData, user }: {
                 <Package className="w-8 h-8 text-green-600" />
               </div>
               <p className="text-sm text-gray-600">Total Orders</p>
-              <p className="font-semibold">{customerData.orders?.length || 0}</p>
+              <p className="font-semibold">{(customerData as any).orders?.length || 0}</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
