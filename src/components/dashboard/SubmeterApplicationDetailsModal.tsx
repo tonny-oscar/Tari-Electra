@@ -8,8 +8,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Download } from 'lucide-react';
 import { format } from 'date-fns';
+import jsPDF from 'jspdf';
 
 interface SubmeterApplication {
   id: string;
@@ -46,14 +49,112 @@ export function SubmeterApplicationDetailsModal({
 }: SubmeterApplicationDetailsModalProps) {
   if (!application) return null;
 
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    let yPosition = 20;
+
+    // Header
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Tari Electra - Sub-Meter Application', pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 20;
+
+    // Application ID and Date
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Application ID: ${application.id}`, 20, yPosition);
+    yPosition += 10;
+    doc.text(`Submitted: ${format(new Date(application.submissionDate), 'PPP')}`, 20, yPosition);
+    yPosition += 10;
+    doc.text(`Status: ${application.status.toUpperCase()}`, 20, yPosition);
+    yPosition += 20;
+
+    // Personal Information
+    doc.setFont('helvetica', 'bold');
+    doc.text('Personal Information', 20, yPosition);
+    yPosition += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Full Name: ${application.fullName}`, 20, yPosition);
+    yPosition += 8;
+    doc.text(`Email: ${application.email}`, 20, yPosition);
+    yPosition += 8;
+    doc.text(`Phone: ${application.phoneNumber}`, 20, yPosition);
+    yPosition += 15;
+
+    // Property Details
+    doc.setFont('helvetica', 'bold');
+    doc.text('Property Details', 20, yPosition);
+    yPosition += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Property Type: ${application.propertyType}`, 20, yPosition);
+    yPosition += 8;
+    doc.text(`Application Type: ${application.applicationType}`, 20, yPosition);
+    yPosition += 8;
+    doc.text(`Physical Location: ${application.physicalLocation}`, 20, yPosition);
+    yPosition += 8;
+    doc.text(`Area & Town: ${application.areaTown}`, 20, yPosition);
+    yPosition += 15;
+
+    // Meter Information
+    doc.setFont('helvetica', 'bold');
+    doc.text('Meter Information', 20, yPosition);
+    yPosition += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Main Meter Account: ${application.mainMeterAccountNumber}`, 20, yPosition);
+    yPosition += 8;
+    doc.text(`Current Reading: ${application.currentReading}`, 20, yPosition);
+    yPosition += 8;
+    doc.text(`Supplies Other Areas: ${application.suppliesOtherAreas ? 'Yes' : 'No'}`, 20, yPosition);
+    yPosition += 8;
+    if (application.linkedMeterNumbers) {
+      doc.text(`Linked Meters: ${application.linkedMeterNumbers}`, 20, yPosition);
+      yPosition += 8;
+    }
+    yPosition += 10;
+
+    // Sub-meters Registered
+    if (application.submetersRegistered) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Sub-meters Registered', 20, yPosition);
+      yPosition += 10;
+      doc.setFont('helvetica', 'normal');
+      const lines = doc.splitTextToSize(application.submetersRegistered, pageWidth - 40);
+      doc.text(lines, 20, yPosition);
+      yPosition += lines.length * 6 + 10;
+    }
+
+    // Admin Notes
+    if (application.approvalNotes || application.rejectionNotes) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Admin Notes', 20, yPosition);
+      yPosition += 10;
+      doc.setFont('helvetica', 'normal');
+      const notes = application.approvalNotes || application.rejectionNotes || '';
+      const noteLines = doc.splitTextToSize(notes, pageWidth - 40);
+      doc.text(noteLines, 20, yPosition);
+    }
+
+    // Save PDF
+    doc.save(`submeter-application-${application.id}.pdf`);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Sub-Meter Application Details</DialogTitle>
-          <DialogDescription>
-            Application submitted on {format(new Date(application.submissionDate), 'PPP')}
-          </DialogDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle>Sub-Meter Application Details</DialogTitle>
+              <DialogDescription>
+                Application submitted on {format(new Date(application.submissionDate), 'PPP')}
+              </DialogDescription>
+            </div>
+            <Button onClick={generatePDF} variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Download PDF
+            </Button>
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">

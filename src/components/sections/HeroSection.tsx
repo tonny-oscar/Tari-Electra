@@ -146,7 +146,7 @@ export function HeroSection({
               size="lg"
               className="bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white border-0 shadow-2xl px-8 py-4 text-lg font-semibold transition-all duration-300 hover:scale-105"
             >
-              <Link href="/#contact" aria-label="Request a free estimate via contact section">
+              <Link href="/free-estimate" aria-label="Request a free estimate">
                 Request Free Estimate
               </Link>
             </Button>

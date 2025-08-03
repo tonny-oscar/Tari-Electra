@@ -6,22 +6,24 @@ export interface SubmeterDocument {
 
 export interface SubmeterApplication {
   id?: string;
+  userId?: string;
   propertyType: 'residential' | 'commercial' | 'industrial';
-  utilityServices: ('electricity' | 'water')[];
+  utilityServices?: ('electricity' | 'water')[];
   applicationType: 'new' | 'existing';
   fullName: string;
   phoneNumber: string;
-  idNumber: string;
+  idNumber?: string;
   email: string;
   physicalLocation: string;
   areaTown: string;
-  mainMeterAccountNumber: string;
-  currentReading: number;
-  suppliesOtherAreas: boolean;
+  mainMeterAccountNumber?: string;
+  currentReading?: number;
+  submetersRegistered?: string;
+  suppliesOtherAreas?: boolean;
   linkedMeterNumbers?: string;
-  termsAccepted: boolean;
+  termsAccepted?: boolean;
   signature?: string;
-  submissionDate: string;
+  submissionDate: string | any;
   status: 'pending' | 'approved' | 'rejected';
   // Additional fields for document management and approval process
   documents?: SubmeterDocument[];

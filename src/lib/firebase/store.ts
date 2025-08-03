@@ -43,6 +43,7 @@ export interface CartItem extends Product {
 // ====================
 export interface Order {
   id: string;
+  orderNumber: string;
   customerId: string;
   customerEmail: string;
   items: CartItem[];
@@ -114,14 +115,39 @@ export async function getProduct(productId: string): Promise<Product | null> {
 // Order Operations
 // ====================
 
-export async function createOrder(data: Omit<Order, 'id'>): Promise<string> {
+// Generate custom order number
+async function generateOrderNumber(): Promise<string> {
   try {
+    const ordersRef = collection(db, 'orders');
+    const q = query(ordersRef, orderBy('createdAt', 'desc'), limit(1));
+    const snapshot = await getDocs(q);
+    
+    let nextNumber = 1;
+    if (!snapshot.empty) {
+      const lastOrder = snapshot.docs[0].data();
+      if (lastOrder.orderNumber) {
+        const lastNumber = parseInt(lastOrder.orderNumber.split('/')[2]);
+        nextNumber = lastNumber + 1;
+      }
+    }
+    
+    return `TEE/CG1/${nextNumber.toString().padStart(3, '0')}`;
+  } catch (error) {
+    console.error('Error generating order number:', error);
+    return `TEE/CG1/${Date.now().toString().slice(-3)}`;
+  }
+}
+
+export async function createOrder(data: Omit<Order, 'id' | 'orderNumber'> & { orderNumber?: string }): Promise<{ orderId: string; orderNumber: string }> {
+  try {
+    const orderNumber = await generateOrderNumber();
     const docRef = await addDoc(collection(db, 'orders'), {
       ...data,
+      orderNumber,
       createdAt: new Date().toISOString(),
       status: 1
     });
-    return docRef.id;
+    return { orderId: docRef.id, orderNumber };
   } catch (error) {
     console.error('Error creating order:', error);
     throw error;

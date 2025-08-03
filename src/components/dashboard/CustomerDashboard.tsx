@@ -475,20 +475,15 @@ export function CustomerDashboard() {
         trackingNumber: `TRK${Date.now()}`
       };
 
-      const { orderId } = await createOrder(orderData);
+      const { orderId, orderNumber } = await createOrder(orderData);
 
       toast({
         title: 'Order Placed!',
-        description: `Order has been placed successfully.`,
+        description: `Order ${orderNumber} has been placed successfully.`,
       });
 
       setCart([]);
       setActiveTab('orders');
-
-     
-      setTimeout(() => updateOrderStatusLocal(orderId, 2), 3000);
-      setTimeout(() => updateOrderStatusLocal(orderId, 3), 8000);
-      setTimeout(() => updateOrderStatusLocal(orderId, 4), 15000);
 
     } catch (error) {
       console.error('Error placing order:', sanitizeForLog(String(error)));
@@ -500,17 +495,7 @@ export function CustomerDashboard() {
     }
   };
 
-  const updateOrderStatusLocal = async (orderId: string, newStatus: number) => {
-    try {
-      if (!orderId || typeof newStatus !== 'number') return;
-      await updateDoc(doc(db, 'orders', orderId), {
-        status: newStatus,
-        updatedAt: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('Error updating order status:', sanitizeForLog(String(error)));
-    }
-  };
+
 
   const handleLogout = async () => {
     try {
@@ -553,7 +538,7 @@ export function CustomerDashboard() {
   // Navigation tabs
   const tabs = [
     { id: 'dashboard', name: 'Dashboard', icon: Home },
-    { id: 'submeters', name: 'Submeter Application Form', icon: Zap },
+    { id: 'submeters', name: 'Submeter', icon: Zap },
     { id: 'products', name: 'Products', icon: Package },
     { id: 'cart', name: 'Cart', icon: ShoppingCart, badge: cart.length },
     { id: 'orders', name: 'Orders', icon: Truck },
@@ -777,7 +762,7 @@ function DashboardTab({ customerData, orders, cart, trackingStages, products, ad
                 return (
                   <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
-                      <p className="font-medium">Order #{order.id.slice(-8)}</p>
+                      <p className="font-medium">Order {order.orderNumber || `#${order.id.slice(-8)}`}</p>
                       <p className="text-sm text-gray-600">
                         {order.items.length} items • KSH {order.total.toFixed(2)}
                       </p>
@@ -1186,7 +1171,22 @@ function CartTab({ cart, updateCartQuantity, removeFromCart, getCartTotal, place
             <Card key={item.id}>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4">
-                  <div className="text-3xl">{item.image}</div>
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                    {item.image && item.image !== '📦' && !item.image.startsWith('http') ? (
+                      <span className="text-2xl">{item.image}</span>
+                    ) : item.image && item.image.startsWith('http') ? (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className={`text-2xl text-gray-400 ${item.image && item.image.startsWith('http') ? 'hidden' : item.image && item.image !== '📦' ? 'hidden' : ''}`}>📦</div>
+                  </div>
                   <div className="flex-1">
                     <h3 className="font-semibold">{item.name}</h3>
                     <p className="text-sm text-gray-600">{item.description}</p>
@@ -1305,7 +1305,7 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-lg">
-                      Order #{order.id.slice(-8)}
+                      Order {order.orderNumber || `#${order.id.slice(-8)}`}
                     </CardTitle>
                     <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
                       <span className="flex items-center">
@@ -1340,7 +1340,22 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
                     {order.items.map((item, index) => (
                       <div key={index} className="flex items-center justify-between py-2 border-b last:border-b-0">
                         <div className="flex items-center space-x-3">
-                          <span className="text-2xl">{item.image}</span>
+                          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                            {item.image && item.image !== '📦' && !item.image.startsWith('http') ? (
+                              <span className="text-lg">{item.image}</span>
+                            ) : item.image && item.image.startsWith('http') ? (
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                }}
+                              />
+                            ) : null}
+                            <div className={`text-lg text-gray-400 ${item.image && item.image.startsWith('http') ? 'hidden' : item.image && item.image !== '📦' ? 'hidden' : ''}`}>📦</div>
+                          </div>
                           <div>
                             <p className="font-medium">{sanitizeUserInput(item.name)}</p>
                             <p className="text-sm text-gray-600">

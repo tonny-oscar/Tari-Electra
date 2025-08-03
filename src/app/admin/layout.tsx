@@ -36,6 +36,7 @@ const navLinks = [
   { href: '/admin', label: 'Dashboard', icon: Home },
   { href: '/admin/blog', label: 'Blog Management', icon: Newspaper },
   { href: '/admin/products', label: 'Customer Products', icon: ShoppingBag },
+  { href: '/admin/stock', label: 'Stock Management', icon: Settings },
   { href: '/admin/homepage-products', label: 'Homepage Products', icon: ImageIcon },
   { href: '/admin/orders', label: 'Orders Management', icon: ShoppingBag },
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },

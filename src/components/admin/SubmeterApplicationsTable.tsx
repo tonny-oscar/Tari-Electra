@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { FileText, Eye, Filter, Download } from 'lucide-react';
+import jsPDF from 'jspdf';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   DropdownMenu,
@@ -80,42 +81,129 @@ export default function SubmeterApplicationsTable() {
   };
 
   const generatePDF = (application: SubmeterApplication) => {
-    const content = `
-SUB-METER APPLICATION FORM
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    let yPosition = 20;
 
-Submission Date: ${format(typeof application.submissionDate?.toDate === 'function' ? application.submissionDate.toDate() : new Date(application.submissionDate), 'PPP')}
-Application ID: ${application.id}
+    // Header
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Tari Electra - Sub-Meter Application', pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 20;
 
-APPLICANT INFORMATION:
-Full Name: ${application.fullName}
-Email: ${application.email}
-Phone Number: ${application.phoneNumber}
+    // Application details
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    const submissionDate = typeof application.submissionDate?.toDate === 'function' 
+      ? application.submissionDate.toDate() 
+      : new Date(application.submissionDate);
+    
+    doc.text(`Application ID: ${application.id}`, 20, yPosition);
+    yPosition += 10;
+    doc.text(`Submitted: ${format(submissionDate, 'PPP')}`, 20, yPosition);
+    yPosition += 10;
+    doc.text(`Status: ${application.status.toUpperCase()}`, 20, yPosition);
+    yPosition += 20;
 
-PROPERTY DETAILS:
-Property Type: ${application.propertyType}
-Application Type: ${application.applicationType}
-Physical Location: ${application.physicalLocation}
-Area/Town: ${application.areaTown}
+    // Personal Information
+    doc.setFont('helvetica', 'bold');
+    doc.text('Personal Information', 20, yPosition);
+    yPosition += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Full Name: ${application.fullName}`, 20, yPosition);
+    yPosition += 8;
+    doc.text(`Email: ${application.email}`, 20, yPosition);
+    yPosition += 8;
+    doc.text(`Phone: ${application.phoneNumber}`, 20, yPosition);
+    yPosition += 8;
+    if (application.idNumber) {
+      doc.text(`ID/Registration Number: ${application.idNumber}`, 20, yPosition);
+      yPosition += 8;
+    }
+    if (application.utilityServices) {
+      const services = Array.isArray(application.utilityServices) ? application.utilityServices.join(', ') : application.utilityServices;
+      doc.text(`Utility Services: ${services}`, 20, yPosition);
+      yPosition += 8;
+    }
+    yPosition += 10;
 
-STATUS:
-Current Status: ${application.status}
-${application.approvalDate ? `Approval Date: ${format(new Date(application.approvalDate), 'PPP')}` : ''}
-${application.approvalNotes ? `Admin Notes: ${application.approvalNotes}` : ''}
-${application.rejectionDate ? `Rejection Date: ${format(new Date(application.rejectionDate), 'PPP')}` : ''}
-${application.rejectionNotes ? `Rejection Notes: ${application.rejectionNotes}` : ''}
+    // Property Details
+    doc.setFont('helvetica', 'bold');
+    doc.text('Property Details', 20, yPosition);
+    yPosition += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Property Type: ${application.propertyType}`, 20, yPosition);
+    yPosition += 8;
+    doc.text(`Application Type: ${application.applicationType}`, 20, yPosition);
+    yPosition += 8;
+    doc.text(`Physical Location: ${application.physicalLocation}`, 20, yPosition);
+    yPosition += 8;
+    doc.text(`Area & Town: ${application.areaTown}`, 20, yPosition);
+    yPosition += 15;
 
-Generated on: ${format(new Date(), 'PPP')}
-    `;
+    // Meter Information
+    if (application.mainMeterAccountNumber) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Meter Information', 20, yPosition);
+      yPosition += 10;
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Main Meter Account: ${application.mainMeterAccountNumber}`, 20, yPosition);
+      yPosition += 8;
+      if (application.currentReading) {
+        doc.text(`Current Reading: ${application.currentReading}`, 20, yPosition);
+        yPosition += 8;
+      }
+      if (application.suppliesOtherAreas !== undefined) {
+        doc.text(`Supplies Other Areas: ${application.suppliesOtherAreas ? 'Yes' : 'No'}`, 20, yPosition);
+        yPosition += 8;
+      }
+      if (application.linkedMeterNumbers) {
+        doc.text(`Linked Meters: ${application.linkedMeterNumbers}`, 20, yPosition);
+        yPosition += 8;
+      }
+      yPosition += 10;
+    }
 
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `sub-meter-application-${application.id}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // Sub-meters Registered
+    if (application.submetersRegistered) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Sub-meters Registered', 20, yPosition);
+      yPosition += 10;
+      doc.setFont('helvetica', 'normal');
+      const lines = doc.splitTextToSize(application.submetersRegistered, pageWidth - 40);
+      doc.text(lines, 20, yPosition);
+      yPosition += lines.length * 6 + 10;
+    }
+
+    // Admin Notes
+    if (application.approvalNotes || application.rejectionNotes) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Admin Notes', 20, yPosition);
+      yPosition += 10;
+      doc.setFont('helvetica', 'normal');
+      const notes = application.approvalNotes || application.rejectionNotes || '';
+      const noteLines = doc.splitTextToSize(notes, pageWidth - 40);
+      doc.text(noteLines, 20, yPosition);
+      yPosition += noteLines.length * 6 + 10;
+    }
+
+    // Status dates
+    if (application.approvalDate) {
+      doc.text(`Approved on: ${format(new Date(application.approvalDate), 'PPP')}`, 20, yPosition);
+      yPosition += 8;
+    }
+    if (application.rejectionDate) {
+      doc.text(`Rejected on: ${format(new Date(application.rejectionDate), 'PPP')}`, 20, yPosition);
+      yPosition += 8;
+    }
+
+    // Footer
+    yPosition += 10;
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${format(new Date(), 'PPP')}`, 20, yPosition);
+
+    // Save PDF
+    doc.save(`submeter-application-${application.id}.pdf`);
   };
 
   const getBadgeColor = (status: string) => {
@@ -213,6 +301,7 @@ Generated on: ${format(new Date(), 'PPP')}
                     <TableHead>Name</TableHead>
                     <TableHead>Property Type</TableHead>
                     <TableHead>Application Type</TableHead>
+                    <TableHead>Utility Services</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Documents</TableHead>
                     <TableHead>Actions</TableHead>
@@ -238,6 +327,11 @@ Generated on: ${format(new Date(), 'PPP')}
                         </TableCell>
                         <TableCell className="capitalize">{app.propertyType}</TableCell>
                         <TableCell className="capitalize">{app.applicationType}</TableCell>
+                        <TableCell>
+                          {app.utilityServices ? (
+                            Array.isArray(app.utilityServices) ? app.utilityServices.join(', ') : app.utilityServices
+                          ) : 'N/A'}
+                        </TableCell>
                         <TableCell>
                           <Badge className={getBadgeColor(app.status)}>
                             {app.status}

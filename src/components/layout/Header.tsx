@@ -88,20 +88,9 @@ export function Header() {
           ) : user ? (
             <>
               {isCustomer && (
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button size="sm" className="hidden sm:flex">Get a Free Estimate</Button>
-                  </SheetTrigger>
-                  <SheetContent className="sm:max-w-lg w-[90vw] overflow-y-auto">
-                    <SheetHeader className="mb-4">
-                      <SheetTitle>Request a Free Estimate</SheetTitle>
-                      <SheetDescription>
-                        Fill out the form below and we&apos;ll get back to you as soon as possible.
-                      </SheetDescription>
-                    </SheetHeader>
-                    <ContactSection />
-                  </SheetContent>
-                </Sheet>
+                <Button size="sm" className="hidden sm:flex" asChild>
+                  <Link href="/free-estimate">Get a Free Estimate</Link>
+                </Button>
               )}
 
               <DropdownMenu>
@@ -208,7 +197,7 @@ export function Header() {
 
                   {isCustomer && (
                     <Button asChild className="mt-4 text-lg justify-start px-3 py-2">
-                      <Link href="/contact">Get a Free Estimate</Link>
+                      <Link href="/free-estimate">Get a Free Estimate</Link>
                     </Button>
                   )}
 
