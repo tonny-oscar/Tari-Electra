@@ -16,7 +16,7 @@ import {
   ImageIcon,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import {
@@ -70,9 +70,18 @@ export default function AdminLayout({
       return;
     }
 
-    // For this setup, any logged-in user (who signed up with invite code) can access admin.
-    // The NEXT_PUBLIC_ADMIN_EMAIL is now only for header link visibility if needed.
-    console.log(`[AdminLayout] User ${user.email} is authenticated. Granting access to admin area.`);
+    // Check if user is admin
+    const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@yourstore.com').split(',').map(email => email.trim());
+    const isAdmin = ADMIN_EMAILS.includes(user.email?.trim() || '');
+    
+    if (!isAdmin) {
+      console.log(`[AdminLayout] User ${user.email} is not an admin. Redirecting to login.`);
+      router.push('/login');
+      setIsAdminRouteAllowed(false);
+      return;
+    }
+    
+    console.log(`[AdminLayout] User ${user.email} is authenticated as admin. Granting access.`);
     setIsAdminRouteAllowed(true);
 
   }, [user, loading, router, toast]);

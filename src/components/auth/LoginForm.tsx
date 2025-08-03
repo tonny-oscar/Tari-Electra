@@ -64,43 +64,13 @@ export function LoginForm() {
         return;
       }
 
-      // Check if user exists in customers collection
-      const customerDoc = await getDoc(doc(db, 'customers', user.uid));
-
-      if (!customerDoc.exists()) {
-        // If user doesn't exist in customers collection, sign them out
-        await auth.signOut();
-        setError('Account not found. Please sign up as a customer first.');
-        toast({
-          title: 'Access Denied',
-          description: 'Please sign up as a customer to access the dashboard.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const customerData = customerDoc.data();
-
-      // Verify user role is customer
-      if (customerData.role !== 'customer') {
-        await auth.signOut();
-        setError('Access denied. Customer account required.');
-        toast({
-          title: 'Access Denied',
-          description: 'Customer account required for dashboard access.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
+      // All other users go to customer dashboard
       toast({
         title: 'Login Successful!',
         description: 'Redirecting to your dashboard...',
       });
-
-      // Get redirect URL from search params or default to dashboard
-      const redirectTo = searchParams?.get('redirect') || '/customer/dashboard';
-      router.push(redirectTo);
+      
+      router.push('/customer/dashboard');
 
     } catch (err: any) {
       const message = err?.message || 'Failed to login. Please check your credentials.';

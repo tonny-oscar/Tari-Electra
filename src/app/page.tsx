@@ -1,37 +1,33 @@
-import { HeroSection } from "@/components/sections/HeroSection";
-import { ServiceHighlightsSection } from "@/components/sections/ServiceHighlightsSection";
-import { ProductsSection } from "@/components/sections/ProductsSection";
-import { TestimonialSection } from "@/components/sections/TestimonialSection";
-import { CallToActionStripSection } from "@/components/sections/CallToActionStripSection";
-import { ContactSection } from "@/components/sections/ContactSection";
-import { getHomepageSettings } from "@/data/homepageSettings";
-import { getProducts } from "@/data/products";
-import { unstable_noStore as noStore } from 'next/cache';
+'use client';
 
-export default async function HomePage() {
-  noStore();
-  
-  const [homepageSettings, products] = await Promise.all([
-    getHomepageSettings(),
-    getProducts()
-  ]);
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
-  if (!homepageSettings) {
-    throw new Error('Failed to load homepage settings');
+export default function HomePage() {
+  const { user, isAdmin, isCustomer, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading) return;
+
+    if (!user) {
+      router.push('/login');
+    } else if (isAdmin) {
+      router.push('/admin');
+    } else {
+      router.push('/customer/dashboard');
+    }
+  }, [user, isAdmin, isCustomer, loading, router]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2">Loading...</span>
+      </div>
+    );
   }
 
-  return (
-    <>
-      <HeroSection
-        imageUrl={homepageSettings.heroImageUrl}
-        imageHint={homepageSettings.heroImageHint}
-      />
-      <ServiceHighlightsSection />
-      <ProductsSection products={products} />
-      <TestimonialSection />
-      <CallToActionStripSection />
-      <ContactSection />
-    </>
-  );
+  return null;
 }
-
