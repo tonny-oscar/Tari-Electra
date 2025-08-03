@@ -48,8 +48,8 @@ export function HomepageSettingsForm({ initialSettings }: HomepageSettingsFormPr
         variant: 'default',
         duration: 5000,
       });
-      if (state.updatedSettings?.heroImageUrl) {
-        setImagePreview(state.updatedSettings.heroImageUrl);
+      if (state.updatedItem?.heroImageUrl) {
+        setImagePreview(state.updatedItem.heroImageUrl);
       }
     } else if (state.isError && state.message && !state.fields) {
       toast({

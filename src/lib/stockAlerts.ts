@@ -18,13 +18,13 @@ export function initializeStockMonitoring() {
     
     snapshot.docs.forEach(async (docSnapshot) => {
       const product = { id: docSnapshot.id, ...docSnapshot.data() };
-      const stock = product.stock || 0;
+      const stock = (product as any).stock || 0;
       
       // Check for out of stock
       if (stock === 0) {
         alerts.push({
           productId: product.id,
-          productName: product.name,
+          productName: (product as any).name,
           currentStock: stock,
           alertType: 'out_of_stock',
           timestamp: new Date().toISOString()
@@ -40,14 +40,14 @@ export function initializeStockMonitoring() {
       else if (stock <= 5 && stock > 0) {
         alerts.push({
           productId: product.id,
-          productName: product.name,
+          productName: (product as any).name,
           currentStock: stock,
           alertType: 'low_stock',
           timestamp: new Date().toISOString()
         });
       }
       // Reactivate product if stock is restored
-      else if (stock > 0 && product.status === 'inactive') {
+      else if (stock > 0 && (product as any).status === 'inactive') {
         await updateDoc(doc(db, 'customerProducts', product.id), {
           status: 'active',
           updatedAt: new Date().toISOString()
@@ -83,7 +83,7 @@ export async function getUnreadStockAlerts(): Promise<StockAlert[]> {
         const alerts = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        })) as StockAlert[];
+        })) as any[];
         resolve(alerts);
         unsubscribe();
       });

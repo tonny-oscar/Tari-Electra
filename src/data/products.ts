@@ -36,10 +36,10 @@ export async function getProducts(): Promise<Product[]> {
     const productsCollection = collection(db, PRODUCTS_COLLECTION);
     const q = query(productsCollection, orderBy('name', 'asc'));
     const productSnapshot = await getDocs(q);
-    const productList = productSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...productToClient(doc.data()),
-    }));
+    const productList = productSnapshot.docs.map(doc => {
+      const data = productToClient(doc.data());
+      return { ...data, id: doc.id };
+    });
     console.log(`[FirestoreProducts - getProducts] Fetched ${productList.length} products from Firestore.`);
     return productList;
   } catch (error) {
@@ -60,8 +60,8 @@ export async function findProduct(id: string): Promise<Product | undefined> {
     const productSnap = await getDoc(productDocRef);
     if (productSnap.exists()) {
       const productData = productToClient(productSnap.data());
-      console.log(`[FirestoreProducts - findProduct] Found product from Firestore:`, { id: productSnap.id, ...productData });
-      return { id: productSnap.id, ...productData };
+      console.log(`[FirestoreProducts - findProduct] Found product from Firestore:`, { ...productData, id: productSnap.id });
+      return { ...productData, id: productSnap.id };
     }
     console.log(`[FirestoreProducts - findProduct] Product with ID ${id} not found in Firestore.`);
     return undefined;
@@ -125,7 +125,8 @@ export async function updateProduct(
     
     const updatedSnap = await getDoc(productDocRef);
     if (updatedSnap.exists()) {
-      const updatedProduct = { id: updatedSnap.id, ...productToClient(updatedSnap.data()) };
+      const updatedData = productToClient(updatedSnap.data());
+      const updatedProduct = { ...updatedData, id: updatedSnap.id };
       console.log(`[FirestoreProducts - updateProduct] Returning updated product data from Firestore:`, updatedProduct);
       return updatedProduct;
     } else {

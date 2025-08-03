@@ -53,8 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@yourstore.com').split(',').map(email => email.trim());
   
-  console.log('Admin emails configured:', ADMIN_EMAILS);
-  console.log('Current user email:', user?.email);
+  // Remove debug logs in production
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Admin emails configured:', ADMIN_EMAILS);
+    console.log('Current user email:', user?.email);
+  }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -62,9 +65,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (currentUser) {
         const userEmail = currentUser.email?.trim() || '';
-        console.log('Checking admin status for:', userEmail);
-        console.log('Admin emails:', ADMIN_EMAILS);
-        console.log('Is admin?', ADMIN_EMAILS.includes(userEmail));
+        // Remove debug logs in production
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Checking admin status for:', userEmail);
+          console.log('Admin emails:', ADMIN_EMAILS);
+          console.log('Is admin?', ADMIN_EMAILS.includes(userEmail));
+        }
         
         if (ADMIN_EMAILS.includes(userEmail)) {
           setCustomerData(null); // Admin has no customer data

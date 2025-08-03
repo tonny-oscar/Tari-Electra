@@ -81,8 +81,8 @@ export function OrderUpdateModal({ order, isOpen, onClose, trackingStages }: Ord
         ...(notes.trim() && { notes: notes.trim() }),
       };
 
-      updateData.statusHistory = order.statusHistory ? 
-        [...order.statusHistory, statusHistoryEntry] : 
+      updateData.statusHistory = (order as any).statusHistory ? 
+        [...(order as any).statusHistory, statusHistoryEntry] : 
         [statusHistoryEntry];
 
 

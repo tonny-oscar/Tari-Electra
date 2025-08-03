@@ -28,7 +28,7 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@yourstore.com';
+const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@yourstore.com').split(',').map(email => email.trim());
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -55,7 +55,7 @@ export function LoginForm() {
       const user = userCredential.user;
 
       // Check if user is admin
-      if (data.email === ADMIN_EMAIL) {
+      if (ADMIN_EMAILS.includes(data.email.trim())) {
         toast({
           title: 'Admin Login Successful!',
           description: 'Redirecting to admin panel...',
@@ -64,41 +64,12 @@ export function LoginForm() {
         return;
       }
 
-      // Check if user exists in customers collection
-      const customerDoc = await getDoc(doc(db, 'customers', user.uid));
-
-      if (!customerDoc.exists()) {
-        // If user doesn't exist in customers collection, sign them out
-        await auth.signOut();
-        setError('Account not found. Please sign up as a customer first.');
-        toast({
-          title: 'Access Denied',
-          description: 'Please sign up as a customer to access the dashboard.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const customerData = customerDoc.data();
-
-      // Verify user role is customer
-      if (customerData.role !== 'customer') {
-        await auth.signOut();
-        setError('Access denied. Customer account required.');
-        toast({
-          title: 'Access Denied',
-          description: 'Customer account required for dashboard access.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
+      // All other users go to customer dashboard
       toast({
         title: 'Login Successful!',
         description: 'Redirecting to your dashboard...',
       });
-
-      // Redirect customer to dashboard
+      
       router.push('/customer/dashboard');
 
     } catch (err: any) {

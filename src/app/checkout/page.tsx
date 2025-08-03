@@ -55,7 +55,7 @@ export default function CheckoutPage() {
     metadata: {
       custom_fields: [
         {
-          display_name: user.email,
+          display_name: user.email || 'Customer',
           variable_name: 'user_id',
           value: user.uid,
         },
