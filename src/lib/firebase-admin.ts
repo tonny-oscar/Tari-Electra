@@ -1,5 +1,6 @@
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+
 
 const serviceAccount = {
   type: "service_account",
