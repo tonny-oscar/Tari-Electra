@@ -18,15 +18,15 @@ export function Logo({ className = '', showLabel = true }: LogoProps) {
       )}
     >
       <Image
-        src="/tari-logo.png"
+        src="/LOGO_1.png"
         alt="Tari Electra Logo"
         width={100}
         height={100}
         className="object-contain"
         priority={true}
         style={{
-          width: '80px',
-          height: '80px'
+          width: '100px',
+          height: '100px'
         }}
       />
     </Link>
