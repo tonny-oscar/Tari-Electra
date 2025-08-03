@@ -27,25 +27,40 @@ const blogPostToClient = (docData: any): Omit<BlogPost, 'slug'> => {
 
 export async function getBlogPosts(): Promise<BlogPost[]> {
   noStore();
-  if (!db) return [];
-  const postsCollection = collection(db, BLOGS_COLLECTION);
-  const q = query(postsCollection, orderBy('date', 'desc'));
-  const postSnapshot = await getDocs(q);
-  return postSnapshot.docs.map(doc => ({
-    slug: doc.id,
-    ...blogPostToClient(doc.data()),
-  }));
+  try {
+    if (!db) return [];
+    const postsCollection = collection(db, BLOGS_COLLECTION);
+    const q = query(postsCollection, orderBy('date', 'desc'));
+    const postSnapshot = await getDocs(q);
+    return postSnapshot.docs.map(doc => ({
+      slug: doc.id,
+      ...blogPostToClient(doc.data()),
+    }));
+  } catch (error) {
+    console.error('Error fetching blog posts:', error);
+    return []; // Return empty array on error
+  }
+}
+
+export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+  noStore();
+  try {
+    if (!db) return null;
+    const postDocRef = doc(db, BLOGS_COLLECTION, slug);
+    const postSnap = await getDoc(postDocRef);
+    if (postSnap.exists()) {
+      return { slug: postSnap.id, ...blogPostToClient(postSnap.data()) };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching blog post:', error);
+    return null;
+  }
 }
 
 export async function findBlogPost(slug: string): Promise<BlogPost | undefined> {
-  noStore();
-  if (!db) return undefined;
-  const postDocRef = doc(db, BLOGS_COLLECTION, slug);
-  const postSnap = await getDoc(postDocRef);
-  if (postSnap.exists()) {
-    return { slug: postSnap.id, ...blogPostToClient(postSnap.data()) };
-  }
-  return undefined;
+  const post = await getBlogPostBySlug(slug);
+  return post || undefined;
 }
 
 export async function addBlogPost(postData: Omit<BlogPost, 'date'>): Promise<BlogPost | null> {

@@ -38,7 +38,10 @@ export type FormState<T> = {
   createdItem?: Partial<T>;
 };
 
-export type BlogFormState = FormState<BlogPost>;
+export type BlogFormState = FormState<BlogPost> & {
+  createdPost?: BlogPost;
+  updatedPost?: BlogPost;
+};
 
 export type Product = {
   id: string; // Firestore document ID
@@ -54,7 +57,9 @@ export type Product = {
   status: 'active' | 'inactive' | 'draft';
 };
 
-export type ProductFormState = FormState<Product>;
+export type ProductFormState = FormState<Product> & {
+  createdProduct?: Product;
+};
 
 
 export type ContactMessage = {

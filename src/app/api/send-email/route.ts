@@ -3,6 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const { to, subject, orderData, type } = await request.json();
+    
+    // Validate required fields
+    if (!to || !subject || !orderData) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+    
+    // Validate API key exists
+    if (!process.env.SENDGRID_API_KEY) {
+      console.error('SendGrid API key not configured');
+      return NextResponse.json({ error: 'Email service not configured' }, { status: 500 });
+    }
 
     // Using SendGrid (replace with your API key)
     const response = await fetch('https://api.sendgrid.com/v3/mail/send', {

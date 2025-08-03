@@ -56,6 +56,9 @@ export async function createProductAction(
       features: featuresArray,
       imageUrl: imageUrl || undefined, 
       imageHint: imageHint || undefined,
+      status: 'active',
+      stock: 100,
+      rating: 4.0,
     };
     
     console.log('[createProductAction] Data for addProduct (Firestore):', productToAdd);

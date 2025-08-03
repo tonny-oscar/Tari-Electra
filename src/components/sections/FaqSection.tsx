@@ -17,7 +17,7 @@ export function FaqSection() {
       faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
       faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [searchTerm, allFaqs]);
+  }, [searchTerm]);
 
   
   return (

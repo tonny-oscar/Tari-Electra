@@ -8,11 +8,12 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 type EditHomepageProductPageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export async function generateMetadata({ params }: EditHomepageProductPageProps): Promise<Metadata> {
-  const product = await getProduct(params.id);
+  const { id } = await params;
+  const product = await getProduct(id);
   if (!product) {
     return {
       title: 'Product Not Found - Admin Edit',
@@ -25,7 +26,8 @@ export async function generateMetadata({ params }: EditHomepageProductPageProps)
 }
 
 export default async function EditHomepageProductPage({ params }: EditHomepageProductPageProps) {
-  const productToEdit = await getProduct(params.id);
+  const { id } = await params;
+  const productToEdit = await getProduct(id);
 
   if (!productToEdit) {
     notFound();

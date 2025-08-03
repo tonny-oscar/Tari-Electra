@@ -9,11 +9,12 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 type EditProductPageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export async function generateMetadata({ params }: EditProductPageProps): Promise<Metadata> {
-  const product = await getCustomerProduct(params.id);
+  const { id } = await params;
+  const product = await getCustomerProduct(id);
   if (!product) {
     return {
       title: 'Product Not Found - Admin Edit',
@@ -26,7 +27,8 @@ export async function generateMetadata({ params }: EditProductPageProps): Promis
 }
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
-  const productToEdit = await getCustomerProduct(params.id);
+  const { id } = await params;
+  const productToEdit = await getCustomerProduct(id);
 
   if (!productToEdit) {
     notFound(); // This will render the nearest not-found.js or a default Next.js 404 page

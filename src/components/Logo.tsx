@@ -13,16 +13,17 @@ export function Logo({ className = '', showLabel = true }: LogoProps) {
     <Link
       href="/"
       className={clsx(
-        'block transition-all duration-300 hover:scale-105',
+        'block transition-all duration-300 hover:scale-105 cursor-pointer',
         className
       )}
+      title="Go to Homepage"
     >
       <Image
         src="/LOGO_1.png"
-        alt="Tari Electra Logo"
+        alt="Tari Electra Logo - Click to go home"
         width={100}
         height={100}
-        className="object-contain"
+        className="object-contain cursor-pointer"
         priority={true}
         style={{
           width: '100px',

@@ -46,15 +46,6 @@ export async function updateHomepageSettingsAction(
     };
     
     const updatedSettings = await updateHomepageSettings(dataToUpdate); // Call Firestore version
-
-    if (!updatedSettings) {
-        console.error('[updateHomepageSettingsAction] Failed to update settings in Firestore.');
-        return {
-            message: 'Failed to update homepage settings. Please try again.',
-            isError: true,
-            isSuccess: false,
-        };
-    }
     
     console.log('[updateHomepageSettingsAction] Homepage Settings Updated (Firestore):', updatedSettings);
     
@@ -65,7 +56,7 @@ export async function updateHomepageSettingsAction(
       message: `Homepage settings updated successfully (saved to Firestore).`,
       isError: false,
       isSuccess: true,
-      updatedSettings: updatedSettings,
+      updatedItem: updatedSettings,
     };
   } catch (error) {
     console.error('[updateHomepageSettingsAction] Error updating settings:', error);

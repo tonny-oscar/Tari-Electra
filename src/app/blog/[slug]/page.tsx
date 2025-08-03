@@ -1,109 +1,120 @@
-
-import Link from "next/link";
-import Image from "next/image";
-import { getBlogPosts } from "@/data/blogPosts"; 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, CalendarDays, UserCircle, Tag } from "lucide-react";
+import { notFound } from 'next/navigation';
+import { getBlogPostBySlug, getBlogPosts } from '@/data/blogPosts';
 import type { Metadata } from 'next';
-import { headers } from 'next/headers'; 
-import { unstable_noStore as noStore } from 'next/cache'; 
-import type { BlogPost } from "@/lib/types";
-import { BlogSubscriptionForm } from "@/components/blog/BlogSubscriptionForm"; // Import the new component
+import type { BlogPost } from '@/lib/types';
+import { CalendarDays, UserCircle, Tag, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 
-export const metadata: Metadata = {
-  title: "Blog - Tari Electra",
-  description: "Articles and insights on energy saving, sub-metering, and landlord advice.",
+type BlogPostPageProps = {
+  params: Promise<{ slug: string }>;
 };
 
-export default async function BlogPage() {
-  headers(); 
-  noStore(); 
-  
-  console.log('[BlogPage] Fetching blog posts from Firestore for public page...');
-  const posts: BlogPost[] = await getBlogPosts(); 
-  console.log(`[BlogPage] Public page fetched ${posts.length} posts:`, posts.map(p => ({ slug: p.slug, title: p.title })));
+export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
+  try {
+    const { slug } = await params;
+    const post = await getBlogPostBySlug(slug);
+    
+    if (!post) {
+      return {
+        title: 'Post Not Found - Tari Electra Blog',
+      };
+    }
+    
+    return {
+      title: `${post.title} - Tari Electra Blog`,
+      description: post.excerpt,
+    };
+  } catch (error) {
+    return {
+      title: 'Post Not Found - Tari Electra Blog',
+    };
+  }
+}
 
-  return (
-    <div className="bg-secondary">
-      <div className="container mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-            Tari Electra Blog
-          </h1>
-          <p className="mt-6 text-xl text-muted-foreground max-w-2xl mx-auto">
-            Stay informed with our latest articles, tips, and news on smart sub-metering and energy management.
-          </p>
-        </div>
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
+  try {
+    const { slug } = await params;
+    const post = await getBlogPostBySlug(slug);
 
-        {posts.length === 0 ? (
-          <div className="text-center py-10">
-            <p className="text-xl text-muted-foreground">No blog posts yet. Check back soon!</p>
+    if (!post) {
+      notFound();
+    }
+
+    return (
+      <div className="bg-background">
+        <div className="container mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="mb-8">
+            <Button asChild variant="ghost">
+              <Link href="/blog">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Blog
+              </Link>
+            </Button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => (
-              <Card key={post.slug} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 bg-background">
-                 <Link href={`/blog/${post.slug}`} className="block">
-                  <div className="aspect-[3/2] w-full relative bg-muted">
-                    <Image
-                      src={post.imageUrl || 'https://placehold.co/600x400.png'}
-                      alt={post.title}
-                      fill
-                      className="object-cover"
-                      data-ai-hint={post.imageHint || post.title.split(' ').slice(0,2).join(' ').toLowerCase() || 'article image'}
-                    />
-                  </div>
-                </Link>
-                <CardHeader>
-                  <div className="mb-2">
-                    <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                      <Tag className="mr-1.5 h-3.5 w-3.5" />
-                      {post.category}
-                    </span>
-                  </div>
-                  <Link href={`/blog/${post.slug}`}>
-                    <CardTitle className="text-2xl font-semibold leading-tight hover:text-primary transition-colors">{post.title}</CardTitle>
-                  </Link>
-                  <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-3">
-                    <div className="flex items-center">
-                      <CalendarDays className="mr-1.5 h-4 w-4" />
-                      {new Date(post.date as string).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                    </div>
-                    <div className="flex items-center">
-                      <UserCircle className="mr-1.5 h-4 w-4" />
-                      {post.author}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <CardDescription className="text-base">{post.excerpt}</CardDescription>
-                </CardContent>
-                <CardFooter>
-                  <Button asChild variant="link" className="px-0 text-primary text-base">
-                    <Link href={`/blog/${post.slug}`}>
-                      Read More <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        )}
 
-        {/* Add Subscription Form Section */}
-        <div className="mt-16 md:mt-24 max-w-xl mx-auto">
-            <BlogSubscriptionForm />
+          <article>
+            <header className="mb-8">
+              <div className="mb-4">
+                <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+                  <Tag className="mr-1.5 h-3.5 w-3.5" />
+                  {post.category}
+                </span>
+              </div>
+              
+              <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl mb-6">
+                {post.title}
+              </h1>
+              
+              <div className="flex items-center space-x-6 text-muted-foreground mb-8">
+                <div className="flex items-center">
+                  <CalendarDays className="mr-2 h-5 w-5" />
+                  {new Date(post.date as string).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </div>
+                <div className="flex items-center">
+                  <UserCircle className="mr-2 h-5 w-5" />
+                  {post.author}
+                </div>
+              </div>
+
+              {post.imageUrl && (
+                <div className="aspect-[2/1] w-full relative bg-muted rounded-lg overflow-hidden mb-8">
+                  <Image
+                    src={post.imageUrl}
+                    alt={post.title}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              )}
+            </header>
+
+            <div className="prose prose-lg max-w-none">
+              <div dangerouslySetInnerHTML={{ __html: post.content }} />
+            </div>
+          </article>
         </div>
-
       </div>
-    </div>
-  );
+    );
+  } catch (error) {
+    console.error('Error loading blog post:', error);
+    notFound();
+  }
 }
 
 export async function generateStaticParams() {
-  const posts = await getBlogPosts(); 
-  return posts.map((post) => ({
-    slug: post.slug,
-  }));
+  try {
+    const posts = await getBlogPosts();
+    return posts.map((post) => ({
+      slug: post.slug,
+    }));
+  } catch (error) {
+    console.error('Error generating static params for blog posts:', error);
+    return []; // Return empty array to prevent build failure
+  }
 }

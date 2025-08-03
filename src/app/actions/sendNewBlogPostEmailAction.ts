@@ -69,8 +69,8 @@ export async function sendNewBlogPostEmailAction(
       html: emailHtmlBody,
     };
     return transporter.sendMail(mailOptions)
-      .then(info => ({ email: subscriber.email, success: true, info }))
-      .catch(error => ({ email: subscriber.email, success: false, error }));
+      .then(() => ({ email: subscriber.email, success: true as const }))
+      .catch((error: any) => ({ email: subscriber.email, success: false as const, error }));
   });
 
   const results = await Promise.all(emailPromises);
@@ -79,11 +79,12 @@ export async function sendNewBlogPostEmailAction(
 
   results.forEach(result => {
     if (result.success) {
-      console.log(`[sendNewBlogPostEmailAction] Email sent successfully to: ${result.email}. Message ID: ${result.info.messageId}`);
+      console.log(`[sendNewBlogPostEmailAction] Email sent successfully to: ${result.email}`);
       successfulSends++;
     } else {
-      console.error(`[sendNewBlogPostEmailAction] Failed to send email to: ${result.email}. Error: ${result.error.message}`);
-      errors.push(`Failed to send to ${result.email}: ${result.error.message}`);
+      const errorMsg = 'error' in result ? result.error?.message || 'Unknown error' : 'Unknown error';
+      console.error(`[sendNewBlogPostEmailAction] Failed to send email to: ${result.email}. Error: ${errorMsg}`);
+      errors.push(`Failed to send to ${result.email}: ${errorMsg}`);
     }
   });
 

@@ -3,6 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const { to, message } = await request.json();
+    
+    // Validate required fields
+    if (!to || !message) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+    
+    // Validate Twilio credentials
+    if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
+      console.error('Twilio credentials not configured');
+      return NextResponse.json({ error: 'SMS service not configured' }, { status: 500 });
+    }
 
     // Using Twilio
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
