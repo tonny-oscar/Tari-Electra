@@ -51,14 +51,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@yourstore.com';
+  const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@yourstore.com').split(',');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
 
       if (currentUser) {
-        if (currentUser.email === ADMIN_EMAIL) {
+        if (ADMIN_EMAILS.includes(currentUser.email || '')) {
           setCustomerData(null); // Admin has no customer data
         } else {
           try {
@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [ADMIN_EMAIL]);
+  }, [ADMIN_EMAILS]);
 
   const logout = async () => {
     try {
@@ -96,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const isCustomer = !!user && customerData?.role === 'customer';
-  const isAdmin = !!user && user.email === ADMIN_EMAIL;
+  const isAdmin = !!user && ADMIN_EMAILS.includes(user.email || '');
 
   return (
     <AuthContext.Provider

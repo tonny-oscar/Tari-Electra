@@ -148,6 +148,11 @@ export async function createOrder(data: Omit<Order, 'id' | 'orderNumber'> & { or
       status: 1
     };
     
+    // Update stock for each item in the order
+    for (const item of data.items) {
+      await updateProductStock(item.id, item.quantity);
+    }
+    
     const docRef = await addDoc(collection(db, 'orders'), orderData);
     const order = { id: docRef.id, ...orderData } as Order;
     
@@ -219,6 +224,31 @@ export async function updateOrderStatus(orderId: string, status: number): Promis
     });
   } catch (error) {
     console.error('Error updating order status:', error);
+    throw error;
+  }
+}
+
+// ====================
+// Stock Management
+// ====================
+
+export async function updateProductStock(productId: string, quantityPurchased: number): Promise<void> {
+  try {
+    const productRef = doc(db, 'products', productId);
+    const productSnap = await getDoc(productRef);
+    
+    if (productSnap.exists()) {
+      const currentStock = productSnap.data().stock || 0;
+      const newStock = Math.max(0, currentStock - quantityPurchased);
+      
+      await updateDoc(productRef, {
+        stock: newStock,
+        updatedAt: new Date().toISOString(),
+        status: newStock === 0 ? 'inactive' : 'active'
+      });
+    }
+  } catch (error) {
+    console.error('Error updating product stock:', error);
     throw error;
   }
 }

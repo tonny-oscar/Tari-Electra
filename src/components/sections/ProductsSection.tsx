@@ -52,10 +52,9 @@ export function ProductsSection({ products }: { products: Product[] }) {
 
   const handleAddToCart = (product: Product) => {
     if (!user) {
-      toast({
-        title: "Login Required",
-        description: "Please log in to add products to your cart.",
-      });
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
       return;
     }
 
@@ -63,8 +62,6 @@ export function ProductsSection({ products }: { products: Product[] }) {
       title: "Added to Cart",
       description: `${product.name} has been added to your cart.`,
     });
-
-    // Optionally add to cart context if needed
   };
 
   return (
@@ -108,6 +105,9 @@ export function ProductsSection({ products }: { products: Product[] }) {
                           KES {(product.price || 0).toFixed(2)}
                         </div>
                       )}
+                      <div className="absolute top-2 left-2 bg-blue-500/90 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                        Stock: {product?.stock || 0}
+                      </div>
                     </div>
                     <CardHeader className="items-center text-center pt-6 pb-4">
                       <div className="p-3 bg-primary/10 rounded-full mb-3 inline-block group-hover:bg-primary/20 transition-colors">
@@ -201,13 +201,26 @@ export function ProductsSection({ products }: { products: Product[] }) {
                                   </p>
                                 </div>
                                 
-                                <div className="bg-primary/5 p-4 rounded-lg">
-                                  <h3 className="font-semibold mb-2 flex items-center gap-2">
-                                    💰 Pricing
-                                  </h3>
-                                  <p className="text-2xl font-bold text-primary">
-                                    {(product?.price || 0) > 0 ? `KES ${(product.price || 0).toFixed(2)}` : 'Request Quote'}
-                                  </p>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="bg-primary/5 p-4 rounded-lg">
+                                    <h3 className="font-semibold mb-2 flex items-center gap-2">
+                                      💰 Pricing
+                                    </h3>
+                                    <p className="text-2xl font-bold text-primary">
+                                      {(product?.price || 0) > 0 ? `KES ${(product.price || 0).toFixed(2)}` : 'Request Quote'}
+                                    </p>
+                                  </div>
+                                  <div className="bg-blue-50 p-4 rounded-lg">
+                                    <h3 className="font-semibold mb-2 flex items-center gap-2">
+                                      📦 Stock
+                                    </h3>
+                                    <p className={`text-2xl font-bold ${
+                                      (product?.stock || 0) > 10 ? 'text-green-600' : 
+                                      (product?.stock || 0) > 0 ? 'text-orange-600' : 'text-red-600'
+                                    }`}>
+                                      {(product?.stock || 0) > 0 ? `${product?.stock || 0} Available` : 'Out of Stock'}
+                                    </p>
+                                  </div>
                                 </div>
                                 
                                 {Array.isArray(product?.features) && product.features.length > 0 && (
