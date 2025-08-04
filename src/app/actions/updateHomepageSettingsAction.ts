@@ -38,6 +38,7 @@ export async function updateHomepageSettingsAction(
     };
   }
 
+  
   console.log('[updateHomepageSettingsAction] Validation successful. Validated data:', validatedFields.data);
 
   try {
