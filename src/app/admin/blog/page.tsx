@@ -7,6 +7,7 @@ import { PlusCircle, ExternalLink, Newspaper } from 'lucide-react';
 import Image from 'next/image';
 import { BlogActionsCell } from '@/components/admin/BlogActionsCell';
 import type { BlogPost } from '@/lib/types';
+import { formatDate } from '@/lib/utils/date';
 
 export default async function AdminBlogListPage() {
   const posts: BlogPost[] = await getBlogPosts(); 
