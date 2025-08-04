@@ -92,7 +92,6 @@ export async function updateProductAction(
       message: `Product "${updatedProduct.name}" updated successfully (saved to JSON).`,
       isError: false,
       isSuccess: true,
-      updatedProduct: updatedProduct,
     };
   } catch (error) {
     console.error('[updateProductAction] Error updating product:', error);
