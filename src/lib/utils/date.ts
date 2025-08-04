@@ -14,7 +14,13 @@ export function toDate(dateValue: string | Timestamp | Date): Date {
 }
 
 export function formatDate(dateValue: string | Timestamp | Date): string {
-  return toDate(dateValue).toLocaleDateString();
+  const date = toDate(dateValue);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+}
+
+export function formatDateISO(dateValue: string | Timestamp | Date): string {
+  return toDate(dateValue).toISOString().split('T')[0];
 }
 
 export function formatDateTime(dateValue: string | Timestamp | Date): string {
