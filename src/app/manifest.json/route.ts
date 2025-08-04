@@ -10,12 +10,7 @@ export async function GET() {
     icons: [
       {
         src: '/LOGO_1.png',
-        sizes: '192x192',
-        type: 'image/png',
-      },
-      {
-        src: '/LOGO_1.png',
-        sizes: '512x512',
+        sizes: 'any',
         type: 'image/png',
       },
     ],
