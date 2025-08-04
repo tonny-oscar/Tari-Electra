@@ -73,7 +73,7 @@ export function BlogSummarySection() {
                   <div className="flex items-center space-x-4 text-xs text-muted-foreground mt-2">
                     <div className="flex items-center">
                       <CalendarDays className="mr-1.5 h-4 w-4" />
-                      {new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      {(post.date && typeof post.date === 'object' && 'toDate' in post.date ? post.date.toDate() : new Date(post.date)).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </div>
                     <div className="flex items-center">
                       <UserCircle className="mr-1.5 h-4 w-4" />
