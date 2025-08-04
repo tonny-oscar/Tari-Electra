@@ -122,10 +122,10 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
           setImagePreview(null); 
           // Reset local state after successful create
           setFormState(initialFormState); 
-        } else if (mode === 'edit' && formState.updatedProduct) {
+        } else if (mode === 'edit' && 'updatedProduct' in formState && (formState as any).updatedProduct) {
           // Potentially reset message for edit, or handle as needed
           // setFormState(prev => ({ ...prev, isSuccess: false, message: '' })); 
-          if(formState.updatedProduct.imageUrl) setImagePreview(formState.updatedProduct.imageUrl);
+          if((formState as any).updatedProduct.imageUrl) setImagePreview((formState as any).updatedProduct.imageUrl);
           router.refresh(); // Good practice to refresh after edit
         }
       } else if (formState.isError && !formState.fields) { 

@@ -144,9 +144,9 @@ export default function SubmeterApplicationModal({
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Application ID: ${application.id}`, 20, yPosition + 12);
+    doc.text(`Application ID: ${application?.id}`, 20, yPosition + 12);
     doc.text(`Submitted: ${formattedSubmissionDate}`, 20, yPosition + 18);
-    doc.text(`Status: ${application.status.toUpperCase()}`, pageWidth - 80, yPosition + 12);
+    doc.text(`Status: ${application?.status.toUpperCase()}`, pageWidth - 80, yPosition + 12);
     
     yPosition += 35;
 
@@ -167,17 +167,17 @@ export default function SubmeterApplicationModal({
     doc.setDrawColor(34, 197, 94);
     doc.rect(15, yPosition - 5, pageWidth - 30, 45, 'S');
     
-    doc.text(`Full Name: ${application.fullName}`, 20, yPosition);
+    doc.text(`Full Name: ${application?.fullName}`, 20, yPosition);
     yPosition += 7;
-    doc.text(`Email: ${application.email}`, 20, yPosition);
+    doc.text(`Email: ${application?.email}`, 20, yPosition);
     yPosition += 7;
-    doc.text(`Phone: ${application.phoneNumber}`, 20, yPosition);
+    doc.text(`Phone: ${application?.phoneNumber}`, 20, yPosition);
     yPosition += 7;
-    if (application.idNumber) {
+    if (application?.idNumber) {
       doc.text(`ID/Registration Number: ${application.idNumber}`, 20, yPosition);
       yPosition += 7;
     }
-    if (application.utilityServices) {
+    if (application?.utilityServices) {
       const services = Array.isArray(application.utilityServices) ? application.utilityServices.join(', ') : application.utilityServices;
       doc.text(`Utility Services: ${services}`, 20, yPosition);
       yPosition += 7;
@@ -200,13 +200,13 @@ export default function SubmeterApplicationModal({
     doc.setDrawColor(168, 85, 247);
     doc.rect(15, yPosition - 5, pageWidth - 30, 35, 'S');
     
-    doc.text(`Property Type: ${application.propertyType}`, 20, yPosition);
+    doc.text(`Property Type: ${application?.propertyType}`, 20, yPosition);
     yPosition += 7;
-    doc.text(`Application Type: ${application.applicationType}`, 20, yPosition);
+    doc.text(`Application Type: ${application?.applicationType}`, 20, yPosition);
     yPosition += 7;
-    doc.text(`Physical Location: ${application.physicalLocation}`, 20, yPosition);
+    doc.text(`Physical Location: ${application?.physicalLocation}`, 20, yPosition);
     yPosition += 7;
-    doc.text(`Area & Town: ${application.areaTown}`, 20, yPosition);
+    doc.text(`Area & Town: ${application?.areaTown}`, 20, yPosition);
     yPosition += 15;
 
     // Meter Information Section
