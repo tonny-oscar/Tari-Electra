@@ -9,6 +9,9 @@ export interface StockAlert {
   timestamp: string;
 }
 
+
+
+
 // Monitor stock levels and create alerts
 export function initializeStockMonitoring() {
   const productsRef = collection(db, 'customerProducts');
