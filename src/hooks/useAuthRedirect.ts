@@ -8,15 +8,24 @@ export function useAuthRedirect() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (loading) return;
-    if (pathname === '/login' || pathname === '/signup') return;
+    if (loading) return; // wait until Firebase finishes loading
 
-    if (!user) {
+    // If user is not logged in and not on login/signup → send to login
+    if (!user && pathname !== '/login' && pathname !== '/signup') {
       router.push('/login');
-    } else if (isAdmin && !pathname.startsWith('/admin')) {
+      return;
+    }
+
+    // If admin logs in, redirect to admin
+    if (user && isAdmin && !pathname.startsWith('/admin')) {
       router.push('/admin');
-    } else if (!isAdmin && !pathname.startsWith('/customer')) {
+      return;
+    }
+
+    // If customer logs in, redirect to customer dashboard
+    if (user && !isAdmin && !pathname.startsWith('/customer')) {
       router.push('/customer/dashboard');
+      return;
     }
   }, [user, isAdmin, loading, router, pathname]);
 }

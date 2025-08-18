@@ -1,16 +1,27 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
 import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import {
-  LogOut, Menu, UserCircle, ShoppingBag, NewspaperIcon,
-  Settings, HomeIcon, LogIn, UserPlus
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import {
+  LogOut,
+  Menu,
+  UserCircle,
+  ShoppingBag,
+  Newspaper,
+  Settings,
+  Home,
+  LogIn,
+  UserPlus,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { ContactSection } from '@/components/sections/ContactSection';
 import { useAuth } from '@/hooks/useAuth';
 import {
   DropdownMenu,
@@ -19,24 +30,35 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import { useCart } from '@/context/CartContext';
 
-const mainNavItems = [
-  { href: '/', label: 'Home', icon: HomeIcon },
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+};
+
+const mainNavItems: NavItem[] = [
+  { href: '/', label: 'Home', icon: Home },
   { href: '/products', label: 'Products', icon: ShoppingBag },
-  { href: '/about', label: 'About', icon: NewspaperIcon },
-  { href: '/faq', label: 'FAQ', icon: NewspaperIcon },
+  { href: '/about', label: 'About', icon: Newspaper },
+  { href: '/faq', label: 'FAQ', icon: Newspaper },
   { href: '/contact', label: 'Contact', icon: UserCircle },
-  { href: '/blog', label: 'Blog', icon: NewspaperIcon },
+  { href: '/blog', label: 'Blog', icon: Newspaper },
 ];
 
 export function Header() {
   const { user, loading, logout, isAdmin, isCustomer } = useAuth();
   const { cartItems } = useCart();
 
-  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
-  const cartTotal = cartItems.reduce((total, item) => total + item.quantity * item.price, 0);
+  // Fallbacks to avoid runtime errors if cart context isn't ready
+  const items = Array.isArray(cartItems) ? cartItems : [];
+  const cartCount = items.reduce((total, item) => total + (item?.quantity ?? 0), 0);
+  const cartTotal = items.reduce(
+    (total, item) => total + (item?.quantity ?? 0) * (item?.price ?? 0),
+    0
+  );
 
   const handleLogout = async () => {
     await logout();
@@ -47,18 +69,31 @@ export function Header() {
       <div className="container mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Logo />
 
+        {/* Desktop nav */}
         <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-          {mainNavItems.map((item) => (
-            <Button key={item.label} variant="ghost" asChild className="text-muted-foreground hover:text-primary hover:bg-primary/10 px-2 lg:px-3">
-              <Link href={item.href}>
-                <item.icon className="h-4 w-4 mr-1 lg:mr-2" />
-                {item.label}
-              </Link>
-            </Button>
-          ))}
+          {mainNavItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Button
+                key={item.label}
+                variant="ghost"
+                asChild
+                className="text-muted-foreground hover:text-primary hover:bg-primary/10 px-2 lg:px-3"
+              >
+                <Link href={item.href}>
+                  <Icon className="h-4 w-4 mr-1 lg:mr-2" />
+                  {item.label}
+                </Link>
+              </Button>
+            );
+          })}
 
           {isAdmin && (
-            <Button variant="ghost" asChild className="text-muted-foreground hover:text-primary hover:bg-primary/10 px-2 lg:px-3">
+            <Button
+              variant="ghost"
+              asChild
+              className="text-muted-foreground hover:text-primary hover:bg-primary/10 px-2 lg:px-3"
+            >
               <Link href="/admin">
                 <Settings className="h-4 w-4 mr-1 lg:mr-2" />
                 Admin
@@ -71,7 +106,7 @@ export function Header() {
           <ThemeToggle />
 
           {isCustomer && (
-            <Link href="/cart">
+            <Link href="/cart" aria-label="Open cart">
               <Button variant="outline" size="icon" className="relative">
                 <ShoppingBag className="h-5 w-5" />
                 {cartCount > 0 && (
@@ -83,8 +118,11 @@ export function Header() {
             </Link>
           )}
 
+          {/* Auth state */}
           {loading ? (
-            <Button variant="outline" size="sm" disabled>Loading...</Button>
+            <Button variant="outline" size="sm" disabled>
+              Loading...
+            </Button>
           ) : user ? (
             <>
               {isCustomer && (
@@ -95,7 +133,7 @@ export function Header() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full">
+                  <Button variant="ghost" size="icon" className="rounded-full" aria-label="Open user menu">
                     <UserCircle className="h-6 w-6" />
                     <span className="sr-only">User menu</span>
                   </Button>
@@ -116,7 +154,8 @@ export function Header() {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />Logout
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -124,10 +163,16 @@ export function Header() {
           ) : (
             <div className="hidden md:flex items-center gap-2">
               <Button variant="ghost" asChild>
-                <Link href="/login">Login</Link>
+                <Link href="/login">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Login
+                </Link>
               </Button>
               <Button asChild>
-                <Link href="/signup">Sign Up</Link>
+                <Link href="/signup">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Sign Up
+                </Link>
               </Button>
             </div>
           )}
@@ -136,20 +181,33 @@ export function Header() {
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" aria-label="Open navigation menu">
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-                <nav className="flex flex-col space-y-2 mt-8">
-                  {mainNavItems.map((item) => (
-                    <Button key={item.label} variant="ghost" asChild className="text-lg justify-start px-3 py-2">
-                      <Link href={item.href}>
-                        <item.icon className="h-5 w-5 mr-3" />
-                        {item.label}
-                      </Link>
-                    </Button>
-                  ))}
+                {/* Accessibility: title inside Sheet */}
+                <SheetHeader>
+                  <SheetTitle>Navigation Menu</SheetTitle>
+                </SheetHeader>
+
+                <nav className="flex flex-col space-y-2 mt-6">
+                  {mainNavItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Button
+                        key={item.label}
+                        variant="ghost"
+                        asChild
+                        className="text-lg justify-start px-3 py-2"
+                      >
+                        <Link href={item.href}>
+                          <Icon className="h-5 w-5 mr-3" />
+                          {item.label}
+                        </Link>
+                      </Button>
+                    );
+                  })}
 
                   {isCustomer && (
                     <Button asChild variant="ghost" className="text-lg justify-start px-3 py-2">
@@ -161,13 +219,17 @@ export function Header() {
                   )}
 
                   {isCustomer && (
-                    <p className="text-sm px-3 py-1 text-muted-foreground">Total: KES {cartTotal}</p>
+                    <p className="text-sm px-3 py-1 text-muted-foreground">
+                      Total: KES {cartTotal}
+                    </p>
                   )}
 
                   <hr className="my-3" />
 
                   {loading ? (
-                    <Button variant="outline" disabled className="w-full justify-start px-3 py-2 text-lg">Loading...</Button>
+                    <Button variant="outline" disabled className="w-full justify-start px-3 py-2 text-lg">
+                      Loading...
+                    </Button>
                   ) : user ? (
                     <>
                       <Button variant="ghost" asChild className="text-lg justify-start px-3 py-2">
@@ -176,20 +238,27 @@ export function Header() {
                           {isAdmin ? 'Admin Dashboard' : 'My Dashboard'}
                         </Link>
                       </Button>
-                      <Button onClick={handleLogout} variant="ghost" className="text-lg text-destructive justify-start px-3 py-2">
-                        <LogOut className="h-5 w-5 mr-3" />Logout
+                      <Button
+                        onClick={handleLogout}
+                        variant="ghost"
+                        className="text-lg text-destructive justify-start px-3 py-2"
+                      >
+                        <LogOut className="h-5 w-5 mr-3" />
+                        Logout
                       </Button>
                     </>
                   ) : (
                     <>
                       <Button variant="ghost" asChild className="text-lg justify-start px-3 py-2">
                         <Link href="/login">
-                          <LogIn className="h-5 w-5 mr-3" />Login
+                          <LogIn className="h-5 w-5 mr-3" />
+                          Login
                         </Link>
                       </Button>
                       <Button asChild className="text-lg justify-start px-3 py-2">
                         <Link href="/signup">
-                          <UserPlus className="h-5 w-5 mr-3" />Sign Up
+                          <UserPlus className="h-5 w-5 mr-3" />
+                          Sign Up
                         </Link>
                       </Button>
                     </>
