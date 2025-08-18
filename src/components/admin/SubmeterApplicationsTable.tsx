@@ -36,7 +36,6 @@ import {
 import DocumentPreviewModal from '@/components/admin/DocumentPreviewModal';
 import SubmeterApplicationModal from '@/components/admin/SubmeterApplicationModal';
 
-
 export default function SubmeterApplicationsTable() {
   const [applications, setApplications] = useState<SubmeterApplication[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,6 +80,8 @@ export default function SubmeterApplicationsTable() {
   };
 
   const generatePDF = (application: SubmeterApplication) => {
+    if (!application) return;
+
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     let yPosition = 20;
@@ -88,40 +89,42 @@ export default function SubmeterApplicationsTable() {
     // Header background
     doc.setFillColor(59, 130, 246);
     doc.rect(0, 0, pageWidth, 40, 'F');
-    
+
     // Company name in header
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
     doc.text('TARI ELECTRA', pageWidth / 2, 20, { align: 'center' });
-    
+
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
     doc.text('Sub-Meter Application Form', pageWidth / 2, 30, { align: 'center' });
-    
+
     yPosition = 55;
     doc.setTextColor(0, 0, 0);
 
     // Application details box
-    const submissionDate = typeof application.submissionDate?.toDate === 'function' 
-      ? application.submissionDate.toDate() 
-      : new Date(application.submissionDate);
-    
+    const submissionDate = application.submissionDate && typeof (application.submissionDate as any)?.toDate === 'function'
+      ? (application.submissionDate as any).toDate()
+      : application.submissionDate
+        ? new Date(application.submissionDate)
+        : new Date();
+
     doc.setFillColor(240, 248, 255);
     doc.rect(15, yPosition - 5, pageWidth - 30, 25, 'F');
     doc.setDrawColor(59, 130, 246);
     doc.rect(15, yPosition - 5, pageWidth - 30, 25, 'S');
-    
+
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.text('APPLICATION DETAILS', 20, yPosition + 5);
-    
+
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Application ID: ${application.id}`, 20, yPosition + 12);
+    doc.text(`Application ID: ${application.id ?? ''}`, 20, yPosition + 12);
     doc.text(`Submitted: ${format(submissionDate, 'PPP')}`, 20, yPosition + 18);
-    doc.text(`Status: ${application.status.toUpperCase()}`, pageWidth - 80, yPosition + 12);
-    
+    doc.text(`Status: ${application.status?.toUpperCase?.() ?? 'N/A'}`, pageWidth - 80, yPosition + 12);
+
     yPosition += 35;
 
     // Personal Information
@@ -129,18 +132,20 @@ export default function SubmeterApplicationsTable() {
     doc.text('Personal Information', 20, yPosition);
     yPosition += 10;
     doc.setFont('helvetica', 'normal');
-    doc.text(`Full Name: ${application.fullName}`, 20, yPosition);
+    doc.text(`Full Name: ${application.fullName ?? ''}`, 20, yPosition);
     yPosition += 8;
-    doc.text(`Email: ${application.email}`, 20, yPosition);
+    doc.text(`Email: ${application.email ?? ''}`, 20, yPosition);
     yPosition += 8;
-    doc.text(`Phone: ${application.phoneNumber}`, 20, yPosition);
+    doc.text(`Phone: ${application.phoneNumber ?? ''}`, 20, yPosition);
     yPosition += 8;
     if (application.idNumber) {
       doc.text(`ID/Registration Number: ${application.idNumber}`, 20, yPosition);
       yPosition += 8;
     }
     if (application.utilityServices) {
-      const services = Array.isArray(application.utilityServices) ? application.utilityServices.join(', ') : application.utilityServices;
+      const services = Array.isArray(application.utilityServices)
+        ? application.utilityServices.join(', ')
+        : application.utilityServices;
       doc.text(`Utility Services: ${services}`, 20, yPosition);
       yPosition += 8;
     }
@@ -151,13 +156,13 @@ export default function SubmeterApplicationsTable() {
     doc.text('Property Details', 20, yPosition);
     yPosition += 10;
     doc.setFont('helvetica', 'normal');
-    doc.text(`Property Type: ${application.propertyType}`, 20, yPosition);
+    doc.text(`Property Type: ${application.propertyType ?? ''}`, 20, yPosition);
     yPosition += 8;
-    doc.text(`Application Type: ${application.applicationType}`, 20, yPosition);
+    doc.text(`Application Type: ${application.applicationType ?? ''}`, 20, yPosition);
     yPosition += 8;
-    doc.text(`Physical Location: ${application.physicalLocation}`, 20, yPosition);
+    doc.text(`Physical Location: ${application.physicalLocation ?? ''}`, 20, yPosition);
     yPosition += 8;
-    doc.text(`Area & Town: ${application.areaTown}`, 20, yPosition);
+    doc.text(`Area & Town: ${application.areaTown ?? ''}`, 20, yPosition);
     yPosition += 15;
 
     // Meter Information
@@ -227,6 +232,17 @@ export default function SubmeterApplicationsTable() {
 
     // Save PDF
     doc.save(`submeter-application-${application.id}.pdf`);
+  };
+
+  const getBadgeVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
+    switch (status) {
+      case 'approved':
+        return 'default'; // Green-ish default color
+      case 'rejected':
+        return 'destructive'; // Red variant
+      default:
+        return 'secondary'; // Gray/yellow-ish for pending
+    }
   };
 
   const getBadgeColor = (status: string) => {
@@ -332,10 +348,11 @@ export default function SubmeterApplicationsTable() {
                 </TableHeader>
                 <TableBody>
                   {applications.map((app) => {
-                    const dateValue =
-                      typeof app.submissionDate?.toDate === 'function'
-                        ? app.submissionDate.toDate()
-                        : new Date(app.submissionDate);
+                    const dateValue = app.submissionDate && typeof (app.submissionDate as any)?.toDate === 'function'
+                      ? (app.submissionDate as any).toDate()
+                      : app.submissionDate
+                        ? new Date(app.submissionDate)
+                        : new Date();
 
                     return (
                       <TableRow key={app.id}>
@@ -344,19 +361,22 @@ export default function SubmeterApplicationsTable() {
                         </TableCell>
                         <TableCell>
                           <div>
-                            <p className="font-medium">{app.fullName}</p>
-                            <p className="text-sm text-muted-foreground">{app.email}</p>
+                            <p className="font-medium">{app.fullName ?? ''}</p>
+                            <p className="text-sm text-muted-foreground">{app.email ?? ''}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="capitalize">{app.propertyType}</TableCell>
-                        <TableCell className="capitalize">{app.applicationType}</TableCell>
+                        <TableCell className="capitalize">{app.propertyType ?? ''}</TableCell>
+                        <TableCell className="capitalize">{app.applicationType ?? ''}</TableCell>
                         <TableCell>
                           {app.utilityServices ? (
                             Array.isArray(app.utilityServices) ? app.utilityServices.join(', ') : app.utilityServices
                           ) : 'N/A'}
                         </TableCell>
                         <TableCell>
-                          <Badge className={getBadgeColor(app.status)}>
+                          <Badge 
+                            variant={getBadgeVariant(app.status)} 
+                            className={getBadgeColor(app.status)}
+                          >
                             {app.status}
                           </Badge>
                         </TableCell>
@@ -367,7 +387,7 @@ export default function SubmeterApplicationsTable() {
                                 key={index}
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleViewDocument(doc.url)}
+                                onClick={() => doc.url && handleViewDocument(doc.url)}
                                 title={doc.name}
                               >
                                 <FileText className="w-4 h-4" />
@@ -377,7 +397,7 @@ export default function SubmeterApplicationsTable() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleViewDocument(app.approvalDocumentUrl)}
+                                onClick={() => handleViewDocument(app.approvalDocumentUrl!)}
                                 className="text-green-600"
                                 title="Approval Document"
                               >
@@ -429,9 +449,12 @@ export default function SubmeterApplicationsTable() {
       />
 
       <DocumentPreviewModal
-        documentUrl={selectedDocumentUrl}
         isOpen={isDocumentModalOpen}
-        onClose={() => setIsDocumentModalOpen(false)}
+        onClose={() => {
+          setIsDocumentModalOpen(false);
+          setSelectedDocumentUrl('');
+        }}
+        documentUrl={selectedDocumentUrl}
       />
     </div>
   );
