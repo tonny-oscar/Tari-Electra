@@ -19,8 +19,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Timestamp } from 'firebase/firestore';
 import { Download } from 'lucide-react';
-import jsPDF from 'jspdf'; 
-
+import jsPDF from 'jspdf';
 
 interface SubmeterApplicationModalProps {
   application: SubmeterApplication | null;
@@ -108,13 +107,12 @@ export default function SubmeterApplicationModal({
   };
 
   const generatePDF = () => {
+    if (!application) return;
+
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     let yPosition = 20;
 
-    // Add logo (you'll need to convert the logo to base64 or use a different approach)
-    // For now, we'll create a professional header
-    
     // Header background
     doc.setFillColor(59, 130, 246); // Blue color
     doc.rect(0, 0, pageWidth, 40, 'F');
@@ -209,8 +207,8 @@ export default function SubmeterApplicationModal({
     doc.text(`Area & Town: ${application?.areaTown}`, 20, yPosition);
     yPosition += 15;
 
-    // Meter Information Section
-    if (application.mainMeterAccountNumber) {
+    // Meter Information Section - FIXED VERSION
+    if (application?.mainMeterAccountNumber) {
       doc.setFillColor(245, 158, 11); // Orange color
       doc.rect(15, yPosition - 3, pageWidth - 30, 8, 'F');
       doc.setTextColor(255, 255, 255);
@@ -223,7 +221,9 @@ export default function SubmeterApplicationModal({
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       
-      let sectionHeight = 28;
+      // Calculate dynamic section height based on available fields
+      let sectionHeight = 14; // Base height for main meter account
+      if (application.submeterAccountNumber) sectionHeight += 7;
       if (application.currentReading !== undefined) sectionHeight += 7;
       if (application.suppliesOtherAreas !== undefined) sectionHeight += 7;
       if (application.linkedMeterNumbers) sectionHeight += 7;
@@ -231,8 +231,11 @@ export default function SubmeterApplicationModal({
       doc.setDrawColor(245, 158, 11);
       doc.rect(15, yPosition - 5, pageWidth - 30, sectionHeight, 'S');
       
+      // Main meter account (always present due to the if condition)
       doc.text(`Main Meter Account: ${application.mainMeterAccountNumber}`, 20, yPosition);
       yPosition += 7;
+      
+      // Optional fields - only add if they exist
       if (application.submeterAccountNumber) {
         doc.text(`Sub-meter Account: ${application.submeterAccountNumber}`, 20, yPosition);
         yPosition += 7;
@@ -249,7 +252,8 @@ export default function SubmeterApplicationModal({
         doc.text(`Linked Meters: ${application.linkedMeterNumbers}`, 20, yPosition);
         yPosition += 7;
       }
-      yPosition += 15;
+      
+      yPosition += 15; // Add spacing after section
     }
 
     // Sub-meters Registered Section
@@ -319,24 +323,24 @@ export default function SubmeterApplicationModal({
 
   if (!application) return null;
 
-const formattedSubmissionDate = (() => {
-  const date = application?.submissionDate;
+  const formattedSubmissionDate = (() => {
+    const date = application?.submissionDate;
 
-  if (!date) return 'N/A';
+    if (!date) return 'N/A';
 
-  let jsDate: Date;
+    let jsDate: Date;
 
-  // ✅ Safe check for Firestore Timestamp (has .toDate function)
-  if (typeof date === 'object' && date !== null && typeof (date as any).toDate === 'function') {
-    jsDate = (date as any).toDate();
-  } else if (typeof date === 'string' || typeof date === 'number') {
-    jsDate = new Date(date);
-  } else {
-    return 'N/A';
-  }
+    // ✅ Safe check for Firestore Timestamp (has .toDate function)
+    if (typeof date === 'object' && date !== null && typeof (date as any).toDate === 'function') {
+      jsDate = (date as any).toDate();
+    } else if (typeof date === 'string' || typeof date === 'number') {
+      jsDate = new Date(date);
+    } else {
+      return 'N/A';
+    }
 
-  return format(jsDate, 'PPP');
-})();
+    return format(jsDate, 'PPP');
+  })();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -353,170 +357,169 @@ const formattedSubmissionDate = (() => {
 
         <div className="overflow-y-auto max-h-[75vh] pr-2">
           <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-xl p-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm">
+                <h3 className="font-bold text-lg mb-4 text-blue-700 border-b border-blue-200 pb-2">👤 Applicant Information</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-gray-600">Submission Date:</span>
+                    <span className="text-sm font-semibold">{formattedSubmissionDate}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-gray-600">Full Name:</span>
+                    <span className="text-sm font-semibold">{application.fullName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-gray-600">Email:</span>
+                    <span className="text-sm font-semibold text-blue-600">{application.email}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-gray-600">Phone:</span>
+                    <span className="text-sm font-semibold">{application.phoneNumber}</span>
+                  </div>
+                  {application.idNumber && (
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium text-gray-600">ID/Registration:</span>
+                      <span className="text-sm font-semibold">{application.idNumber}</span>
+                    </div>
+                  )}
+                  {application.utilityServices && (
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium text-gray-600">Services:</span>
+                      <span className="text-sm font-semibold capitalize">{Array.isArray(application.utilityServices) ? application.utilityServices.join(', ') : application.utilityServices}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm">
+                <h3 className="font-bold text-lg mb-4 text-green-700 border-b border-green-200 pb-2">🏢 Property Details</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-gray-600">Property Type:</span>
+                    <span className="text-sm font-semibold capitalize">{application.propertyType}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-gray-600">Application Type:</span>
+                    <span className="text-sm font-semibold capitalize">{application.applicationType}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-gray-600">Location:</span>
+                    <span className="text-sm font-semibold">{application.physicalLocation}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-gray-600">Area & Town:</span>
+                    <span className="text-sm font-semibold">{application.areaTown}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-gray-600">Status:</span>
+                    <span className={`text-sm font-bold px-2 py-1 rounded-full ${
+                      application.status === 'approved'
+                        ? 'bg-green-100 text-green-700'
+                        : application.status === 'rejected'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {application.status.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm">
-              <h3 className="font-bold text-lg mb-4 text-blue-700 border-b border-blue-200 pb-2">👤 Applicant Information</h3>
+            <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-4">
+              <h3 className="font-bold text-lg mb-4 text-purple-700 border-b border-purple-200 pb-2">⚡ Meter Information</h3>
               <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium text-gray-600">Submission Date:</span>
-                  <span className="text-sm font-semibold">{formattedSubmissionDate}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium text-gray-600">Full Name:</span>
-                  <span className="text-sm font-semibold">{application.fullName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium text-gray-600">Email:</span>
-                  <span className="text-sm font-semibold text-blue-600">{application.email}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium text-gray-600">Phone:</span>
-                  <span className="text-sm font-semibold">{application.phoneNumber}</span>
-                </div>
-                {application.idNumber && (
-                  <div className="flex justify-between">
-                    <span className="text-sm font-medium text-gray-600">ID/Registration:</span>
-                    <span className="text-sm font-semibold">{application.idNumber}</span>
+                {application.mainMeterAccountNumber && (
+                  <div className="bg-white/70 rounded p-2">
+                    <span className="text-sm font-medium text-gray-600">Main Meter Account:</span>
+                    <p className="font-semibold text-purple-700">{application.mainMeterAccountNumber}</p>
                   </div>
                 )}
-                {application.utilityServices && (
-                  <div className="flex justify-between">
-                    <span className="text-sm font-medium text-gray-600">Services:</span>
-                    <span className="text-sm font-semibold capitalize">{Array.isArray(application.utilityServices) ? application.utilityServices.join(', ') : application.utilityServices}</span>
+                {application.currentReading !== undefined && (
+                  <div className="bg-white/70 rounded p-2">
+                    <span className="text-sm font-medium text-gray-600">Current Reading:</span>
+                    <p className="font-semibold">{application.currentReading} kWh</p>
+                  </div>
+                )}
+                {application.suppliesOtherAreas !== undefined && (
+                  <div className="bg-white/70 rounded p-2">
+                    <span className="text-sm font-medium text-gray-600">Supplies Other Areas:</span>
+                    <p className={`font-semibold ${application.suppliesOtherAreas ? 'text-green-600' : 'text-red-600'}`}>
+                      {application.suppliesOtherAreas ? '✓ Yes' : '✗ No'}
+                    </p>
+                  </div>
+                )}
+                {application.submeterAccountNumber && (
+                  <div className="bg-white/70 rounded p-2">
+                    <span className="text-sm font-medium text-gray-600">Sub-meter Account:</span>
+                    <p className="font-semibold text-purple-700">{application.submeterAccountNumber}</p>
+                  </div>
+                )}
+                {application.linkedMeterNumbers && (
+                  <div className="bg-white/70 rounded p-2">
+                    <span className="text-sm font-medium text-gray-600">Linked Meters:</span>
+                    <p className="font-semibold">{application.linkedMeterNumbers}</p>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm">
-              <h3 className="font-bold text-lg mb-4 text-green-700 border-b border-green-200 pb-2">🏢 Property Details</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium text-gray-600">Property Type:</span>
-                  <span className="text-sm font-semibold capitalize">{application.propertyType}</span>
+            <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg p-4">
+              <h3 className="font-bold text-lg mb-4 text-orange-700 border-b border-orange-200 pb-2">📋 Sub-meters Registered</h3>
+              {application.submetersRegistered ? (
+                <div className="bg-white/80 rounded-lg p-3 shadow-sm">
+                  <div className="text-sm font-medium text-gray-600 mb-2">Registered Sub-meters:</div>
+                  <div className="bg-gray-50 rounded p-3 border-l-4 border-orange-400">
+                    <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono">{application.submetersRegistered}</pre>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium text-gray-600">Application Type:</span>
-                  <span className="text-sm font-semibold capitalize">{application.applicationType}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium text-gray-600">Location:</span>
-                  <span className="text-sm font-semibold">{application.physicalLocation}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium text-gray-600">Area & Town:</span>
-                  <span className="text-sm font-semibold">{application.areaTown}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium text-gray-600">Status:</span>
-                  <span className={`text-sm font-bold px-2 py-1 rounded-full ${
-                    application.status === 'approved'
-                      ? 'bg-green-100 text-green-700'
-                      : application.status === 'rejected'
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {application.status.toUpperCase()}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-4">
-            <h3 className="font-bold text-lg mb-4 text-purple-700 border-b border-purple-200 pb-2">⚡ Meter Information</h3>
-            <div className="space-y-3">
-              {application.mainMeterAccountNumber && (
-                <div className="bg-white/70 rounded p-2">
-                  <span className="text-sm font-medium text-gray-600">Main Meter Account:</span>
-                  <p className="font-semibold text-purple-700">{application.mainMeterAccountNumber}</p>
-                </div>
-              )}
-              {application.currentReading !== undefined && (
-                <div className="bg-white/70 rounded p-2">
-                  <span className="text-sm font-medium text-gray-600">Current Reading:</span>
-                  <p className="font-semibold">{application.currentReading} kWh</p>
-                </div>
-              )}
-              {application.suppliesOtherAreas !== undefined && (
-                <div className="bg-white/70 rounded p-2">
-                  <span className="text-sm font-medium text-gray-600">Supplies Other Areas:</span>
-                  <p className={`font-semibold ${application.suppliesOtherAreas ? 'text-green-600' : 'text-red-600'}`}>
-                    {application.suppliesOtherAreas ? '✓ Yes' : '✗ No'}
-                  </p>
-                </div>
-              )}
-              {application.submeterAccountNumber && (
-                <div className="bg-white/70 rounded p-2">
-                  <span className="text-sm font-medium text-gray-600">Sub-meter Account:</span>
-                  <p className="font-semibold text-purple-700">{application.submeterAccountNumber}</p>
-                </div>
-              )}
-              {application.linkedMeterNumbers && (
-                <div className="bg-white/70 rounded p-2">
-                  <span className="text-sm font-medium text-gray-600">Linked Meters:</span>
-                  <p className="font-semibold">{application.linkedMeterNumbers}</p>
+              ) : (
+                <div className="bg-white/80 rounded-lg p-3 text-center">
+                  <p className="text-gray-500 italic">No sub-meters information provided</p>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg p-4">
-            <h3 className="font-bold text-lg mb-4 text-orange-700 border-b border-orange-200 pb-2">📋 Sub-meters Registered</h3>
-            {application.submetersRegistered ? (
-              <div className="bg-white/80 rounded-lg p-3 shadow-sm">
-                <div className="text-sm font-medium text-gray-600 mb-2">Registered Sub-meters:</div>
-                <div className="bg-gray-50 rounded p-3 border-l-4 border-orange-400">
-                  <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono">{application.submetersRegistered}</pre>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-white/80 rounded-lg p-3 text-center">
-                <p className="text-gray-500 italic">No sub-meters information provided</p>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Admin Notes</label>
+              <Textarea
+                placeholder="Add any notes or comments about this application..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={4}
+              />
+            </div>
+
+            {application.status === 'pending' && (
+              <div>
+                <label className="block text-sm font-medium mb-2">Approval Document (PDF)</label>
+                <Input
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file?.type === 'application/pdf') {
+                      setApprovalDocument(file);
+                    } else {
+                      toast({
+                        title: 'Invalid File',
+                        description: 'Please upload a PDF document only.',
+                        variant: 'destructive',
+                      });
+                    }
+                  }}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Upload an optional approval document (PDF only)
+                </p>
               </div>
             )}
           </div>
-        </div>
-
-        <div className="space-y-4 py-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">Admin Notes</label>
-            <Textarea
-              placeholder="Add any notes or comments about this application..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={4}
-            />
-          </div>
-
-          {application.status === 'pending' && (
-            <div>
-              <label className="block text-sm font-medium mb-2">Approval Document (PDF)</label>
-              <Input
-                type="file"
-                accept=".pdf"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file?.type === 'application/pdf') {
-                    setApprovalDocument(file);
-                  } else {
-                    toast({
-                      title: 'Invalid File',
-                      description: 'Please upload a PDF document only.',
-                      variant: 'destructive',
-                    });
-                  }
-                }}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Upload an optional approval document (PDF only)
-              </p>
-            </div>
-          )}
-        </div>
-
         </div>
         
         <DialogFooter className="sticky bottom-0 bg-white border-t pt-4">
