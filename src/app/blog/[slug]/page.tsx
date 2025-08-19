@@ -1,27 +1,26 @@
 import { notFound } from 'next/navigation';
 import { getBlogPostBySlug, getBlogPosts } from '@/data/blogPosts';
 import type { Metadata } from 'next';
-import type { BlogPost } from '@/lib/types';
 import { CalendarDays, UserCircle, Tag, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 
 type BlogPostPageProps = {
-  params: Promise<{ slug: string }>;
+  params: { slug: string };
 };
 
+// --- Metadata ---
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
   try {
-    const { slug } = await params;
-    const post = await getBlogPostBySlug(slug);
-    
+    const post = await getBlogPostBySlug(params.slug);
+
     if (!post) {
       return {
         title: 'Post Not Found - Tari Electra Blog',
       };
     }
-    
+
     return {
       title: `${post.title} - Tari Electra Blog`,
       description: post.excerpt,
@@ -33,10 +32,10 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   }
 }
 
+// --- Page Component ---
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   try {
-    const { slug } = await params;
-    const post = await getBlogPostBySlug(slug);
+    const post = await getBlogPostBySlug(params.slug);
 
     if (!post) {
       notFound();
@@ -62,18 +61,18 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                   {post.category}
                 </span>
               </div>
-              
+
               <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl mb-6">
                 {post.title}
               </h1>
-              
+
               <div className="flex items-center space-x-6 text-muted-foreground mb-8">
                 <div className="flex items-center">
                   <CalendarDays className="mr-2 h-5 w-5" />
-                  {new Date(post.date as string).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                  {new Date(post.date as string).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
                   })}
                 </div>
                 <div className="flex items-center">
@@ -107,6 +106,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 }
 
+// --- Static Params for SSG ---
 export async function generateStaticParams() {
   try {
     const posts = await getBlogPosts();
@@ -115,6 +115,6 @@ export async function generateStaticParams() {
     }));
   } catch (error) {
     console.error('Error generating static params for blog posts:', error);
-    return []; // Return empty array to prevent build failure
+    return [];
   }
 }
