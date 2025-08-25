@@ -39,8 +39,9 @@ type NavItem = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 };
 
+// ✅ Make sure Home always points to "/" (landing page, not login)
 const mainNavItems: NavItem[] = [
-  { href: '/', label: 'Home', icon: Home }, // ✅ Always goes to landing page
+  { href: '/', label: 'Home', icon: Home },
   { href: '/products', label: 'Products', icon: ShoppingBag },
   { href: '/about', label: 'About', icon: Newspaper },
   { href: '/faq', label: 'FAQ', icon: Newspaper },

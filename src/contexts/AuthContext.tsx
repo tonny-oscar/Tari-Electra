@@ -51,13 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@yourstore.com').split(',').map(email => email.trim());
-  
-  // Remove debug logs in production
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Admin emails configured:', ADMIN_EMAILS);
-    console.log('Current user email:', user?.email);
-  }
+  const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@yourstore.com')
+    .split(',')
+    .map(email => email.trim());
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -65,26 +61,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (currentUser) {
         const userEmail = currentUser.email?.trim() || '';
-        // Remove debug logs in production
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Checking admin status for:', userEmail);
-          console.log('Admin emails:', ADMIN_EMAILS);
-          console.log('Is admin?', ADMIN_EMAILS.includes(userEmail));
-        }
-        
+
         if (ADMIN_EMAILS.includes(userEmail)) {
           setCustomerData(null); // Admin has no customer data
         } else {
           try {
             const customerRef = doc(db, 'customers', currentUser.uid);
             const customerSnap = await getDoc(customerRef);
-            if (customerSnap.exists()) {
-              setCustomerData(customerSnap.data() as CustomerData);
-            } else {
-              setCustomerData(null);
-            }
-          } catch (error) {
-            console.error('Error fetching customer data:', error);
+            setCustomerData(customerSnap.exists() ? (customerSnap.data() as CustomerData) : null);
+          } catch {
             setCustomerData(null);
           }
         }
@@ -104,8 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setCustomerData(null);
       router.push('/');
-    } catch (error) {
-      console.error('Logout failed:', error);
+    } catch {
+      // Keep minimal error logging in production
     }
   };
 
