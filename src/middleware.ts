@@ -1,34 +1,26 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+// Define which routes are public
+const publicRoutes = ['/', '/login', '/signup', '/api']
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname } = request.nextUrl
+  const token = request.cookies.get('authToken') // Or however you store auth
 
-  // ✅ Always allow these public routes
-  if (
-    pathname === '/' ||
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/signup') ||
-    pathname.startsWith('/about') ||
-    pathname.startsWith('/contact') ||
-    pathname.startsWith('/products') ||
-    pathname.startsWith('/faq') ||
-    pathname.startsWith('/blog') ||
-    pathname.startsWith('/api/')
-  ) {
-    return NextResponse.next();
+  // Allow public routes
+  if (publicRoutes.some((route) => pathname.startsWith(route))) {
+    return NextResponse.next()
   }
 
-  // 🔒 Example protected routes (customize to your needs)
-  const token = request.cookies.get('token')?.value;
-
-  if (!token && (pathname.startsWith('/admin') || pathname.startsWith('/customer'))) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  // If user is not authenticated, redirect to login
+  if (!token) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  return NextResponse.next();
+  return NextResponse.next()
 }
 
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
-};
+}
