@@ -5,7 +5,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { blogPosts } from "@/data/blogPosts";
+import { getBlogPosts } from "@/data/blogPosts";
+import { useEffect, useState } from "react";
+import type { BlogPost } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, CalendarDays, UserCircle } from "lucide-react";
@@ -26,7 +28,37 @@ const itemVariants = {
 
 
 export function BlogSummarySection() {
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchPosts() {
+      try {
+        const posts = await getBlogPosts();
+        setBlogPosts(posts);
+      } catch (error) {
+        console.error('Error fetching blog posts:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPosts();
+  }, []);
+
   const recentPosts = blogPosts.slice(0, 3); // Display latest 3 posts
+
+  if (loading) {
+    return (
+      <section className="py-16 lg:py-24 bg-background">
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading blog posts...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="blog-summary" className="py-16 lg:py-24 bg-background">
@@ -58,7 +90,7 @@ export function BlogSummarySection() {
                 <Link href={`/blog/${post.slug}`} className="block">
                   <div className="aspect-video w-full relative">
                     <Image
-                      src={post.imageUrl}
+                      src={post.imageUrl || 'https://placehold.co/600x400.png'}
                       alt={post.title}
                       fill
                       className="object-cover"
@@ -73,7 +105,7 @@ export function BlogSummarySection() {
                   <div className="flex items-center space-x-4 text-xs text-muted-foreground mt-2">
                     <div className="flex items-center">
                       <CalendarDays className="mr-1.5 h-4 w-4" />
-                      {(post.date && typeof post.date === 'object' && 'toDate' in post.date ? post.date.toDate() : new Date(post.date)).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      {typeof post.date === 'string' ? new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </div>
                     <div className="flex items-center">
                       <UserCircle className="mr-1.5 h-4 w-4" />

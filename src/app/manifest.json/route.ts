@@ -9,8 +9,13 @@ export async function GET() {
     theme_color: '#3b82f6',
     icons: [
       {
-        src: '/LOGO_1.png',
-        sizes: 'any',
+        src: '/favicon.ico',
+        sizes: '16x16 32x32',
+        type: 'image/x-icon',
+      },
+      {
+        src: '/tari-logo.png',
+        sizes: '192x192',
         type: 'image/png',
       },
     ],

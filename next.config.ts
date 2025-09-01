@@ -62,9 +62,11 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
+  output: 'export',
+  distDir: 'dist',
+  trailingSlash: true,
   images: {
-    unoptimized: false,
+    unoptimized: true,
     formats: ['image/webp', 'image/avif'],
     remotePatterns: [
       {
@@ -83,6 +85,11 @@ const nextConfig: NextConfig = {
   },
   poweredByHeader: false,
   compress: true,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
   typescript: {
     ignoreBuildErrors: true, // Temporarily ignore for production build
   },

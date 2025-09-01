@@ -1,5 +1,7 @@
+
+
 import { notFound } from 'next/navigation';
-import { getBlogPostBySlug, getBlogPosts } from '@/data/blogPosts';
+import { getBlogPostBySlug } from '@/data/blogPosts';
 import type { Metadata } from 'next';
 import { CalendarDays, UserCircle, Tag, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -9,6 +11,9 @@ import Image from 'next/image';
 type BlogPostPageProps = {
   params: { slug: string };
 };
+
+// --- Force Dynamic (SSR always) ---
+export const dynamic = "force-dynamic";
 
 // --- Metadata ---
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
@@ -103,18 +108,5 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   } catch (error) {
     console.error('Error loading blog post:', error);
     notFound();
-  }
-}
-
-// --- Static Params for SSG ---
-export async function generateStaticParams() {
-  try {
-    const posts = await getBlogPosts();
-    return posts.map((post) => ({
-      slug: post.slug,
-    }));
-  } catch (error) {
-    console.error('Error generating static params for blog posts:', error);
-    return [];
   }
 }

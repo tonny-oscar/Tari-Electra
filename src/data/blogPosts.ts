@@ -63,32 +63,37 @@ export async function findBlogPost(slug: string): Promise<BlogPost | undefined> 
   return post || undefined;
 }
 
-export async function addBlogPost(postData: Omit<BlogPost, 'date'>): Promise<BlogPost | null> {
+export async function addBlogPost(postData: Omit<BlogPost, 'date'> & { slug: string }): Promise<BlogPost | null> {
   if (!db) return null;
   if (!postData.slug || postData.slug.trim() === '') return null;
 
-  const docDataForFirestore = {
-    title: postData.title,
-    excerpt: postData.excerpt,
-    author: postData.author,
-    category: postData.category,
-    content: postData.content,
-    date: Timestamp.now(),
-    imageUrl: postData.imageUrl || 'https://placehold.co/600x400.png',
-    imageHint: postData.imageHint || postData.title.split(' ').slice(0, 2).join(' ').toLowerCase() || 'article placeholder',
-  };
+  try {
+    const docDataForFirestore = {
+      title: postData.title,
+      excerpt: postData.excerpt,
+      author: postData.author,
+      category: postData.category,
+      content: postData.content,
+      date: Timestamp.now(),
+      imageUrl: postData.imageUrl || 'https://placehold.co/600x400.png',
+      imageHint: postData.imageHint || postData.title.split(' ').slice(0, 2).join(' ').toLowerCase() || 'article placeholder',
+    };
 
-  const postDocRef = doc(db, BLOGS_COLLECTION, postData.slug);
-  await setDoc(postDocRef, docDataForFirestore);
+    const postDocRef = doc(db, BLOGS_COLLECTION, postData.slug);
+    await setDoc(postDocRef, docDataForFirestore);
 
-  return {
-    slug: postData.slug,
-    ...docDataForFirestore,
-    date: (docDataForFirestore.date as Timestamp).toDate().toISOString().split('T')[0],
-  };
+    return {
+      slug: postData.slug,
+      ...docDataForFirestore,
+      date: docDataForFirestore.date.toDate().toISOString().split('T')[0],
+    };
+  } catch (error) {
+    console.error('Error saving blog post:', error);
+    return null;
+  }
 }
 
-export async function updateBlogPost(slug: string, updatedPostData: Partial<Omit<BlogPost, 'slug' | 'date'>>): Promise<BlogPost | null> {
+export async function updateBlogPost(slug: string, updatedPostData: Partial<Omit<BlogPost, 'slug'>>): Promise<BlogPost | null> {
   if (!db) return null;
   const postDocRef = doc(db, BLOGS_COLLECTION, slug);
   const postSnap = await getDoc(postDocRef);
@@ -97,8 +102,6 @@ export async function updateBlogPost(slug: string, updatedPostData: Partial<Omit
   const dataToUpdate: Record<string, any> = { ...updatedPostData };
   if (updatedPostData.date && typeof updatedPostData.date === 'string') {
     dataToUpdate.date = Timestamp.fromDate(new Date(updatedPostData.date));
-  } else {
-    delete dataToUpdate.date;
   }
 
   await setDoc(postDocRef, dataToUpdate, { merge: true });

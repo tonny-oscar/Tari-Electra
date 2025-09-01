@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf .next out",
     "export": "next build",
-    "build:static": "next build"
+    "build:static": "next build",
+    "build:export": "next build"
   },
   "engines": {
     "node": ">=18.0.0"
