@@ -7,10 +7,16 @@
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "next build",
-    "start": "next start -p 5173",
-    "lint": "next lint",
+    "build:prod": "npm run typecheck && npm run lint && npm run build",
+    "build:analyze": "ANALYZE=true npm run build",
+    "start": "next start",
+    "start:prod": "NODE_ENV=production next start -p 3000",
+    "lint": "next lint --fix",
+    "lint:check": "next lint",
     "typecheck": "tsc --noEmit",
-    "build:prod": "npm run typecheck && npm run lint && npm run build"
+    "clean": "rm -rf .next out",
+    "export": "next build",
+    "build:static": "next build"
   },
   "engines": {
     "node": ">=18.0.0"

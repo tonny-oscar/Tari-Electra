@@ -62,15 +62,10 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  output: 'standalone', // good for Docker/Render
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  output: 'standalone',
   images: {
     unoptimized: false,
+    formats: ['image/webp', 'image/avif'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -86,6 +81,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  poweredByHeader: false,
+  compress: true,
+  typescript: {
+    ignoreBuildErrors: true, // Temporarily ignore for production build
+  },
+  eslint: {
+    ignoreDuringBuilds: true, // Temporarily ignore for production build
+  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -96,23 +99,17 @@ const nextConfig: NextConfig = {
       };
     }
 
-    // Ignore handlebars dynamic requires
     config.module.rules.push({
       test: /node_modules[\\/]handlebars[\\/]lib[\\/]index\.js$/,
       use: 'null-loader',
     });
 
-    // Silence @opentelemetry/winston-transport missing module
     config.externals = config.externals || [];
     config.externals.push({
       '@opentelemetry/winston-transport': 'commonjs @opentelemetry/winston-transport',
     });
 
     return config;
-  },
-  experimental: {
-    // Prevent _document errors in app router
-    appDocumentPreloading: false,
   },
   async headers() {
     return [
@@ -122,6 +119,8 @@ const nextConfig: NextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
         ],
       },
     ];

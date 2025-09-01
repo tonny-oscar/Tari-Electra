@@ -7,8 +7,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ThemeProvider } from "@/components/ThemeProvider";
-
-// ✅ Make sure this path is correct (was `contexts`, now `context`)
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 
