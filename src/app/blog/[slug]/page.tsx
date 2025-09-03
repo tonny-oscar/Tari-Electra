@@ -74,11 +74,11 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
 
           <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm overflow-hidden">
             {post.imageUrl && (
-              <div className="w-full h-64 md:h-80 overflow-hidden">
+              <div className="w-full">
                 <img 
                   src={post.imageUrl} 
                   alt={post.title} 
-                  className="w-full h-full object-cover"
+                  className="w-full h-auto object-contain"
                 />
               </div>
             )}
