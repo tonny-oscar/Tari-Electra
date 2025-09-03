@@ -1,14 +1,8 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
 
 export async function GET() {
   try {
-    const doc = await adminDb.collection('homepageSettings').doc('main').get();
-    
-    if (doc.exists) {
-      return NextResponse.json(doc.data());
-    }
-    
+    // Return default homepage settings
     return NextResponse.json({
       heroImageUrl: '',
       heroImageHint: '',

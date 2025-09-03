@@ -88,6 +88,7 @@ export async function addProduct(
       imageUrl: productData.imageUrl || 'https://placehold.co/600x400.png',
       imageHint: productData.imageHint || productData.name.split(' ').slice(0,2).join(' ').toLowerCase() || 'product image',
       category: productData.category || 'General',
+      subcategory: productData.subcategory || '',
       stock: productData.stock || 100,
       rating: productData.rating || 4.0,
       createdAt: new Date(),

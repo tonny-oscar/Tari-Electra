@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CardContent, CardFooter } from '@/components/ui/card';
-import { AlertCircle, Loader2, Save, Edit3, Upload } from 'lucide-react';
+import { AlertCircle, Loader2, Save, Edit3, Upload, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { ProductFormState, Product } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -48,6 +48,13 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
   const formRef = useRef<HTMLFormElement>(null);
   const imageUrlRef = useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null);
+  const [selectedCategory, setSelectedCategory] = useState(initialData?.category || '');
+  const [selectedSubcategory, setSelectedSubcategory] = useState(initialData?.subcategory || '');
+  
+  const subcategoryOptions = {
+    'Water Meter': ['Prepaid Meter', 'Smart Meter'],
+    'Energy Meter': ['Prepaid Meter', 'Smart Meter']
+  };
 
   const handleFormAction = async (formData: FormData) => {
     console.log('[CreateProductForm] handleFormAction called. Mode:', mode);
@@ -59,6 +66,7 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
       description: formData.get('description') as string,
       price: parseFloat(formData.get('price') as string),
       category: formData.get('category') as string,
+      subcategory: formData.get('subcategory') as string,
       features: (formData.get('features') as string)?.split(',').map(f => f.trim()).filter(Boolean) || [],
       specifications: (formData.get('specifications') as string)?.split(',').map(s => s.trim()).filter(Boolean) || [],
       imageUrl: formData.get('imageUrl') as string,
@@ -193,18 +201,61 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <select
-              id="category"
-              name="category"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              defaultValue={initialData?.category || ''}
-            >
-              <option value="">Select Category</option>
-              <option value="Water Meter">Water Meter</option>
-              <option value="Energy Meter">Energy Meter</option>
-            </select>
-            {formState.fields?.category && <p className="text-sm text-destructive mt-1">{formState.fields.category.join(', ')}</p>}
+            <Label htmlFor="category" className="text-sm font-semibold text-gray-700">Category *</Label>
+            <div className="relative">
+              <select
+                id="category"
+                name="category"
+                value={selectedCategory}
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value);
+                  setSelectedSubcategory(''); // Reset subcategory when category changes
+                }}
+                className="appearance-none flex h-12 w-full rounded-lg border-2 border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-sm transition-all duration-200 hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10"
+              >
+                <option value="" className="text-gray-500">Choose a category...</option>
+                <option value="Water Meter" className="font-medium">💧 Water Meter</option>
+                <option value="Energy Meter" className="font-medium">⚡ Energy Meter</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+            {formState.fields?.category && <p className="text-sm text-red-600 mt-1 flex items-center gap-1"><AlertCircle className="h-4 w-4" />{formState.fields.category.join(', ')}</p>}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="subcategory" className="text-sm font-semibold text-gray-700">Subcategory *</Label>
+            <div className="relative">
+              <select
+                id="subcategory"
+                name="subcategory"
+                value={selectedSubcategory}
+                onChange={(e) => setSelectedSubcategory(e.target.value)}
+                disabled={!selectedCategory}
+                className={`appearance-none flex h-12 w-full rounded-lg border-2 bg-white px-4 py-3 text-sm font-medium shadow-sm transition-all duration-200 ${
+                  !selectedCategory 
+                    ? 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed' 
+                    : 'border-gray-200 text-gray-900 hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10'
+                }`}
+              >
+                <option value="" className="text-gray-500">
+                  {!selectedCategory ? 'Select category first...' : 'Choose subcategory...'}
+                </option>
+                {selectedCategory && subcategoryOptions[selectedCategory as keyof typeof subcategoryOptions]?.map((sub) => (
+                  <option key={sub} value={sub} className="font-medium">
+                    {sub === 'Prepaid Meter' ? '💳' : '🔌'} {sub}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className={`absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 pointer-events-none transition-colors ${
+                !selectedCategory ? 'text-gray-300' : 'text-gray-400'
+              }`} />
+            </div>
+            {formState.fields?.subcategory && <p className="text-sm text-red-600 mt-1 flex items-center gap-1"><AlertCircle className="h-4 w-4" />{formState.fields.subcategory.join(', ')}</p>}
+            {selectedCategory && (
+              <p className="text-xs text-blue-600 mt-1">
+                ✨ Available for {selectedCategory}: {subcategoryOptions[selectedCategory as keyof typeof subcategoryOptions]?.join(', ')}
+              </p>
+            )}
           </div>
         </div>
         
