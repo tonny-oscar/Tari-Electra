@@ -64,11 +64,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (ADMIN_EMAILS.includes(userEmail)) {
           setCustomerData(null); // Admin has no customer data
+          // Redirect admin away from login page if they're on it
+          if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+            router.push('/admin');
+          }
         } else {
           try {
             const customerRef = doc(db, 'customers', currentUser.uid);
             const customerSnap = await getDoc(customerRef);
             setCustomerData(customerSnap.exists() ? (customerSnap.data() as CustomerData) : null);
+            // Redirect customer away from login page if they're on it
+            if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+              router.push('/customer/dashboard');
+            }
           } catch {
             setCustomerData(null);
           }
@@ -81,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [ADMIN_EMAILS]);
+  }, [ADMIN_EMAILS, router]);
 
   const logout = async () => {
     try {
