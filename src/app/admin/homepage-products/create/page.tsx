@@ -1,104 +1,41 @@
-'use client';
-
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Header } from '@/components/layout/Header';
+import { CreateProductForm } from '@/components/admin/CreateProductForm';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useAuth } from '@/hooks/useAuth';
+import { ArrowLeft, Plus } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import type { Metadata } from 'next';
 
-export default function CreateHomepageProduct() {
-  const { user, isAdmin, loading } = useAuth();
-  const router = useRouter();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState<number | ''>('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+export const metadata: Metadata = {
+  title: 'Create Homepage Product - Admin',
+  description: 'Create a new product for the homepage.',
+};
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !description || !price || !imageUrl) return;
-
-    setSubmitting(true);
-    try {
-      const res = await fetch('/api/homepage-products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, price, imageUrl }),
-      });
-
-      if (res.ok) {
-        router.push('/admin/homepage-products');
-      } else {
-        alert('Failed to create product');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('An error occurred');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (loading) return <p>Loading...</p>;
-  if (!user || !isAdmin) return <p>Access denied.</p>;
-
+export default function CreateHomepageProductPage() {
   return (
-    <>
-      <Header />
-      <main className="container mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6">Create Homepage Product</h1>
-        <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
-          <div>
-            <label className="block mb-1 font-medium">Title</label>
-            <Input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter product title"
-              required
-            />
+    <div className="space-y-6">
+      <div className="flex items-center justify-start mb-6">
+        <Button asChild variant="outline" size="sm">
+          <Link href="/admin/homepage-products">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Homepage Products
+          </Link>
+        </Button>
+      </div>
+      <Card className="shadow-md">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Plus className="h-6 w-6 text-primary" />
+            <CardTitle className="text-2xl">Create Homepage Product</CardTitle>
           </div>
-
-          <div>
-            <label className="block mb-1 font-medium">Description</label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter product description"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block mb-1 font-medium">Price</label>
-            <Input
-              type="number"
-              value={price}
-              onChange={(e) => setPrice(Number(e.target.value))}
-              placeholder="Enter product price"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block mb-1 font-medium">Image URL</label>
-            <Input
-              type="text"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="Enter image URL"
-              required
-            />
-          </div>
-
-          <Button type="submit" disabled={submitting}>
-            {submitting ? 'Submitting...' : 'Create Product'}
-          </Button>
-        </form>
-      </main>
-    </>
+          <CardDescription>Add a new product to display on the public homepage (products collection).</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CreateProductForm 
+            mode="create" 
+            isHomepageProduct={true}
+          />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

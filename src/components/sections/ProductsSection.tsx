@@ -40,13 +40,17 @@ const DEFAULT_IMAGE = 'https://placehold.co/600x400.png';
 
 export function ProductsSection({ products }: { products: Product[] }) {
   const hasProducts = products?.length > 0;
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
   const filteredProducts = selectedCategory === 'all' 
     ? products 
-    : products.filter(product => product.category === selectedCategory);
+    : products.filter(product => product.category?.toLowerCase() === selectedCategory.toLowerCase());
+
+  console.log('Selected category:', selectedCategory);
+  console.log('Available categories:', [...new Set(products.map(p => p.category))]);
+  console.log('Filtered products:', filteredProducts.length);
 
   const getCategoryIcon = (category: string) => {
     const lower = category?.toLowerCase() || '';
@@ -91,21 +95,30 @@ export function ProductsSection({ products }: { products: Product[] }) {
           <motion.div className="mt-8 flex justify-center gap-4" variants={itemVariants}>
             <Button 
               variant={selectedCategory === 'all' ? 'default' : 'outline'}
-              onClick={() => setSelectedCategory('all')}
+              onClick={() => {
+                console.log('Clicked All Products');
+                setSelectedCategory('all');
+              }}
               className="px-6"
             >
               All Products
             </Button>
             <Button 
               variant={selectedCategory === 'Water Meter' ? 'default' : 'outline'}
-              onClick={() => setSelectedCategory('Water Meter')}
+              onClick={() => {
+                console.log('Clicked Water Meter');
+                setSelectedCategory('Water Meter');
+              }}
               className="px-6"
             >
               💧 Water Meters
             </Button>
             <Button 
               variant={selectedCategory === 'Energy Meter' ? 'default' : 'outline'}
-              onClick={() => setSelectedCategory('Energy Meter')}
+              onClick={() => {
+                console.log('Clicked Energy Meter');
+                setSelectedCategory('Energy Meter');
+              }}
               className="px-6"
             >
               ⚡ Energy Meters
@@ -183,8 +196,8 @@ export function ProductsSection({ products }: { products: Product[] }) {
                             if (typeof window !== 'undefined') {
                               if (!user) {
                                 window.location.href = '/login';
-                              } else {
-                                window.location.href = '/contact';
+                              } else if (user && !isAdmin) {
+                                window.location.href = '/customer/dashboard';
                               }
                             }
                           }}
@@ -276,8 +289,8 @@ export function ProductsSection({ products }: { products: Product[] }) {
                                       if (typeof window !== 'undefined') {
                                         if (!user) {
                                           window.location.href = '/login';
-                                        } else {
-                                          window.location.href = '/contact';
+                                        } else if (user && !isAdmin) {
+                                          window.location.href = '/customer/dashboard';
                                         }
                                       }
                                     }}
@@ -311,8 +324,8 @@ export function ProductsSection({ products }: { products: Product[] }) {
                               if (typeof window !== 'undefined') {
                                 if (!user) {
                                   window.location.href = '/login';
-                                } else {
-                                  window.location.href = '/contact';
+                                } else if (user && !isAdmin) {
+                                  window.location.href = '/customer/dashboard';
                                 }
                               }
                             }}

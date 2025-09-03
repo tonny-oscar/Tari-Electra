@@ -61,7 +61,7 @@ export default async function AdminHomepageProductsPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-semibold line-clamp-2 leading-tight">{product.name}</CardTitle>
                 <CardDescription className="text-xs text-muted-foreground pt-1">
-                  <span className="font-medium text-primary">{product.category}</span> • KES {product.price.toLocaleString('en-KE')}
+                  <span className="font-medium text-primary">{product.category}</span> • KES {(product.price || 0).toLocaleString('en-KE')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-grow pt-0 text-sm">

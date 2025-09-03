@@ -12,12 +12,19 @@ export const metadata: Metadata = {
 };
 
 export default async function ProductsPage() {
-  headers(); // Accessing headers makes this page dynamically rendered on each request.
-  noStore(); // Explicitly opt out of caching for this Server Component's data fetching operation.
+  headers();
+  noStore();
   
   console.log('[ProductsPage] Fetching products from Firestore for public page...');
   const products: Product[] = await getProducts();
   console.log(`[ProductsPage] Public page fetched ${products.length} products:`, products.map(p => ({ id: p.id, name: p.name, price: p.price })));
   
-  return <ProductsSection products={products} />;
+  // Serialize Firestore timestamps for client component
+  const serializedProducts = products.map(product => ({
+    ...product,
+    createdAt: product.createdAt?.toDate?.() || product.createdAt,
+    updatedAt: product.updatedAt?.toDate?.() || product.updatedAt,
+  }));
+  
+  return <ProductsSection products={serializedProducts} />;
 }
