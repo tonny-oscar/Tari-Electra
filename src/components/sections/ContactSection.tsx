@@ -118,6 +118,7 @@ export function ContactSection() {
         name: formData.get('name') as string,
         email: formData.get('email') as string,
         phone: formData.get('phone') as string || '',
+        property: formData.get('property') as string || '',
         message: formData.get('message') as string,
         receivedAt: serverTimestamp(),
         isRead: false
@@ -182,13 +183,13 @@ export function ContactSection() {
             className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"
             variants={itemVariants}
           >
-            Get Your Free Estimate
+            Let's Optimize Your Utility Management.
           </motion.h2>
           <motion.p
-            className="mt-4 text-lg text-muted-foreground"
+            className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto"
             variants={itemVariants}
           >
-            Contact us today for a personalized quote
+            Get in touch with us today to discuss your requirements and discover how Tari's smart metering solutions can help you save costs and improve efficiency.
           </motion.p>
         </div>
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 items-start">
@@ -200,12 +201,22 @@ export function ContactSection() {
               </CardHeader>
               <CardContent className="space-y-8">
                 <div className="grid gap-6">
+                  <div className="flex items-center p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border border-purple-200 hover:shadow-md transition-all duration-300">
+                    <div className="p-3 bg-purple-500 rounded-full mr-4">
+                      <MapPin className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-purple-900 text-lg">📍 Address</h3>
+                      <p className="text-purple-700 font-semibold text-lg">Ramco Court, Mombasa Road, Nairobi, Kenya</p>
+                    </div>
+                  </div>
+                  
                   <div className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200 hover:shadow-md transition-all duration-300">
                     <div className="p-3 bg-blue-500 rounded-full mr-4">
                       <Mail className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-blue-900 text-lg">📧 Email Us</h3>
+                      <h3 className="font-bold text-blue-900 text-lg">📧 Email</h3>
                       <a href="mailto:hello@tari.africa" className="text-blue-700 hover:text-blue-900 font-semibold text-lg">hello@tari.africa</a>
                     </div>
                   </div>
@@ -215,8 +226,8 @@ export function ContactSection() {
                       <PhoneIcon className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-green-900 text-lg">📞 Call Us</h3>
-                      <a href="tel:0717777668" className="text-green-700 hover:text-green-900 font-semibold text-lg">0717777668</a>
+                      <h3 className="font-bold text-green-900 text-lg">📞 Phone</h3>
+                      <a href="tel:+254757672936" className="text-green-700 hover:text-green-900 font-semibold text-lg">+254 757672936</a>
                     </div>
                   </div>
                   
@@ -310,8 +321,12 @@ export function ContactSection() {
                     {formState.fields?.phone && <p className="text-sm text-destructive mt-1">{formState.fields.phone}</p>}
                   </div>
                   <div>
-                    <Label htmlFor="message">Project Details</Label>
-                    <Textarea id="message" name="message" placeholder="Tell us about your sub-metering project and requirements..." required rows={4} />
+                    <Label htmlFor="property">Property Name/Location</Label>
+                    <Input id="property" name="property" type="text" placeholder="e.g. Westlands Apartments, Nairobi" />
+                  </div>
+                  <div>
+                    <Label htmlFor="message">Message</Label>
+                    <Textarea id="message" name="message" placeholder="Tell us about your requirements..." required rows={4} />
                     {formState.fields?.message && <p className="text-sm text-destructive mt-1">{formState.fields.message}</p>}
                   </div>
 
@@ -324,7 +339,10 @@ export function ContactSection() {
                       </AlertDescription>
                     </Alert>
                   )}
-                  <SubmitButton isSubmitting={isSubmitting} />
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                    Send Message
+                  </Button>
                 </form>
               </CardContent>
             </Card>

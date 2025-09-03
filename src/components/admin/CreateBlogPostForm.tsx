@@ -23,9 +23,10 @@ interface BlogPost {
 interface CreateBlogPostFormProps {
   initialData?: BlogPost;
   mode?: 'create' | 'edit';
+  currentId?: string;
 }
 
-export function CreateBlogPostForm({ initialData, mode = 'create' }: CreateBlogPostFormProps) {
+export function CreateBlogPostForm({ initialData, mode = 'create', currentId }: CreateBlogPostFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,7 +55,7 @@ export function CreateBlogPostForm({ initialData, mode = 'create' }: CreateBlogP
           throw new Error('Failed to create blog post');
         }
       } else {
-        const success = await updateBlogPost(initialData?.id || '', formData);
+        const success = await updateBlogPost(currentId || initialData?.id || '', formData);
         if (success) {
           toast({
             title: 'Blog Post Updated!',

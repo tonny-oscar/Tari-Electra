@@ -12,7 +12,7 @@ export function Footer() {
               Empowering properties with smart sub-metering solutions.
             </p>
             <p className="text-sm mt-2">
-             Ramcocot, South C
+             Ramco Court, Mombasa Road, Nairobi, Kenya
             </p>
           </div>
           <div>
@@ -30,7 +30,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               <li className="flex items-center">
                 <Phone className="h-4 w-4 mr-2 text-primary" />
-                <a href="tel:+254758424283" className="hover:text-primary transition-colors">+254 758 424 283</a>
+                <a href="tel:+254758424283" className="hover:text-primary transition-colors">+254 757672936 </a>
               </li>
               <li className="flex items-center">
                 <Mail className="h-4 w-4 mr-2 text-primary" />
