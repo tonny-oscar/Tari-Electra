@@ -735,7 +735,7 @@ function DashboardTab({ customerData, orders, cart, trackingStages, products, ad
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Spent</p>
-                <p className="text-2xl font-bold">KSH {totalSpent.toFixed(2)}</p>
+                <p className="text-2xl font-bold">KSH {totalSpent.toLocaleString('en-KE')}</p>
               </div>
               <DollarSign className="w-8 h-8 text-purple-600" />
             </div>
@@ -764,7 +764,7 @@ function DashboardTab({ customerData, orders, cart, trackingStages, products, ad
                     <div>
                       <p className="font-medium">Order {order.orderNumber || `#${order.id.slice(-8)}`}</p>
                       <p className="text-sm text-gray-600">
-                        {order.items.length} items • KSH {order.total.toFixed(2)}
+                        {order.items.length} items • KSH {order.total.toLocaleString('en-KE')}
                       </p>
                       <p className="text-xs text-gray-500">
                         {new Date(order.createdAt).toLocaleDateString()}
@@ -816,7 +816,7 @@ function DashboardTab({ customerData, orders, cart, trackingStages, products, ad
                     <div className={`text-4xl text-gray-400 ${product.image && product.image !== '📦' ? 'hidden' : ''}`}>📦</div>
                   </div>
                   <h4 className="font-medium text-sm mb-1 truncate">{sanitizeUserInput(product.name)}</h4>
-                  <p className="text-lg font-bold text-blue-600 mb-2">KSH {product.price.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-blue-600 mb-2">KSH {product.price.toLocaleString('en-KE')}</p>
                   <Button
                     onClick={() => addToCart(product)}
                     disabled={product.stock === 0}
@@ -903,7 +903,7 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
-  const categories = ['All', ...Array.from(new Set(products.map(p => p.category || 'General')))];
+  const categories = ['All', 'Water Meter', 'Smart Meter', 'Prepaid Meter', 'Energy Meter'];
 
   // Filter and sort products
   const filteredAndSortedProducts = React.useMemo(() => {
@@ -1101,7 +1101,7 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
 
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-2xl font-bold text-blue-600">
-                    KSH {product.price.toFixed(2)}
+                    KSH {product.price.toLocaleString('en-KE')}
                   </span>
                   <Badge variant={product.stock > 0 ? "default" : "destructive"}>
                     {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
@@ -1191,7 +1191,7 @@ function CartTab({ cart, updateCartQuantity, removeFromCart, getCartTotal, place
                     <h3 className="font-semibold">{item.name}</h3>
                     <p className="text-sm text-gray-600">{item.description}</p>
                     <p className="text-lg font-bold text-blue-600">
-                      KSH {item.price.toFixed(2)}
+                      KSH {item.price.toLocaleString('en-KE')}
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -1213,7 +1213,7 @@ function CartTab({ cart, updateCartQuantity, removeFromCart, getCartTotal, place
                   </div>
                   <div className="text-right">
                     <p className="font-semibold">
-                      KSH {(item.price * item.quantity).toFixed(2)}
+                      KSH {(item.price * item.quantity).toLocaleString('en-KE')}
                     </p>
                     <Button
                       variant="ghost"
@@ -1238,7 +1238,7 @@ function CartTab({ cart, updateCartQuantity, removeFromCart, getCartTotal, place
             <CardContent className="space-y-4">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
-                <span>KSH {getCartTotal().toFixed(2)}</span>
+                <span>KSH {getCartTotal().toLocaleString('en-KE')}</span>
               </div>
               <div className="flex justify-between">
                 <span>Shipping:</span>
@@ -1246,12 +1246,12 @@ function CartTab({ cart, updateCartQuantity, removeFromCart, getCartTotal, place
               </div>
               <div className="flex justify-between">
                 <span>Tax:</span>
-                <span>KSH {(getCartTotal() * 0.1).toFixed(2)}</span>
+                <span>KSH {(getCartTotal() * 0.1).toLocaleString('en-KE')}</span>
               </div>
               <div className="border-t pt-4">
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total:</span>
-                  <span>KSH {(getCartTotal() * 1.1).toFixed(2)}</span>
+                  <span>KSH {(getCartTotal() * 1.1).toLocaleString('en-KE')}</span>
                 </div>
               </div>
               <Button onClick={placeOrder} className="w-full" size="lg">
@@ -1313,7 +1313,7 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
                         {new Date(order.createdAt).toLocaleDateString()}
                       </span>
                       <span>•</span>
-                      <span>KSH {order.total.toFixed(2)}</span>
+                      <span>KSH {order.total.toLocaleString('en-KE')}</span>
                       <span>•</span>
                       <span>{order.items.length} items</span>
                     </div>
@@ -1359,12 +1359,12 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
                           <div>
                             <p className="font-medium">{sanitizeUserInput(item.name)}</p>
                             <p className="text-sm text-gray-600">
-                              Qty: {item.quantity} × KSH {item.price.toFixed(2)}
+                              Qty: {item.quantity} × KSH {item.price.toLocaleString('en-KE')}
                             </p>
                           </div>
                         </div>
                         <p className="font-semibold">
-                          KSH {(item.price * item.quantity).toFixed(2)}
+                          KSH {(item.price * item.quantity).toLocaleString('en-KE')}
                         </p>
                       </div>
                     ))}

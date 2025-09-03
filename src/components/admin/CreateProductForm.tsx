@@ -60,6 +60,7 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
       price: parseFloat(formData.get('price') as string),
       category: formData.get('category') as string,
       features: (formData.get('features') as string)?.split(',').map(f => f.trim()).filter(Boolean) || [],
+      specifications: (formData.get('specifications') as string)?.split(',').map(s => s.trim()).filter(Boolean) || [],
       imageUrl: formData.get('imageUrl') as string,
       imageHint: formData.get('imageHint') as string,
     };
@@ -218,6 +219,19 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
           />
            <p className="text-xs text-muted-foreground">Enter features separated by commas.</p>
           {formState.fields?.features && <p className="text-sm text-destructive mt-1">{formState.fields.features.join(', ')}</p>}
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="specifications">Specifications (comma-separated)</Label>
+          <Textarea 
+            id="specifications" 
+            name="specifications" 
+            placeholder="e.g., Voltage: 240V, Current: 60A, Accuracy: Class 1, Display: LCD" 
+            rows={3} 
+            defaultValue={initialData?.specifications?.join(', ') || ''} 
+          />
+           <p className="text-xs text-muted-foreground">Enter technical specifications separated by commas.</p>
+          {formState.fields?.specifications && <p className="text-sm text-destructive mt-1">{formState.fields.specifications.join(', ')}</p>}
         </div>
         
         <div className="space-y-2">

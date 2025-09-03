@@ -84,6 +84,7 @@ export async function addProduct(
       ...productData,
       price: Number(productData.price) || 0,
       features: Array.isArray(productData.features) ? productData.features : [],
+      specifications: Array.isArray(productData.specifications) ? productData.specifications : [],
       imageUrl: productData.imageUrl || 'https://placehold.co/600x400.png',
       imageHint: productData.imageHint || productData.name.split(' ').slice(0,2).join(' ').toLowerCase() || 'product image',
       category: productData.category || 'General',

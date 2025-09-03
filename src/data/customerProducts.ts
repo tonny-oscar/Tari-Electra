@@ -72,6 +72,7 @@ export async function addCustomerProduct(productData: Omit<Product, 'id'>): Prom
       price: Number(productData.price) || 0,
       category: productData.category || 'General',
       features: Array.isArray(productData.features) ? productData.features : [],
+      specifications: Array.isArray(productData.specifications) ? productData.specifications : [],
       imageUrl: productData.imageUrl || '',
       image: productData.imageUrl || '📦',
       stock: 100,

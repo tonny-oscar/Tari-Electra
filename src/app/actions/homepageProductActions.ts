@@ -5,12 +5,15 @@ import { revalidatePath } from 'next/cache';
 
 export async function addHomepageProductAction(productData: any) {
   try {
-    // Process features from comma-separated string to array
+    // Process features and specifications from comma-separated strings to arrays
     const processedData = {
       ...productData,
       features: typeof productData.features === 'string' 
         ? productData.features.split(',').map((f: string) => f.trim()).filter(Boolean)
         : productData.features || [],
+      specifications: typeof productData.specifications === 'string' 
+        ? productData.specifications.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : productData.specifications || [],
     };
     
     const product = await addProduct(processedData);
@@ -38,12 +41,15 @@ export async function addHomepageProductAction(productData: any) {
 
 export async function updateHomepageProductAction(id: string, productData: any) {
   try {
-    // Process features from comma-separated string to array
+    // Process features and specifications from comma-separated strings to arrays
     const processedData = {
       ...productData,
       features: typeof productData.features === 'string' 
         ? productData.features.split(',').map((f: string) => f.trim()).filter(Boolean)
         : productData.features || [],
+      specifications: typeof productData.specifications === 'string' 
+        ? productData.specifications.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : productData.specifications || [],
     };
     
     const product = await updateProduct(id, processedData);

@@ -28,7 +28,18 @@ export async function deleteCustomerProductAction(id: string) {
 
 export async function addCustomerProductAction(productData: any) {
   try {
-    const id = await addCustomerProduct(productData);
+    // Process features and specifications from comma-separated strings to arrays
+    const processedData = {
+      ...productData,
+      features: typeof productData.features === 'string' 
+        ? productData.features.split(',').map((f: string) => f.trim()).filter(Boolean)
+        : productData.features || [],
+      specifications: typeof productData.specifications === 'string' 
+        ? productData.specifications.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : productData.specifications || [],
+    };
+    
+    const id = await addCustomerProduct(processedData);
     if (id) {
       revalidatePath('/admin/products');
       return {
@@ -52,7 +63,18 @@ export async function addCustomerProductAction(productData: any) {
 
 export async function updateCustomerProductAction(id: string, productData: any) {
   try {
-    const success = await updateCustomerProduct(id, productData);
+    // Process features and specifications from comma-separated strings to arrays
+    const processedData = {
+      ...productData,
+      features: typeof productData.features === 'string' 
+        ? productData.features.split(',').map((f: string) => f.trim()).filter(Boolean)
+        : productData.features || [],
+      specifications: typeof productData.specifications === 'string' 
+        ? productData.specifications.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : productData.specifications || [],
+    };
+    
+    const success = await updateCustomerProduct(id, processedData);
     if (success) {
       revalidatePath('/admin/products');
       return {
