@@ -1,25 +1,34 @@
+'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { getBlogPosts } from '@/data/blogPosts';
-import { PlusCircle, ExternalLink, Newspaper } from 'lucide-react';
-import Image from 'next/image';
-import { BlogActionsCell } from '@/components/admin/BlogActionsCell';
-import type { BlogPost } from '@/lib/types';
-import { formatDate } from '@/lib/utils/date';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { PlusCircle, FileText, Edit, Eye } from 'lucide-react';
+import { getBlogPosts, type BlogPost } from '@/data/blogPosts';
+import { useEffect, useState } from 'react';
 
-export default async function AdminBlogListPage() {
-  const posts: BlogPost[] = await getBlogPosts(); 
+export default function BlogManagementPage() {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadPosts = async () => {
+      const blogPosts = await getBlogPosts();
+      setPosts(blogPosts);
+      setLoading(false);
+    };
+    loadPosts();
+  }, []);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Newspaper className="h-7 w-7 text-primary" />
+          <FileText className="h-7 w-7 text-primary" />
           <div>
-            <h1 className="text-2xl font-semibold">Blog Posts</h1>
-            <p className="text-muted-foreground">Manage your articles here. Data saved to JSON.</p>
+            <h1 className="text-2xl font-semibold">Blog Management</h1>
+            <p className="text-muted-foreground">Create and manage blog posts ({posts.length})</p>
           </div>
         </div>
         <Button asChild>
@@ -29,47 +38,49 @@ export default async function AdminBlogListPage() {
         </Button>
       </div>
 
-      {posts.length === 0 ? (
-        <Card className="shadow-md">
-          <CardContent className="py-10 text-center">
-            <p className="text-muted-foreground">No blog posts yet. Start by creating one!</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {posts.map((post: BlogPost) => (
-            <Card key={post.slug} className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
-              <div className="aspect-[3/2] w-full relative bg-muted rounded-t-lg overflow-hidden">
-                <Image
-                  src={post.imageUrl || 'https://placehold.co/600x400.png'}
-                  alt={post.title}
-                  fill
-                  className="object-cover"
-                  data-ai-hint={post.imageHint || post.title.split(' ').slice(0,2).join(' ').toLowerCase() || 'article image'}
-                />
-              </div>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-semibold line-clamp-2 leading-tight">{post.title}</CardTitle>
-                <CardDescription className="text-xs text-muted-foreground pt-1">
-                  {formatDate(post.date)} &bull; {post.category}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow pt-0">
-                <p className="text-sm text-muted-foreground line-clamp-3">{post.excerpt}</p>
-                 <p className="text-xs text-muted-foreground mt-2">By {post.author}</p>
-              </CardContent>
-              <CardFooter className="gap-2 pt-3 items-center">
-                <BlogActionsCell slug={post.slug} title={post.title} />
-                <Button variant="ghost" size="icon" asChild className="shrink-0 ml-auto">
-                  <Link href={`/blog/${post.slug}`} target="_blank" aria-label="View post">
-                     <ExternalLink className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Blog Posts</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p className="text-muted-foreground">Loading posts...</p>
+          ) : posts.length === 0 ? (
+            <p className="text-muted-foreground">No blog posts yet. Create your first post!</p>
+          ) : (
+            <div className="space-y-4">
+              {posts.map((post) => (
+                <div key={post.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-4">
+                    {post.imageUrl && (
+                      <img src={post.imageUrl} alt={post.title} className="w-16 h-16 object-cover rounded" />
+                    )}
+                    <div>
+                      <h3 className="font-semibold">{post.title}</h3>
+                      <p className="text-sm text-muted-foreground">/{post.slug}</p>
+                      <Badge variant={post.published ? 'default' : 'secondary'}>
+                        {post.published ? 'Published' : 'Draft'}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/blog/${post.slug}`}>
+                        <Eye className="mr-2 h-4 w-4" /> View
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/admin/blog/edit/${post.slug}`}>
+                        <Edit className="mr-2 h-4 w-4" /> Edit
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

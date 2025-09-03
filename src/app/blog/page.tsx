@@ -1,109 +1,119 @@
+'use client';
 
-import Link from "next/link";
-import Image from "next/image";
-import { getBlogPosts } from "@/data/blogPosts"; 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, CalendarDays, UserCircle, Tag } from "lucide-react";
-import type { Metadata } from 'next';
-import { headers } from 'next/headers'; 
-import { unstable_noStore as noStore } from 'next/cache'; 
-import type { BlogPost } from "@/lib/types";
-import { BlogSubscriptionForm } from "@/components/blog/BlogSubscriptionForm"; // Import the new component
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { FileText, Calendar, ArrowRight } from 'lucide-react';
+import { getPublishedBlogPosts, type BlogPost } from '@/data/blogPosts';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
-export const metadata: Metadata = {
-  title: "Blog - Tari Electra",
-  description: "Articles and insights on energy saving, sub-metering, and landlord advice.",
-};
+export default function BlogPage() {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default async function BlogPage() {
-  headers(); 
-  noStore(); 
-  
-  console.log('[BlogPage] Fetching blog posts from Firestore for public page...');
-  const posts: BlogPost[] = await getBlogPosts(); 
-  console.log(`[BlogPage] Public page fetched ${posts.length} posts:`, posts.map(p => ({ slug: p.slug, title: p.title })));
+  useEffect(() => {
+    const loadPosts = async () => {
+      const publishedPosts = await getPublishedBlogPosts();
+      setPosts(publishedPosts);
+      setLoading(false);
+    };
+    loadPosts();
+  }, []);
 
   return (
-    <div className="bg-secondary">
-      <div className="container mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-            Tari Electra Blog
-          </h1>
-          <p className="mt-6 text-xl text-muted-foreground max-w-2xl mx-auto">
-            Stay informed with our latest articles, tips, and news on smart sub-metering and energy management.
-          </p>
-        </div>
-
-        {posts.length === 0 ? (
-          <div className="text-center py-10">
-            <p className="text-xl text-muted-foreground">No blog posts yet. Check back soon!</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-5xl mx-auto">
+          {/* Classic Header */}
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-6">
+              <FileText className="h-8 w-8 text-primary" />
+            </div>
+            <h1 className="text-5xl font-serif font-bold text-gray-900 mb-4">Our Journal</h1>
+            <div className="w-24 h-1 bg-primary mx-auto mb-4"></div>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              Insights, innovations, and stories from the world of smart metering technology
+            </p>
+            <p className="text-sm text-gray-500 mt-2">{posts.length} articles published</p>
           </div>
+
+          {loading ? (
+            <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-12 text-center">
+                <div className="animate-pulse">
+                  <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4"></div>
+                  <p className="text-gray-500">Loading our latest stories...</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : posts.length === 0 ? (
+            <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-12 text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <FileText className="h-8 w-8 text-gray-400" />
+                </div>
+                <h3 className="text-2xl font-serif font-bold text-gray-900 mb-4">Coming Soon</h3>
+                <p className="text-gray-600 text-lg max-w-md mx-auto">
+                  We're crafting thoughtful stories about innovation in smart metering. Check back soon for our first articles.
+                </p>
+              </CardContent>
+            </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => (
-              <Card key={post.slug} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 bg-background">
-                 <Link href={`/blog/${post.slug}`} className="block">
-                  <div className="aspect-[3/2] w-full relative bg-muted">
-                    <Image
-                      src={post.imageUrl || 'https://placehold.co/600x400.png'}
-                      alt={post.title}
-                      fill
-                      className="object-cover"
-                      data-ai-hint={post.imageHint || post.title.split(' ').slice(0,2).join(' ').toLowerCase() || 'article image'}
-                    />
+          <div className="grid gap-8">
+            {posts.map((post, index) => (
+              <article key={post.id} className={`group ${index === 0 ? 'lg:grid-cols-2' : ''}`}>
+                <Card className="overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 bg-white/80 backdrop-blur-sm">
+                  <div className={`${index === 0 ? 'lg:flex' : 'flex'} ${post.imageUrl ? '' : 'flex-col'}`}>
+                    {post.imageUrl && (
+                      <div className={`${index === 0 ? 'lg:w-1/2' : 'w-full lg:w-80'} relative overflow-hidden`}>
+                        <img 
+                          src={post.imageUrl} 
+                          alt={post.title} 
+                          className={`w-full ${index === 0 ? 'h-64 lg:h-full' : 'h-48'} object-cover group-hover:scale-105 transition-transform duration-700`}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      </div>
+                    )}
+                    <CardContent className={`${index === 0 ? 'lg:w-1/2' : 'flex-1'} p-8`}>
+                      <div className="flex items-center gap-2 text-sm text-primary/70 mb-3">
+                        <Calendar className="h-4 w-4" />
+                        <time className="font-medium">
+                          {post.createdAt?.toDate?.()?.toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          }) || 'Recently'}
+                        </time>
+                      </div>
+                      
+                      <Link href={`/blog/${post.slug}`} className="block group-hover:text-primary transition-colors">
+                        <h2 className={`${index === 0 ? 'text-3xl' : 'text-2xl'} font-serif font-bold text-gray-900 mb-4 leading-tight`}>
+                          {post.title}
+                        </h2>
+                      </Link>
+                      
+                      <p className="text-gray-600 mb-6 leading-relaxed text-lg">
+                        {post.content.substring(0, index === 0 ? 200 : 150)}...
+                      </p>
+                      
+                      <Link href={`/blog/${post.slug}`}>
+                        <Button 
+                          variant="ghost" 
+                          className="group/btn p-0 h-auto font-semibold text-primary hover:text-primary/80 hover:bg-transparent"
+                        >
+                          Continue Reading
+                          <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+                        </Button>
+                      </Link>
+                    </CardContent>
                   </div>
-                </Link>
-                <CardHeader>
-                  <div className="mb-2">
-                    <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                      <Tag className="mr-1.5 h-3.5 w-3.5" />
-                      {post.category}
-                    </span>
-                  </div>
-                  <Link href={`/blog/${post.slug}`}>
-                    <CardTitle className="text-2xl font-semibold leading-tight hover:text-primary transition-colors">{post.title}</CardTitle>
-                  </Link>
-                  <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-3">
-                    <div className="flex items-center">
-                      <CalendarDays className="mr-1.5 h-4 w-4" />
-                      {new Date(post.date as string).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                    </div>
-                    <div className="flex items-center">
-                      <UserCircle className="mr-1.5 h-4 w-4" />
-                      {post.author}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <CardDescription className="text-base">{post.excerpt}</CardDescription>
-                </CardContent>
-                <CardFooter>
-                  <Button asChild variant="link" className="px-0 text-primary text-base">
-                    <Link href={`/blog/${post.slug}`}>
-                      Read More <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardFooter>
-              </Card>
+                </Card>
+              </article>
             ))}
           </div>
         )}
-
-        {/* Add Subscription Form Section */}
-        <div className="mt-16 md:mt-24 max-w-xl mx-auto">
-            <BlogSubscriptionForm />
         </div>
-
       </div>
     </div>
   );
-}
-
-export async function generateStaticParams() {
-  const posts = await getBlogPosts(); 
-  return posts.map((post) => ({
-    slug: post.slug,
-  }));
 }

@@ -1,121 +1,124 @@
-'use server';
-
-import { db } from '@/lib/firebase/client';
-import type { BlogPost } from '@/lib/types';
+import { db } from '@/lib/firebase';
 import {
   collection,
-  doc,
-  setDoc,
-  getDoc,
   getDocs,
+  doc,
+  getDoc,
+  addDoc,
+  updateDoc,
   deleteDoc,
   query,
   orderBy,
-  Timestamp,
+  serverTimestamp,
+  where,
 } from 'firebase/firestore';
-import { unstable_noStore as noStore } from 'next/cache';
 
-const BLOGS_COLLECTION = 'blogs';
+export interface BlogPost {
+  id?: string;
+  title: string;
+  content: string;
+  slug: string;
+  published: boolean;
+  imageUrl?: string;
+  createdAt?: any;
+  updatedAt?: any;
+}
 
-const blogPostToClient = (docData: any): Omit<BlogPost, 'slug'> => {
-  const data = { ...docData };
-  if (data.date && data.date instanceof Timestamp) {
-    data.date = data.date.toDate().toISOString().split('T')[0];
-  }
-  return data as Omit<BlogPost, 'slug'>;
-};
+const BLOG_COLLECTION = 'blogPosts';
 
 export async function getBlogPosts(): Promise<BlogPost[]> {
-  noStore();
   try {
-    if (!db) return [];
-    const postsCollection = collection(db, BLOGS_COLLECTION);
-    const q = query(postsCollection, orderBy('date', 'desc'));
-    const postSnapshot = await getDocs(q);
-    return postSnapshot.docs.map(doc => ({
-      slug: doc.id,
-      ...blogPostToClient(doc.data()),
-    }));
+    const blogCollection = collection(db, BLOG_COLLECTION);
+    const blogSnapshot = await getDocs(blogCollection);
+    
+    const posts = blogSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as BlogPost[];
+    
+    // Sort in JavaScript instead of Firestore
+    return posts.sort((a, b) => {
+      const aTime = a.createdAt?.toDate?.() || new Date(0);
+      const bTime = b.createdAt?.toDate?.() || new Date(0);
+      return bTime.getTime() - aTime.getTime();
+    });
   } catch (error) {
     console.error('Error fetching blog posts:', error);
-    return []; // Return empty array on error
+    return [];
   }
 }
 
-export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
-  noStore();
+export async function getPublishedBlogPosts(): Promise<BlogPost[]> {
   try {
-    if (!db) return null;
-    const postDocRef = doc(db, BLOGS_COLLECTION, slug);
-    const postSnap = await getDoc(postDocRef);
-    if (postSnap.exists()) {
-      return { slug: postSnap.id, ...blogPostToClient(postSnap.data()) };
-    }
-    return null;
+    const blogCollection = collection(db, BLOG_COLLECTION);
+    const blogSnapshot = await getDocs(blogCollection);
+    
+    const posts = blogSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as BlogPost[];
+    
+    // Filter and sort in JavaScript instead of Firestore
+    return posts
+      .filter(post => post.published === true)
+      .sort((a, b) => {
+        const aTime = a.createdAt?.toDate?.() || new Date(0);
+        const bTime = b.createdAt?.toDate?.() || new Date(0);
+        return bTime.getTime() - aTime.getTime();
+      });
+  } catch (error) {
+    console.error('Error fetching published blog posts:', error);
+    return [];
+  }
+}
+
+export async function getBlogPost(slug: string): Promise<BlogPost | null> {
+  try {
+    const blogCollection = collection(db, BLOG_COLLECTION);
+    const blogSnapshot = await getDocs(blogCollection);
+    
+    const posts = blogSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as BlogPost[];
+    
+    // Find post by slug in JavaScript
+    const post = posts.find(p => p.slug === slug);
+    return post || null;
   } catch (error) {
     console.error('Error fetching blog post:', error);
     return null;
   }
 }
 
-export async function findBlogPost(slug: string): Promise<BlogPost | undefined> {
-  const post = await getBlogPostBySlug(slug);
-  return post || undefined;
-}
-
-export async function addBlogPost(postData: Omit<BlogPost, 'date'> & { slug: string }): Promise<BlogPost | null> {
-  if (!db) return null;
-  if (!postData.slug || postData.slug.trim() === '') return null;
-
+export async function addBlogPost(blogData: Omit<BlogPost, 'id'>): Promise<string | null> {
   try {
-    const docDataForFirestore = {
-      title: postData.title,
-      excerpt: postData.excerpt,
-      author: postData.author,
-      category: postData.category,
-      content: postData.content,
-      date: Timestamp.now(),
-      imageUrl: postData.imageUrl || 'https://placehold.co/600x400.png',
-      imageHint: postData.imageHint || postData.title.split(' ').slice(0, 2).join(' ').toLowerCase() || 'article placeholder',
+    const newBlog = {
+      ...blogData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
-
-    const postDocRef = doc(db, BLOGS_COLLECTION, postData.slug);
-    await setDoc(postDocRef, docDataForFirestore);
-
-    return {
-      slug: postData.slug,
-      ...docDataForFirestore,
-      date: docDataForFirestore.date.toDate().toISOString().split('T')[0],
-    };
+    
+    const docRef = await addDoc(collection(db, BLOG_COLLECTION), newBlog);
+    return docRef.id;
   } catch (error) {
-    console.error('Error saving blog post:', error);
+    console.error('Error adding blog post:', error);
     return null;
   }
 }
 
-export async function updateBlogPost(slug: string, updatedPostData: Partial<Omit<BlogPost, 'slug'>>): Promise<BlogPost | null> {
-  if (!db) return null;
-  const postDocRef = doc(db, BLOGS_COLLECTION, slug);
-  const postSnap = await getDoc(postDocRef);
-  if (!postSnap.exists()) return null;
-
-  const dataToUpdate: Record<string, any> = { ...updatedPostData };
-  if (updatedPostData.date && typeof updatedPostData.date === 'string') {
-    dataToUpdate.date = Timestamp.fromDate(new Date(updatedPostData.date));
+export async function updateBlogPost(id: string, blogData: Partial<BlogPost>): Promise<boolean> {
+  try {
+    const blogDoc = doc(db, BLOG_COLLECTION, id);
+    const updateData = {
+      ...blogData,
+      updatedAt: serverTimestamp(),
+    };
+    
+    await updateDoc(blogDoc, updateData);
+    return true;
+  } catch (error) {
+    console.error('Error updating blog post:', error);
+    return false;
   }
-
-  await setDoc(postDocRef, dataToUpdate, { merge: true });
-
-  const updatedSnap = await getDoc(postDocRef);
-  if (updatedSnap.exists()) {
-    return { slug: updatedSnap.id, ...blogPostToClient(updatedSnap.data()) };
-  }
-  return null;
-}
-
-export async function deleteBlogPost(slug: string): Promise<boolean> {
-  if (!db) return false;
-  const postDocRef = doc(db, BLOGS_COLLECTION, slug);
-  await deleteDoc(postDocRef);
-  return true;
 }

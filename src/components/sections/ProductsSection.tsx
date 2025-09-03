@@ -115,30 +115,30 @@ export function ProductsSection({ products }: { products: Product[] }) {
             <div className="relative group">
               <Button 
                 variant={selectedCategory === 'Water Meter' || selectedCategory === 'Water Meter - Prepaid Meter' || selectedCategory === 'Water Meter - Smart Meter' ? 'default' : 'outline'}
-                className="px-6 flex items-center gap-2"
+                className="px-6 flex items-center gap-2 hover:bg-primary/10"
               >
                 💧 Water Meters
                 <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </Button>
-              <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className="absolute top-full left-0 mt-2 w-64 bg-white border-2 border-gray-300 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[9999] transform group-hover:translate-y-0 translate-y-2">
                 <div className="py-2">
                   <button
                     onClick={() => setSelectedCategory('Water Meter')}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+                    className="w-full text-left px-4 py-3 text-base hover:bg-blue-100 flex items-center gap-3 font-semibold transition-colors text-gray-800"
                   >
                     💧 All Water Meters
                   </button>
                   <button
                     onClick={() => setSelectedCategory('Water Meter - Prepaid Meter')}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+                    className="w-full text-left px-4 py-3 text-base hover:bg-blue-100 flex items-center gap-3 font-semibold transition-colors border-t border-gray-200 text-gray-800"
                   >
                     💳 Prepaid Water Meters
                   </button>
                   <button
                     onClick={() => setSelectedCategory('Water Meter - Smart Meter')}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+                    className="w-full text-left px-4 py-3 text-base hover:bg-blue-100 flex items-center gap-3 font-semibold transition-colors border-t border-gray-200 text-gray-800"
                   >
                     🔌 Smart Water Meters
                   </button>
@@ -150,30 +150,30 @@ export function ProductsSection({ products }: { products: Product[] }) {
             <div className="relative group">
               <Button 
                 variant={selectedCategory === 'Energy Meter' || selectedCategory === 'Energy Meter - Prepaid Meter' || selectedCategory === 'Energy Meter - Smart Meter' ? 'default' : 'outline'}
-                className="px-6 flex items-center gap-2"
+                className="px-6 flex items-center gap-2 hover:bg-primary/10"
               >
                 ⚡ Energy Meters
                 <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </Button>
-              <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className="absolute top-full left-0 mt-2 w-64 bg-white border-2 border-gray-300 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[9999] transform group-hover:translate-y-0 translate-y-2">
                 <div className="py-2">
                   <button
                     onClick={() => setSelectedCategory('Energy Meter')}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+                    className="w-full text-left px-4 py-3 text-base hover:bg-blue-100 flex items-center gap-3 font-semibold transition-colors text-gray-800"
                   >
                     ⚡ All Energy Meters
                   </button>
                   <button
                     onClick={() => setSelectedCategory('Energy Meter - Prepaid Meter')}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+                    className="w-full text-left px-4 py-3 text-base hover:bg-blue-100 flex items-center gap-3 font-semibold transition-colors border-t border-gray-200 text-gray-800"
                   >
                     💳 Prepaid Energy Meters
                   </button>
                   <button
                     onClick={() => setSelectedCategory('Energy Meter - Smart Meter')}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+                    className="w-full text-left px-4 py-3 text-base hover:bg-blue-100 flex items-center gap-3 font-semibold transition-colors border-t border-gray-200 text-gray-800"
                   >
                     🔌 Smart Energy Meters
                   </button>
