@@ -5,8 +5,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { SubmeterApplicationDialog } from './SubmeterDialog';
-import { SubmeterApplicationDetailsModal } from './SubmeterApplicationDetailsModal';
+// import { SubmeterApplicationDialog } from './SubmeterDialog';
+// import { SubmeterApplicationDetailsModal } from './SubmeterApplicationDetailsModal';
 
 interface SubmeterApplication {
   id: string;
@@ -34,7 +34,7 @@ export function SubmeterTab({ applications }: SubmeterTabProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Submeter Application Forms</h2>
-        <SubmeterApplicationDialog />
+        <Button>Apply for Submeter</Button>
       </div>
 
       <div className="space-y-4">
@@ -45,7 +45,7 @@ export function SubmeterTab({ applications }: SubmeterTabProps) {
                 <p className="text-muted-foreground">
                   You haven't submitted any sub-meter application forms yet.
                 </p>
-                <SubmeterApplicationDialog />
+                <Button>Apply for Submeter</Button>
               </div>
             </CardContent>
           </Card>
@@ -92,14 +92,7 @@ export function SubmeterTab({ applications }: SubmeterTabProps) {
         )}
       </div>
 
-      <SubmeterApplicationDetailsModal
-        application={selectedApplication}
-        isOpen={isDetailsModalOpen}
-        onClose={() => {
-          setIsDetailsModalOpen(false);
-          setSelectedApplication(null);
-        }}
-      />
+      {/* Modal will be implemented later */}
     </div>
   );
 }
