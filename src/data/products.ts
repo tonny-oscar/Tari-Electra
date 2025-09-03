@@ -86,6 +86,11 @@ export async function addProduct(
       features: Array.isArray(productData.features) ? productData.features : [],
       imageUrl: productData.imageUrl || 'https://placehold.co/600x400.png',
       imageHint: productData.imageHint || productData.name.split(' ').slice(0,2).join(' ').toLowerCase() || 'product image',
+      category: productData.category || 'General',
+      stock: productData.stock || 100,
+      rating: productData.rating || 4.0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
     console.log('[FirestoreProducts - addProduct] Data prepared for Firestore:', productForFirestore);
 
@@ -119,6 +124,10 @@ export async function updateProduct(
     if (typeof updatedProductData.features !== 'undefined' && !Array.isArray(updatedProductData.features)) {
         dataToUpdate.features = []; 
     }
+    if (typeof updatedProductData.category !== 'undefined') {
+        dataToUpdate.category = updatedProductData.category || 'General';
+    }
+    dataToUpdate.updatedAt = new Date();
     
     await setDoc(productDocRef, dataToUpdate, { merge: true });
     console.log(`[FirestoreProducts - updateProduct] Product ${id} updated successfully in Firestore.`);

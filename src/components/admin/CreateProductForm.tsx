@@ -89,21 +89,13 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
         formRef.current?.reset();
         setImagePreview(null);
       }
+      // Don't reset form data on edit - keep existing values
     } else {
       setFormState({
         message: result.message,
         isSuccess: false,
         isError: true,
       });
-    }
-    console.log('[CreateProductForm] Server action result:', result);
-    setFormState(result);
-    if (result.isSuccess) {
-        if(mode === 'create') {
-          setImagePreview(null); 
-        } else if ('createdProduct' in result && (result as any).createdProduct?.imageUrl) {
-          setImagePreview((result as any).createdProduct.imageUrl);
-        }
     }
   };
 
@@ -201,7 +193,16 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
 
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <Input id="category" name="category" placeholder="e.g., Prepaid Meters, Services" defaultValue={initialData?.category} />
+            <select
+              id="category"
+              name="category"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              defaultValue={initialData?.category || ''}
+            >
+              <option value="">Select Category</option>
+              <option value="Water Meter">Water Meter</option>
+              <option value="Energy Meter">Energy Meter</option>
+            </select>
             {formState.fields?.category && <p className="text-sm text-destructive mt-1">{formState.fields.category.join(', ')}</p>}
           </div>
         </div>
@@ -213,7 +214,7 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
             name="features" 
             placeholder="e.g., STS Compliant, Tamper Detection, Low Credit Warning" 
             rows={3} 
-            defaultValue={initialData?.features?.join(', ')} 
+            defaultValue={initialData?.features?.join(', ') || ''} 
           />
            <p className="text-xs text-muted-foreground">Enter features separated by commas.</p>
           {formState.fields?.features && <p className="text-sm text-destructive mt-1">{formState.fields.features.join(', ')}</p>}

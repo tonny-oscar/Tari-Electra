@@ -31,8 +31,15 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
   const productToEdit = await getCustomerProduct(id);
 
   if (!productToEdit) {
-    notFound(); // This will render the nearest not-found.js or a default Next.js 404 page
+    notFound();
   }
+
+  // Convert Firestore timestamps to plain objects
+  const serializedProduct = {
+    ...productToEdit,
+    createdAt: productToEdit.createdAt?.toDate?.() || productToEdit.createdAt,
+    updatedAt: productToEdit.updatedAt?.toDate?.() || productToEdit.updatedAt,
+  };
 
   return (
     <div className="space-y-6">
@@ -55,7 +62,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
         <CardContent>
           <CreateProductForm 
             mode="edit" 
-            initialData={productToEdit} 
+            initialData={serializedProduct} 
             currentId={productToEdit.id} 
           />
         </CardContent>

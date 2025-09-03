@@ -42,6 +42,11 @@ export function ProductsSection({ products }: { products: Product[] }) {
   const hasProducts = products?.length > 0;
   const { user } = useAuth();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  
+  const filteredProducts = selectedCategory === 'all' 
+    ? products 
+    : products.filter(product => product.category === selectedCategory);
 
   const getCategoryIcon = (category: string) => {
     const lower = category?.toLowerCase() || '';
@@ -81,12 +86,37 @@ export function ProductsSection({ products }: { products: Product[] }) {
           <motion.p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto" variants={itemVariants}>
             Providing reliable and efficient sub-metering solutions tailored to your needs.
           </motion.p>
+          
+          {/* Category Filter */}
+          <motion.div className="mt-8 flex justify-center gap-4" variants={itemVariants}>
+            <Button 
+              variant={selectedCategory === 'all' ? 'default' : 'outline'}
+              onClick={() => setSelectedCategory('all')}
+              className="px-6"
+            >
+              All Products
+            </Button>
+            <Button 
+              variant={selectedCategory === 'Water Meter' ? 'default' : 'outline'}
+              onClick={() => setSelectedCategory('Water Meter')}
+              className="px-6"
+            >
+              💧 Water Meters
+            </Button>
+            <Button 
+              variant={selectedCategory === 'Energy Meter' ? 'default' : 'outline'}
+              onClick={() => setSelectedCategory('Energy Meter')}
+              className="px-6"
+            >
+              ⚡ Energy Meters
+            </Button>
+          </motion.div>
         </div>
 
         {hasProducts ? (
           <div className="relative">
             <div className="flex overflow-x-auto scrollbar-hide gap-6 pb-4 snap-x snap-mandatory" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <motion.div key={product?.id || Math.random()} variants={itemVariants} className="flex-none w-80 snap-start">
                   <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col h-full bg-background overflow-hidden group hover:scale-105">
                     <div className="aspect-[3/2] w-full relative bg-muted overflow-hidden">
@@ -298,7 +328,10 @@ export function ProductsSection({ products }: { products: Product[] }) {
             </div>
             <div className="flex justify-center mt-6">
               <p className="text-sm text-muted-foreground bg-muted px-4 py-2 rounded-full">
-                Scroll horizontally to view all {products.length} services →
+                {selectedCategory === 'all' 
+                  ? `Scroll horizontally to view all ${products.length} services →`
+                  : `Showing ${filteredProducts.length} ${selectedCategory} products`
+                }
               </p>
             </div>
           </div>

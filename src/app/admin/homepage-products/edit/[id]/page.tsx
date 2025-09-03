@@ -33,6 +33,13 @@ export default async function EditHomepageProductPage({ params }: EditHomepagePr
     notFound();
   }
 
+  // Convert Firestore timestamps to plain objects
+  const serializedProduct = {
+    ...productToEdit,
+    createdAt: productToEdit.createdAt?.toDate?.() || productToEdit.createdAt,
+    updatedAt: productToEdit.updatedAt?.toDate?.() || productToEdit.updatedAt,
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-start mb-6">
@@ -54,7 +61,7 @@ export default async function EditHomepageProductPage({ params }: EditHomepagePr
         <CardContent>
           <CreateProductForm 
             mode="edit" 
-            initialData={productToEdit} 
+            initialData={serializedProduct} 
             currentId={productToEdit.id}
             isHomepageProduct={true}
           />
