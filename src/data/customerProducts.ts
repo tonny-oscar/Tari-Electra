@@ -124,3 +124,22 @@ export async function deleteCustomerProduct(id: string): Promise<boolean> {
     return false;
   }
 }
+
+export async function reduceCustomerProductStock(productId: string, quantity: number): Promise<boolean> {
+  try {
+    const productRef = doc(db, CUSTOMER_PRODUCTS_COLLECTION, productId);
+    const productSnap = await getDoc(productRef);
+    
+    if (productSnap.exists()) {
+      const currentStock = productSnap.data().stock || 0;
+      const newStock = Math.max(0, currentStock - quantity);
+      
+      await updateDoc(productRef, { stock: newStock });
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error reducing customer product stock:', error);
+    return false;
+  }
+}

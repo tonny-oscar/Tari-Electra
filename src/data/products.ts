@@ -156,5 +156,24 @@ export async function deleteProduct(id: string): Promise<boolean> {
   }
 }
 
+export async function reduceStock(productId: string, quantity: number): Promise<boolean> {
+  try {
+    const productRef = doc(db, PRODUCTS_COLLECTION, productId);
+    const productSnap = await getDoc(productRef);
+    
+    if (productSnap.exists()) {
+      const currentStock = productSnap.data().stock || 0;
+      const newStock = Math.max(0, currentStock - quantity);
+      
+      await setDoc(productRef, { stock: newStock }, { merge: true });
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error reducing stock:', error);
+    return false;
+  }
+}
+
 // Alias for findProduct to match expected function name
 export const getProduct = findProduct;

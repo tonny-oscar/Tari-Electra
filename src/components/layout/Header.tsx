@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Logo from '@/components/Logo';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -22,7 +23,7 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -230,7 +231,7 @@ export function Header() {
 
                   {isCustomer && (
                     <p className="text-sm px-3 py-1 text-muted-foreground">
-                      Total: KES {cartTotal}
+                      Total: KES {cartTotal.toLocaleString('en-KE')}
                     </p>
                   )}
 

@@ -71,7 +71,7 @@ export default function AdminLayout({
     }
 
     // Check if user is admin
-    const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@yourstore.com').split(',').map(email => email.trim());
+    const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'morgan.rotich@tarielectra.africa').split(',').map(email => email.trim());
     const isAdmin = ADMIN_EMAILS.includes(user.email?.trim() || '');
     
     if (!isAdmin) {

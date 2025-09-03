@@ -102,7 +102,7 @@ export function ProductsSection({ products }: { products: Product[] }) {
                       </div>
                       {(product?.price || 0) > 0 && (
                         <div className="absolute bottom-2 left-2 bg-background/90 backdrop-blur-sm text-foreground px-3 py-1 rounded-full text-sm font-bold">
-                          KES {(product.price || 0).toFixed(2)}
+                          KES {(product.price || 0).toLocaleString('en-KE')}
                         </div>
                       )}
                       <div className="absolute top-2 left-2 bg-blue-500/90 text-white px-2 py-1 rounded-full text-xs font-semibold">
@@ -207,7 +207,7 @@ export function ProductsSection({ products }: { products: Product[] }) {
                                       💰 Pricing
                                     </h3>
                                     <p className="text-2xl font-bold text-primary">
-                                      {(product?.price || 0) > 0 ? `KES ${(product.price || 0).toFixed(2)}` : 'Request Quote'}
+                                      {(product?.price || 0) > 0 ? `KES ${(product.price || 0).toLocaleString('en-KE')}` : 'Request Quote'}
                                     </p>
                                   </div>
                                   <div className="bg-blue-50 p-4 rounded-lg">

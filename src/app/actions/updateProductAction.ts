@@ -7,12 +7,12 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
 const UpdateProductSchema = z.object({
-  name: z.string().min(3, { message: 'Name must be at least 3 characters.' }),
-  description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
-  price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
-  category: z.string().min(2, { message: 'Category must be at least 2 characters.' }),
+  name: z.string().min(1),
+  description: z.string().optional(),
+  price: z.coerce.number().min(0),
+  category: z.string().optional(),
   features: z.string().optional(),
-  imageUrl: z.string().optional().or(z.literal('')), // Allow any string (URL or Data URL) or empty
+  imageUrl: z.string().optional().or(z.literal('')),
   imageHint: z.string().optional(),
 });
 

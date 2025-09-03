@@ -13,7 +13,7 @@
     "start:prod": "NODE_ENV=production next start -p 3000",
     "lint": "next lint --fix",
     "lint:check": "next lint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --skipLibCheck",
     "clean": "rm -rf .next out",
     "export": "next build",
     "build:static": "next build",

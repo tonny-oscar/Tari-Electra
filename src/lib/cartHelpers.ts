@@ -23,14 +23,29 @@ export async function saveUserCart(uid: string, items: (Product & { quantity: nu
 }
 
 export async function addToUserCart(uid: string, product: Product) {
+  // Check current stock
+  const productRef = doc(db, 'customerProducts', product.id);
+  const productSnap = await getDoc(productRef);
+  
+  if (productSnap.exists()) {
+    const currentStock = productSnap.data().stock || 0;
+    if (currentStock <= 0) {
+      throw new Error('Product is out of stock');
+    }
+  }
+  
   const currentCart = await getUserCart(uid);
   const existing = currentCart.find((item) => item.id === product.id);
   let updatedCart;
 
   if (existing) {
+    const newQuantity = existing.quantity + 1;
+    if (productSnap.exists() && newQuantity > (productSnap.data().stock || 0)) {
+      throw new Error('Not enough stock available');
+    }
     updatedCart = currentCart.map((item) =>
       item.id === product.id
-        ? { ...item, quantity: item.quantity + 1 }
+        ? { ...item, quantity: newQuantity }
         : item
     );
   } else {
@@ -54,6 +69,25 @@ export async function clearUserCart(uid: string) {
     console.error('Error clearing user cart:', error);
     throw error;
   }
+}
+
+export async function processCartPurchase(uid: string) {
+  const cart = await getUserCart(uid);
+  
+  // Reduce stock for each item
+  for (const item of cart) {
+    const productRef = doc(db, 'customerProducts', item.id);
+    const productSnap = await getDoc(productRef);
+    
+    if (productSnap.exists()) {
+      const currentStock = productSnap.data().stock || 0;
+      const newStock = Math.max(0, currentStock - item.quantity);
+      await updateDoc(productRef, { stock: newStock });
+    }
+  }
+  
+  // Clear cart after purchase
+  await clearUserCart(uid);
 }
 interface PaystackTransaction {
   reference: string;
