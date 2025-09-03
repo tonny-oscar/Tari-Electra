@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useCart } from '@/context/CartContext';
+import { useState } from 'react';
 
 type NavItem = {
   href: string;
@@ -53,6 +54,7 @@ const mainNavItems: NavItem[] = [
 export function Header() {
   const { user, loading, logout, isAdmin, isCustomer } = useAuth();
   const { cartItems } = useCart();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const items = Array.isArray(cartItems) ? cartItems : [];
   const cartCount = items.reduce((total, item) => total + (item?.quantity ?? 0), 0);
@@ -63,6 +65,11 @@ export function Header() {
 
   const handleLogout = async () => {
     await logout();
+    setMobileMenuOpen(false);
+  };
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
   };
 
   return (
@@ -191,7 +198,7 @@ export function Header() {
 
           {/* Mobile Navigation */}
           <div className="md:hidden">
-            <Sheet>
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="Open navigation menu">
                   <Menu className="h-6 w-6" />
@@ -211,6 +218,7 @@ export function Header() {
                         variant="ghost"
                         asChild
                         className="text-lg justify-start px-3 py-2"
+                        onClick={closeMobileMenu}
                       >
                         <Link href={item.href}>
                           <Icon className="h-5 w-5 mr-3" />
@@ -221,7 +229,7 @@ export function Header() {
                   })}
 
                   {isCustomer && (
-                    <Button asChild variant="ghost" className="text-lg justify-start px-3 py-2">
+                    <Button asChild variant="ghost" className="text-lg justify-start px-3 py-2" onClick={closeMobileMenu}>
                       <Link href="/cart">
                         <ShoppingBag className="h-5 w-5 mr-3" />
                         Cart ({cartCount})
@@ -247,7 +255,7 @@ export function Header() {
                     </Button>
                   ) : user ? (
                     <>
-                      <Button variant="ghost" asChild className="text-lg justify-start px-3 py-2">
+                      <Button variant="ghost" asChild className="text-lg justify-start px-3 py-2" onClick={closeMobileMenu}>
                         <Link href={isAdmin ? '/admin' : '/customer/dashboard'}>
                           <Settings className="h-5 w-5 mr-3" />
                           {isAdmin ? 'Admin Dashboard' : 'My Dashboard'}
@@ -264,13 +272,13 @@ export function Header() {
                     </>
                   ) : (
                     <>
-                      <Button variant="ghost" asChild className="text-lg justify-start px-3 py-2">
+                      <Button variant="ghost" asChild className="text-lg justify-start px-3 py-2" onClick={closeMobileMenu}>
                         <Link href="/login">
                           <LogIn className="h-5 w-5 mr-3" />
                           Login
                         </Link>
                       </Button>
-                      <Button asChild className="text-lg justify-start px-3 py-2">
+                      <Button asChild className="text-lg justify-start px-3 py-2" onClick={closeMobileMenu}>
                         <Link href="/signup">
                           <UserPlus className="h-5 w-5 mr-3" />
                           Sign Up
@@ -280,13 +288,13 @@ export function Header() {
                   )}
 
                   {isCustomer && (
-                    <Button asChild className="mt-4 text-lg justify-start px-3 py-2">
+                    <Button asChild className="mt-4 text-lg justify-start px-3 py-2" onClick={closeMobileMenu}>
                       <Link href="/free-estimate">Get a Free Estimate</Link>
                     </Button>
                   )}
 
                   {isCustomer && cartCount > 0 && (
-                    <Link href="/checkout">
+                    <Link href="/checkout" onClick={closeMobileMenu}>
                       <Button className="mt-2 w-full">Proceed to Payment</Button>
                     </Link>
                   )}
