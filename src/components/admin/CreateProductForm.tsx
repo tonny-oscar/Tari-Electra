@@ -51,10 +51,17 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
   const [selectedCategory, setSelectedCategory] = useState(initialData?.category || '');
   const [selectedSubcategory, setSelectedSubcategory] = useState(initialData?.subcategory || '');
   
-  const subcategoryOptions = {
+  const subcategoryOptions: Record<string, string[]> = {
     'Water Meter': ['Prepaid Meter', 'Smart Meter'],
     'Energy Meter': ['Prepaid Meter', 'Smart Meter']
   };
+  
+  // Reset subcategory when category changes
+  React.useEffect(() => {
+    if (selectedCategory && !subcategoryOptions[selectedCategory]?.includes(selectedSubcategory)) {
+      setSelectedSubcategory('');
+    }
+  }, [selectedCategory, selectedSubcategory]);
 
   const handleFormAction = async (formData: FormData) => {
     console.log('[CreateProductForm] handleFormAction called. Mode:', mode);
@@ -208,7 +215,8 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
                 name="category"
                 value={selectedCategory}
                 onChange={(e) => {
-                  setSelectedCategory(e.target.value);
+                  const newCategory = e.target.value;
+                  setSelectedCategory(newCategory);
                   setSelectedSubcategory(''); // Reset subcategory when category changes
                 }}
                 className="appearance-none flex h-12 w-full rounded-lg border-2 border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-sm transition-all duration-200 hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10"
@@ -237,14 +245,23 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
                     : 'border-gray-200 text-gray-900 hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10'
                 }`}
               >
-                <option value="" className="text-gray-500">
+                <option value="">
                   {!selectedCategory ? 'Select category first...' : 'Choose subcategory...'}
                 </option>
-                {selectedCategory && subcategoryOptions[selectedCategory as keyof typeof subcategoryOptions]?.map((sub) => (
-                  <option key={sub} value={sub} className="font-medium">
-                    {sub === 'Prepaid Meter' ? '💳' : '🔌'} {sub}
-                  </option>
-                ))}
+                {/* Water Meter Options */}
+                {selectedCategory === 'Water Meter' && (
+                  <>
+                    <option value="Prepaid Meter">💳 Prepaid Meter</option>
+                    <option value="Smart Meter">🔌 Smart Meter</option>
+                  </>
+                )}
+                {/* Energy Meter Options */}
+                {selectedCategory === 'Energy Meter' && (
+                  <>
+                    <option value="Prepaid Meter">💳 Prepaid Meter</option>
+                    <option value="Smart Meter">🔌 Smart Meter</option>
+                  </>
+                )}
               </select>
               <ChevronDown className={`absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 pointer-events-none transition-colors ${
                 !selectedCategory ? 'text-gray-300' : 'text-gray-400'
@@ -253,7 +270,7 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
             {formState.fields?.subcategory && <p className="text-sm text-red-600 mt-1 flex items-center gap-1"><AlertCircle className="h-4 w-4" />{formState.fields.subcategory.join(', ')}</p>}
             {selectedCategory && (
               <p className="text-xs text-blue-600 mt-1">
-                ✨ Available for {selectedCategory}: {subcategoryOptions[selectedCategory as keyof typeof subcategoryOptions]?.join(', ')}
+                ✨ Available: Prepaid Meter, Smart Meter
               </p>
             )}
           </div>

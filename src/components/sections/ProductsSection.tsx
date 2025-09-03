@@ -46,11 +46,18 @@ export function ProductsSection({ products }: { products: Product[] }) {
   
   const filteredProducts = selectedCategory === 'all' 
     ? products 
-    : products.filter(product => product.category?.toLowerCase() === selectedCategory.toLowerCase());
+    : selectedCategory.includes(' - ') 
+      ? products.filter(product => {
+          const [category, subcategory] = selectedCategory.split(' - ');
+          return product.category === category && product.subcategory === subcategory;
+        })
+      : products.filter(product => product.category === selectedCategory);
 
   console.log('Selected category:', selectedCategory);
   console.log('Available categories:', [...new Set(products.map(p => p.category))]);
+  console.log('Available subcategories:', [...new Set(products.map(p => `${p.category} - ${p.subcategory}`).filter(Boolean))]);
   console.log('Filtered products:', filteredProducts.length);
+  console.log('All products:', products.map(p => ({ name: p.name, category: p.category, subcategory: p.subcategory })));
 
   const getCategoryIcon = (category: string) => {
     const lower = category?.toLowerCase() || '';
@@ -91,7 +98,7 @@ export function ProductsSection({ products }: { products: Product[] }) {
             Providing reliable and efficient sub-metering solutions tailored to your needs.
           </motion.p>
           
-          {/* Category Filter */}
+          {/* Category Filter with Hover Dropdowns */}
           <motion.div className="mt-8 flex justify-center gap-4" variants={itemVariants}>
             <Button 
               variant={selectedCategory === 'all' ? 'default' : 'outline'}
@@ -103,26 +110,76 @@ export function ProductsSection({ products }: { products: Product[] }) {
             >
               All Products
             </Button>
-            <Button 
-              variant={selectedCategory === 'Water Meter' ? 'default' : 'outline'}
-              onClick={() => {
-                console.log('Clicked Water Meter');
-                setSelectedCategory('Water Meter');
-              }}
-              className="px-6"
-            >
-              💧 Water Meters
-            </Button>
-            <Button 
-              variant={selectedCategory === 'Energy Meter' ? 'default' : 'outline'}
-              onClick={() => {
-                console.log('Clicked Energy Meter');
-                setSelectedCategory('Energy Meter');
-              }}
-              className="px-6"
-            >
-              ⚡ Energy Meters
-            </Button>
+            
+            {/* Water Meter Dropdown */}
+            <div className="relative group">
+              <Button 
+                variant={selectedCategory === 'Water Meter' || selectedCategory === 'Water Meter - Prepaid Meter' || selectedCategory === 'Water Meter - Smart Meter' ? 'default' : 'outline'}
+                className="px-6 flex items-center gap-2"
+              >
+                💧 Water Meters
+                <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </Button>
+              <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="py-2">
+                  <button
+                    onClick={() => setSelectedCategory('Water Meter')}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+                  >
+                    💧 All Water Meters
+                  </button>
+                  <button
+                    onClick={() => setSelectedCategory('Water Meter - Prepaid Meter')}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+                  >
+                    💳 Prepaid Water Meters
+                  </button>
+                  <button
+                    onClick={() => setSelectedCategory('Water Meter - Smart Meter')}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+                  >
+                    🔌 Smart Water Meters
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Energy Meter Dropdown */}
+            <div className="relative group">
+              <Button 
+                variant={selectedCategory === 'Energy Meter' || selectedCategory === 'Energy Meter - Prepaid Meter' || selectedCategory === 'Energy Meter - Smart Meter' ? 'default' : 'outline'}
+                className="px-6 flex items-center gap-2"
+              >
+                ⚡ Energy Meters
+                <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </Button>
+              <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="py-2">
+                  <button
+                    onClick={() => setSelectedCategory('Energy Meter')}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+                  >
+                    ⚡ All Energy Meters
+                  </button>
+                  <button
+                    onClick={() => setSelectedCategory('Energy Meter - Prepaid Meter')}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+                  >
+                    💳 Prepaid Energy Meters
+                  </button>
+                  <button
+                    onClick={() => setSelectedCategory('Energy Meter - Smart Meter')}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+                  >
+                    🔌 Smart Energy Meters
+                  </button>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
 
@@ -343,7 +400,7 @@ export function ProductsSection({ products }: { products: Product[] }) {
               <p className="text-sm text-muted-foreground bg-muted px-4 py-2 rounded-full">
                 {selectedCategory === 'all' 
                   ? `Scroll horizontally to view all ${products.length} services →`
-                  : `Showing ${filteredProducts.length} ${selectedCategory} products`
+                  : `Showing ${filteredProducts.length} ${selectedCategory.replace(' - ', ' ')} products`
                 }
               </p>
             </div>
