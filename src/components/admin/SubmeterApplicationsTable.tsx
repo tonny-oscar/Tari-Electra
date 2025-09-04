@@ -213,7 +213,16 @@ export default function SubmeterApplicationsTable() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {applications.map((app) => {
+                {applications
+                  .filter(app => {
+                    if (activeTab === 'all') return true;
+                    return app.status === activeTab;
+                  })
+                  .filter(app => {
+                    if (!propertyTypeFilter) return true;
+                    return app.propertyType === propertyTypeFilter;
+                  })
+                  .map((app) => {
                   const dateValue = safeFormatDate(app.submissionDate);
 
                   return (

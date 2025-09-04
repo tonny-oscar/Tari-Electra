@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Gauge, SplitSquareHorizontal, CheckCircle, ShoppingBag, X, Star } from "lucide-react";
+import { Gauge, SplitSquareHorizontal, CheckCircle, ShoppingBag, X, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Product } from "@/lib/types";
 import Image from "next/image";
@@ -21,6 +21,7 @@ import { Button } from "../ui/button";
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useCart } from "@/context/CartContext";
 import { useState } from "react";
 
 const sectionVariants = {
@@ -41,8 +42,27 @@ const DEFAULT_IMAGE = 'https://placehold.co/600x400.png';
 export function ProductsSection({ products }: { products: Product[] }) {
   const hasProducts = products?.length > 0;
   const { user, isAdmin } = useAuth();
+  const { addToCart, cartItems } = useCart();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [scrollContainer, setScrollContainer] = useState<HTMLDivElement | null>(null);
+
+  const getCartQuantity = (productId: string) => {
+    const item = cartItems.find(item => item.id === productId);
+    return item ? item.quantity : 0;
+  };
+
+  const scrollLeft = () => {
+    if (scrollContainer) {
+      scrollContainer.scrollBy({ left: -320, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainer) {
+      scrollContainer.scrollBy({ left: 320, behavior: 'smooth' });
+    }
+  };
   
   const filteredProducts = selectedCategory === 'all' 
     ? products 
@@ -74,9 +94,13 @@ export function ProductsSection({ products }: { products: Product[] }) {
       return;
     }
 
+    const currentQuantity = getCartQuantity(product.id);
+    addToCart(product);
+    const newQuantity = currentQuantity + 1;
+    
     toast({
       title: "Added to Cart",
-      description: `${product.name} has been added to your cart.`,
+      description: `${product.name} (Quantity: ${newQuantity}) added to cart.`,
     });
   };
 
@@ -185,7 +209,29 @@ export function ProductsSection({ products }: { products: Product[] }) {
 
         {hasProducts ? (
           <div className="relative">
-            <div className="flex overflow-x-auto scrollbar-hide gap-6 pb-4 snap-x snap-mandatory" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            {/* Left Arrow */}
+            <button
+              onClick={scrollLeft}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-200 hover:scale-110"
+              aria-label="Scroll left"
+            >
+              <ChevronLeft className="h-6 w-6 text-primary" />
+            </button>
+            
+            {/* Right Arrow */}
+            <button
+              onClick={scrollRight}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-200 hover:scale-110"
+              aria-label="Scroll right"
+            >
+              <ChevronRight className="h-6 w-6 text-primary" />
+            </button>
+            
+            <div 
+              ref={setScrollContainer}
+              className="flex overflow-x-auto scrollbar-hide gap-6 pb-4 snap-x snap-mandatory px-12" 
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
               {filteredProducts.map((product) => (
                 <motion.div key={product?.id || Math.random()} variants={itemVariants} className="flex-none w-80 snap-start">
                   <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col h-full bg-background overflow-hidden group hover:scale-105">
@@ -249,17 +295,9 @@ export function ProductsSection({ products }: { products: Product[] }) {
                         <Button 
                           size="sm"
                           className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300" 
-                          onClick={() => {
-                            if (typeof window !== 'undefined') {
-                              if (!user) {
-                                window.location.href = '/login';
-                              } else if (user && !isAdmin) {
-                                window.location.href = '/customer/dashboard';
-                              }
-                            }
-                          }}
+                          onClick={() => handleAddToCart(product)}
                         >
-                          🛒 Buy Now
+                          🛒 Add to Cart {getCartQuantity(product.id) > 0 && `(${getCartQuantity(product.id)})`}
                         </Button>
                         <div className="flex gap-2">
                           <Dialog>
@@ -342,17 +380,9 @@ export function ProductsSection({ products }: { products: Product[] }) {
                                 <div className="flex gap-3 pt-4 border-t">
                                   <Button 
                                     className="flex-1 bg-gradient-to-r from-primary to-primary/80" 
-                                    onClick={() => {
-                                      if (typeof window !== 'undefined') {
-                                        if (!user) {
-                                          window.location.href = '/login';
-                                        } else if (user && !isAdmin) {
-                                          window.location.href = '/customer/dashboard';
-                                        }
-                                      }
-                                    }}
+                                    onClick={() => handleAddToCart(product)}
                                   >
-                                    🛒 Buy Now
+                                    🛒 Add to Cart {getCartQuantity(product.id) > 0 && `(${getCartQuantity(product.id)})`}
                                   </Button>
                                   <Button 
                                     variant="outline"
@@ -379,11 +409,7 @@ export function ProductsSection({ products }: { products: Product[] }) {
                             className="flex-1 hover:bg-primary/5" 
                             onClick={() => {
                               if (typeof window !== 'undefined') {
-                                if (!user) {
-                                  window.location.href = '/login';
-                                } else if (user && !isAdmin) {
-                                  window.location.href = '/customer/dashboard';
-                                }
+                                window.location.href = '/contact';
                               }
                             }}
                           >
