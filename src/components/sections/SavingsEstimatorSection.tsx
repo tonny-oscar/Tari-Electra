@@ -1,5 +1,3 @@
-// This file is no longer used on the main landing page as per the new structure.
-// It can be kept for potential future use or if a dedicated page is desired.
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -10,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Slider } from "@/components/ui/slider";
 import { TrendingUp, DollarSign, Loader2 } from "lucide-react";
 
-const AVERAGE_SAVINGS_PERCENTAGE = 0.15; // Assume 15% average savings
+const AVERAGE_SAVINGS_PERCENTAGE = 0.15;
 
 export function SavingsEstimatorSection() {
   const [currentBill, setCurrentBill] = useState<number>(500);

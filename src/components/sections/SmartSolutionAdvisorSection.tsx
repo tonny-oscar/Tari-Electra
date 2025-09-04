@@ -1,10 +1,8 @@
-// This file is no longer used on the main landing page as per the new structure.
-// It can be kept for potential future use or if a dedicated page is desired.
 "use client";
 
 import React, { useEffect } from 'react';
 import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom'; // Corrected import
+import { useFormStatus } from 'react-dom'; 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

@@ -1,5 +1,3 @@
-// This file is no longer used on the main landing page as per the new structure.
-// It can be kept for potential future use or if a dedicated FAQ page is desired.
 "use client";
 
 import React, { useState, useMemo } from 'react';

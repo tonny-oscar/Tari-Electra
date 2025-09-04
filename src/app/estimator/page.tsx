@@ -1,5 +1,3 @@
-// This page is not directly linked in the new single-page landing structure.
-// It can be removed or kept if a dedicated page for the estimator is desired later.
 import { SavingsEstimatorSection } from "@/components/sections/SavingsEstimatorSection";
 import type { Metadata } from 'next';
 

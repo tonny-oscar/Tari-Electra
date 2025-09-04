@@ -19,7 +19,6 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
-// Avatar images for testimonials
 const avatarImages = [
   "/62ab4fd5-eecc-446e-95d1-81940a23ab45.jpeg",
   "/477cc64d-5ac2-4def-8e0c-5615c4375fdb.jpeg",

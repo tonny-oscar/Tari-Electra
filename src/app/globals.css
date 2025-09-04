@@ -7,13 +7,13 @@ body {
 }
 
 html {
-  scroll-padding-top: 4rem; /* Corresponds to h-16 of the sticky header */
+  scroll-padding-top: 4rem;
 }
 
 @layer base {
   :root {
-    --background: 0 0% 100%; /* White background */
-    --foreground: 240 10% 3.9%; /* Dark text for readability on white */
+    --background: 0 0% 100%; 
+    --foreground: 240 10% 3.9%; 
 
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
@@ -21,10 +21,10 @@ html {
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
 
-    --primary: 76 85% 48%; /* #a6ed0b */
-    --primary-foreground: 76 85% 10%; /* Dark green for text on primary */
+    --primary: 76 85% 48%; 
+    --primary-foreground: 76 85% 10%; 
 
-    --secondary: 240 4.8% 95.9%; /* Default light gray for secondary elements */
+    --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 10% 3.9%;
 
     --muted: 240 4.8% 95.9%;

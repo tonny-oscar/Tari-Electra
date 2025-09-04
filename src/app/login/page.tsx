@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/card';
 import Link from 'next/link';
 
-// Force dynamic rendering to avoid pre-render errors
 export const dynamic = 'force-dynamic';
 
 function LoginContent() {

@@ -6,14 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
-// Note: Metadata export can still exist in a client component, Next.js handles it.
-// However, if you needed dynamic metadata based on server-side data, you'd use generateMetadata.
-// For a static title/description, this is fine.
-// export const metadata: Metadata = {
-// title: 'Sign Up - Tari Electra',
-// description: 'Create a new account with Tari Electra.',
-// };
-
 export default function SignupPage() {
   return (
     <div className="flex min-h-[calc(100vh-var(--header-height)-var(--footer-height))] items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-secondary">

@@ -1,4 +1,3 @@
-// src/components/sections/ServiceMapSection.tsx
 "use client";
 
 import Image from "next/image";

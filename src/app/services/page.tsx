@@ -1,7 +1,7 @@
 import { ProductsSection } from "@/components/sections/ProductsSection";
 import type { Metadata } from 'next';
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase"; // make sure this points to your Firestore setup
+import { db } from "@/lib/firebase";
 import type { Product } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -9,7 +9,6 @@ export const metadata: Metadata = {
   description: 'Explore the sub-metering services offered by Tari Electra. This page is an alternative to /products.',
 };
 
-// ✅ Firestore fetch (must be in async function)
 async function fetchProducts(): Promise<Product[]> {
   try {
     const snapshot = await getDocs(collection(db, 'products'));

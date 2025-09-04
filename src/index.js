@@ -1,6 +1,3 @@
-// Add this directly to your main app file (e.g., src/index.js, src/main.tsx, or src/App.js)
-
-// Service Worker Registration
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/service-worker.js')
@@ -12,9 +9,6 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
-
-// If you want to create a separate utility file, do it like this:
-// src/utils/serviceWorker.js (without exports)
 
 function registerSW() {
   if ('serviceWorker' in navigator) {
@@ -30,5 +24,3 @@ function registerSW() {
   }
 }
 
-// Then call it directly in your main app file:
-// registerSW();

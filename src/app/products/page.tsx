@@ -3,8 +3,8 @@ import { ProductsSection } from "@/components/sections/ProductsSection";
 import { getProducts } from "@/data/products"; 
 import type { Metadata } from 'next';
 import type { Product } from '@/lib/types';
-import { headers } from 'next/headers'; // To make the page dynamic
-import { unstable_noStore as noStore } from 'next/cache'; // For explicit no-store
+import { headers } from 'next/headers'; 
+import { unstable_noStore as noStore } from 'next/cache';
 
 export const metadata: Metadata = {
   title: 'Our Products & Services - Tari Electra',
@@ -19,7 +19,6 @@ export default async function ProductsPage() {
   const products: Product[] = await getProducts();
   console.log(`[ProductsPage] Public page fetched ${products.length} products:`, products.map(p => ({ id: p.id, name: p.name, price: p.price })));
   
-  // Serialize Firestore timestamps for client component
   const serializedProducts = products.map(product => ({
     ...product,
     createdAt: product.createdAt?.toDate?.() || product.createdAt,

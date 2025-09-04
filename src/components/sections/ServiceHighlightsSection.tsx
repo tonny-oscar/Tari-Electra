@@ -3,8 +3,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Headset, Users, Zap } from "lucide-react";
-import { motion } from "framer-motion"; // Added this import
-
+import { motion } from "framer-motion"; 
 const highlights = [
   {
     icon: <DollarSign className="h-10 w-10 text-primary" />,
@@ -22,7 +21,7 @@ const highlights = [
     description: "Trusted technicians with verified experience.",
   },
   {
-    icon: <Zap className="h-10 w-10 text-primary" />, // Assuming Zap for Fast Installation
+    icon: <Zap className="h-10 w-10 text-primary" />, 
     title: "Fast Installation",
     description: "Same-day service in selected areas.",
   },
@@ -44,7 +43,7 @@ const itemVariants = {
 export function ServiceHighlightsSection() {
   return (
     <motion.section
-      id="about" // Keep id if used for direct navigation/linking, otherwise can be removed for multi-page setup
+      id="about"
       className="py-16 lg:py-24 bg-background"
       initial="hidden"
       whileInView="visible"
