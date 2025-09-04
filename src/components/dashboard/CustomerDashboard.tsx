@@ -1143,6 +1143,18 @@ function CartTab({ cart, updateCartQuantity, removeFromCart, getCartTotal, place
   placeOrder: () => Promise<void>;
   setActiveTab: (tab: string) => void;
 }) {
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+
+  const handlePlaceOrder = async () => {
+    if (isPlacingOrder) return;
+    
+    setIsPlacingOrder(true);
+    try {
+      await placeOrder();
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
   if (cart.length === 0) {
     return (
       <div className="space-y-6">
@@ -1254,9 +1266,23 @@ function CartTab({ cart, updateCartQuantity, removeFromCart, getCartTotal, place
                   <span>KSH {(getCartTotal() * 1.1).toLocaleString('en-KE')}</span>
                 </div>
               </div>
-              <Button onClick={placeOrder} className="w-full" size="lg">
-                <CreditCard className="w-4 h-4 mr-2" />
-                Place Order
+              <Button 
+                onClick={handlePlaceOrder} 
+                className="w-full" 
+                size="lg"
+                disabled={isPlacingOrder}
+              >
+                {isPlacingOrder ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Placing Order...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Place Order
+                  </>
+                )}
               </Button>
             </CardContent>
           </Card>

@@ -46,6 +46,7 @@ export function ProductsSection({ products }: { products: Product[] }) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [scrollContainer, setScrollContainer] = useState<HTMLDivElement | null>(null);
+  const [addingToCart, setAddingToCart] = useState<string | null>(null);
 
   const getCartQuantity = (productId: string) => {
     const item = cartItems.find(item => item.id === productId);
@@ -86,7 +87,7 @@ export function ProductsSection({ products }: { products: Product[] }) {
     return <ShoppingBag className="h-10 w-10 text-primary" />;
   };
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = async (product: Product) => {
     if (!user) {
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
@@ -94,14 +95,28 @@ export function ProductsSection({ products }: { products: Product[] }) {
       return;
     }
 
-    const currentQuantity = getCartQuantity(product.id);
-    addToCart(product);
-    const newQuantity = currentQuantity + 1;
+    if (addingToCart === product.id) return; // Prevent double clicks
     
-    toast({
-      title: "Added to Cart",
-      description: `${product.name} (Quantity: ${newQuantity}) added to cart.`,
-    });
+    setAddingToCart(product.id);
+    const currentQuantity = getCartQuantity(product.id);
+    
+    try {
+      addToCart(product);
+      const newQuantity = currentQuantity + 1;
+      
+      toast({
+        title: "Added to Cart",
+        description: `${product.name} (Quantity: ${newQuantity}) added to cart.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setTimeout(() => setAddingToCart(null), 1000); // Reset after 1 second
+    }
   };
 
   return (
@@ -296,8 +311,13 @@ export function ProductsSection({ products }: { products: Product[] }) {
                           size="sm"
                           className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300" 
                           onClick={() => handleAddToCart(product)}
+                          disabled={addingToCart === product.id}
                         >
-                          🛒 Add to Cart {getCartQuantity(product.id) > 0 && `(${getCartQuantity(product.id)})`}
+                          {addingToCart === product.id ? (
+                            <>⏳ Adding...</>
+                          ) : (
+                            <>🛒 Add to Cart {getCartQuantity(product.id) > 0 && `(${getCartQuantity(product.id)})`}</>
+                          )}
                         </Button>
                         <div className="flex gap-2">
                           <Dialog>
@@ -381,8 +401,13 @@ export function ProductsSection({ products }: { products: Product[] }) {
                                   <Button 
                                     className="flex-1 bg-gradient-to-r from-primary to-primary/80" 
                                     onClick={() => handleAddToCart(product)}
+                                    disabled={addingToCart === product.id}
                                   >
-                                    🛒 Add to Cart {getCartQuantity(product.id) > 0 && `(${getCartQuantity(product.id)})`}
+                                    {addingToCart === product.id ? (
+                                      <>⏳ Adding...</>
+                                    ) : (
+                                      <>🛒 Add to Cart {getCartQuantity(product.id) > 0 && `(${getCartQuantity(product.id)})`}</>
+                                    )}
                                   </Button>
                                   <Button 
                                     variant="outline"

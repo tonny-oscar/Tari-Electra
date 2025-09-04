@@ -149,17 +149,28 @@ export function ShoppingCart() {
           </span>
         </div>
         
-        <div className="flex gap-3">
-          <Link href="/products" className="flex-1">
-            <Button variant="outline" className="w-full">
-              Continue Shopping
-            </Button>
-          </Link>
-          <Link href="/checkout" className="flex-1">
-            <Button className="w-full bg-orange-500 hover:bg-orange-600">
-              Proceed to Checkout
-            </Button>
-          </Link>
+        <div className="space-y-3">
+          <div className="flex gap-3">
+            <Link href="/products" className="flex-1">
+              <Button variant="outline" className="w-full">
+                Continue Shopping
+              </Button>
+            </Link>
+            <Link href="/checkout" className="flex-1">
+              <Button className="w-full bg-orange-500 hover:bg-orange-600">
+                Proceed to Checkout
+              </Button>
+            </Link>
+          </div>
+          <Button 
+            className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3"
+            onClick={() => {
+              // Place order logic here
+              alert('Order placement functionality to be implemented');
+            }}
+          >
+            🛒 Place Order Now
+          </Button>
         </div>
       </div>
     </div>
