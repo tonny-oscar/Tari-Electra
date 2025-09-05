@@ -185,16 +185,17 @@ export function SubmeterTab({ applications }: SubmeterTabProps) {
 
               <div>
                 <Label htmlFor="utilityServices">Utility Services</Label>
-                <Select value={formData.utilityServices} onValueChange={(value) => setFormData({...formData, utilityServices: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select utility service" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="electricity">Electricity</SelectItem>
-                    <SelectItem value="water">Water</SelectItem>
-                    <SelectItem value="both">Both Electricity & Water</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  id="utilityServices"
+                  value={formData.utilityServices}
+                  onChange={(e) => setFormData({...formData, utilityServices: e.target.value})}
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  <option value="">Select utility service</option>
+                  <option value="electricity">Electricity</option>
+                  <option value="water">Water</option>
+                  <option value="both">Both Electricity & Water</option>
+                </select>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -221,30 +222,31 @@ export function SubmeterTab({ applications }: SubmeterTabProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="propertyType">Property Type *</Label>
-                  <Select value={formData.propertyType} onValueChange={(value) => setFormData({...formData, propertyType: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select property type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="residential">Residential</SelectItem>
-                      <SelectItem value="commercial">Commercial</SelectItem>
-                      <SelectItem value="industrial">Industrial</SelectItem>
-                      <SelectItem value="mixed-use">Mixed Use</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <select
+                    id="propertyType"
+                    value={formData.propertyType}
+                    onChange={(e) => setFormData({...formData, propertyType: e.target.value})}
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  >
+                    <option value="">Select property type</option>
+                    <option value="residential">Residential</option>
+                    <option value="commercial">Commercial</option>
+                    <option value="industrial">Industrial</option>
+                  </select>
                 </div>
                 <div>
                   <Label htmlFor="applicationType">Application Type *</Label>
-                  <Select value={formData.applicationType} onValueChange={(value) => setFormData({...formData, applicationType: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select application type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="transfer">Transfer</SelectItem>
-                      <SelectItem value="upgrade">Upgrade</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <select
+                    id="applicationType"
+                    value={formData.applicationType}
+                    onChange={(e) => setFormData({...formData, applicationType: e.target.value})}
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  >
+                    <option value="">Select application type</option>
+                    <option value="new">New</option>
+                    <option value="transfer">Transfer</option>
+                    <option value="upgrade">Upgrade</option>
+                  </select>
                 </div>
               </div>
 
@@ -271,15 +273,16 @@ export function SubmeterTab({ applications }: SubmeterTabProps) {
 
               <div>
                 <Label htmlFor="suppliesOtherAreas">Supplies Other Areas</Label>
-                <Select value={formData.suppliesOtherAreas} onValueChange={(value) => setFormData({...formData, suppliesOtherAreas: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select option" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="yes">Yes</SelectItem>
-                    <SelectItem value="no">No</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  id="suppliesOtherAreas"
+                  value={formData.suppliesOtherAreas}
+                  onChange={(e) => setFormData({...formData, suppliesOtherAreas: e.target.value})}
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  <option value="">Select option</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
               </div>
 
               <div>
