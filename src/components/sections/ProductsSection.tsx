@@ -47,6 +47,7 @@ export function ProductsSection({ products }: { products: Product[] }) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [scrollContainer, setScrollContainer] = useState<HTMLDivElement | null>(null);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   const getCartQuantity = (productId: string) => {
     const item = cartItems.find(item => item.id === productId);
@@ -73,12 +74,6 @@ export function ProductsSection({ products }: { products: Product[] }) {
           return product.category === category && product.subcategory === subcategory;
         })
       : products.filter(product => product.category === selectedCategory);
-
-  console.log('Selected category:', selectedCategory);
-  console.log('Available categories:', [...new Set(products.map(p => p.category))]);
-  console.log('Available subcategories:', [...new Set(products.map(p => `${p.category} - ${p.subcategory}`).filter(Boolean))]);
-  console.log('Filtered products:', filteredProducts.length);
-  console.log('All products:', products.map(p => ({ name: p.name, category: p.category, subcategory: p.subcategory })));
 
   const getCategoryIcon = (category: string) => {
     const lower = category?.toLowerCase() || '';
@@ -151,17 +146,25 @@ export function ProductsSection({ products }: { products: Product[] }) {
             </Button>
             
             {/* Water Meter Dropdown */}
-            <div className="relative group">
+            <div 
+              className="relative"
+              onMouseEnter={() => setActiveDropdown('water')}
+              onMouseLeave={() => setActiveDropdown(null)}
+            >
               <Button 
                 variant={selectedCategory === 'Water Meter' || selectedCategory === 'Water Meter - Prepaid Meter' || selectedCategory === 'Water Meter - Smart Meter' ? 'default' : 'outline'}
                 className="px-6 flex items-center gap-2 hover:bg-primary/10"
               >
                 💧 Water Meters
-                <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-4 h-4 transition-transform ${activeDropdown === 'water' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </Button>
-              <div className="absolute top-full left-0 mt-2 w-64 bg-white border-2 border-gray-300 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[9999] transform group-hover:translate-y-0 translate-y-2">
+              <div className={`absolute top-full left-0 mt-2 w-64 bg-white border-2 border-gray-300 rounded-xl shadow-2xl transition-all duration-200 z-[9999] ${
+                activeDropdown === 'water' 
+                  ? 'opacity-100 visible translate-y-0' 
+                  : 'opacity-0 invisible translate-y-2'
+              }`}>
                 <div className="py-2">
                   <button
                     onClick={() => setSelectedCategory('Water Meter')}
@@ -186,17 +189,25 @@ export function ProductsSection({ products }: { products: Product[] }) {
             </div>
             
             {/* Energy Meter Dropdown */}
-            <div className="relative group">
+            <div 
+              className="relative"
+              onMouseEnter={() => setActiveDropdown('energy')}
+              onMouseLeave={() => setActiveDropdown(null)}
+            >
               <Button 
                 variant={selectedCategory === 'Energy Meter' || selectedCategory === 'Energy Meter - Prepaid Meter' || selectedCategory === 'Energy Meter - Smart Meter' ? 'default' : 'outline'}
                 className="px-6 flex items-center gap-2 hover:bg-primary/10"
               >
                 ⚡ Energy Meters
-                <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-4 h-4 transition-transform ${activeDropdown === 'energy' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </Button>
-              <div className="absolute top-full left-0 mt-2 w-64 bg-white border-2 border-gray-300 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[9999] transform group-hover:translate-y-0 translate-y-2">
+              <div className={`absolute top-full left-0 mt-2 w-64 bg-white border-2 border-gray-300 rounded-xl shadow-2xl transition-all duration-200 z-[9999] ${
+                activeDropdown === 'energy' 
+                  ? 'opacity-100 visible translate-y-0' 
+                  : 'opacity-0 invisible translate-y-2'
+              }`}>
                 <div className="py-2">
                   <button
                     onClick={() => setSelectedCategory('Energy Meter')}
@@ -250,12 +261,12 @@ export function ProductsSection({ products }: { products: Product[] }) {
               {filteredProducts.map((product) => (
                 <motion.div key={product?.id || Math.random()} variants={itemVariants} className="flex-none w-80 snap-start">
                   <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col h-full bg-background overflow-hidden group hover:scale-105">
-                    <div className="aspect-[3/2] w-full relative bg-muted overflow-hidden">
+                    <div className="h-48 w-full relative bg-muted overflow-hidden">
                       <Image
                         src={product?.imageUrl || DEFAULT_IMAGE}
                         alt={product?.name || "Product Image"}
                         fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-110"
+                        className="object-contain transition-transform duration-300 group-hover:scale-110 p-2"
                         sizes="320px"
                       />
                       <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-semibold">
@@ -338,6 +349,9 @@ export function ProductsSection({ products }: { products: Product[] }) {
                                   </div>
                                   {product?.name || 'Product Details'}
                                 </DialogTitle>
+                                <DialogDescription>
+                                  View detailed information about this product
+                                </DialogDescription>
                               </DialogHeader>
                               
                               <div className="space-y-6">
@@ -381,6 +395,25 @@ export function ProductsSection({ products }: { products: Product[] }) {
                                   </div>
                                 </div>
                                 
+                                {/* Specifications */}
+                                {(product as any)?.specifications && (
+                                  <div>
+                                    <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                      🔧 Specifications
+                                    </h3>
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                        {Object.entries((product as any).specifications).map(([key, value]) => (
+                                          <div key={key} className="flex justify-between">
+                                            <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>
+                                            <span>{String(value)}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
                                 {Array.isArray(product?.features) && product.features.length > 0 && (
                                   <div>
                                     <h3 className="font-semibold mb-3 flex items-center gap-2">
