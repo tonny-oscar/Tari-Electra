@@ -798,15 +798,15 @@ function DashboardTab({ customerData, orders, cart, trackingStages, products, ad
               <p className="text-sm text-gray-500">Products will appear when added by admin</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {featuredProducts.map((product) => (
                 <div key={product.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="aspect-square w-full bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                  <div className="aspect-video w-full bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
                     {product.image && product.image !== '📦' ? (
                       <img
                         src={product.image}
                         alt={product.name}
-                        className="w-full h-full object-cover rounded-lg"
+                        className="w-full h-full object-contain rounded-lg p-2"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                           e.currentTarget.nextElementSibling?.classList.remove('hidden');
@@ -815,12 +815,11 @@ function DashboardTab({ customerData, orders, cart, trackingStages, products, ad
                     ) : null}
                     <div className={`text-4xl text-gray-400 ${product.image && product.image !== '📦' ? 'hidden' : ''}`}>📦</div>
                   </div>
-                  <h4 className="font-medium text-sm mb-1 truncate">{sanitizeUserInput(product.name)}</h4>
-                  <p className="text-lg font-bold text-blue-600 mb-2">KSH {product.price.toLocaleString('en-KE')}</p>
+                  <h4 className="font-medium text-sm mb-2 truncate">{sanitizeUserInput(product.name)}</h4>
+                  <p className="text-lg font-bold text-blue-600 mb-4">KSH {product.price.toLocaleString('en-KE')}</p>
                   <Button
                     onClick={() => addToCart(product)}
                     disabled={product.stock === 0}
-                    size="sm"
                     className="w-full"
                   >
                     {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
@@ -1067,7 +1066,7 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain p-2"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                       e.currentTarget.nextElementSibling?.classList.remove('hidden');
@@ -1081,9 +1080,9 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
               
               <CardContent className="p-6">
                 <div className="mb-4">
-                  <h3 className="font-semibold text-lg mb-2">{sanitizeUserInput(product.name)}</h3>
-                  <p className="text-sm text-gray-600 mb-2 line-clamp-3">{sanitizeUserInput(product.description)}</p>
-                  <div className="flex items-center justify-center space-x-1 mb-2">
+                  <h3 className="font-semibold text-lg mb-2 line-clamp-2">{sanitizeUserInput(product.name)}</h3>
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{sanitizeUserInput(product.description)}</p>
+                  <div className="flex items-center space-x-1 mb-3">
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
@@ -1093,7 +1092,7 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
                           }`}
                       />
                     ))}
-                    <span className="text-sm text-gray-600 ml-1">
+                    <span className="text-sm text-gray-600 ml-2">
                       ({product.rating || 0})
                     </span>
                   </div>
@@ -1108,7 +1107,7 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
                   </Badge>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {getCartItemQuantity(product.id) > 0 && (
                     <div className="text-center">
                       <Badge variant="secondary">
