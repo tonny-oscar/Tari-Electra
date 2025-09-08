@@ -227,7 +227,7 @@ export function ContactSection() {
                     </div>
                     <div>
                       <h3 className="font-bold text-green-900 text-lg">📞 Phone</h3>
-                      <a href="tel:+254757672936" className="text-green-700 hover:text-green-900 font-semibold text-lg">+254 757672936</a>
+                      <a href="tel:+254757672936" className="text-green-700 hover:text-green-900 font-semibold text-lg">+254 758424283</a>
                     </div>
                   </div>
                   
@@ -239,7 +239,7 @@ export function ContactSection() {
                     </div>
                     <div>
                       <h3 className="font-bold text-emerald-900 text-lg">💬 WhatsApp</h3>
-                      <a href="https://wa.me/254717777668?text=Hello%2C%20I%27m%20interested%20in%20your%20sub-metering%20services.%20Could%20you%20please%20provide%20me%20with%20more%20information%3F" target="_blank" rel="noopener noreferrer" className="text-emerald-700 hover:text-emerald-900 font-semibold text-lg">0717777668</a>
+                      <a href="https://wa.me/254717777668?text=Hello%2C%20I%27m%20interested%20in%20your%20sub-metering%20services.%20Could%20you%20please%20provide%20me%20with%20more%20information%3F" target="_blank" rel="noopener noreferrer" className="text-emerald-700 hover:text-emerald-900 font-semibold text-lg">+254 758424283</a>
                     </div>
                   </div>
                   

@@ -358,14 +358,12 @@ export function ProductsSection({ products }: { products: Product[] }) {
                                     </h3>
                                     <div className="bg-muted/50 p-4 rounded-lg border">
                                       <div className="grid gap-2">
-                                        {Object.entries(product.specifications).map(([key, value], idx) => (
+                                        {Object.entries(product.specifications).map(([key, value]) => (
                                           <div
                                             key={key}
                                             className="flex items-start gap-2 p-2 bg-background/50 rounded-lg"
                                           >
-                                            <span className="inline-flex items-center justify-center w-5 h-5 bg-primary text-primary-foreground rounded-full text-xs font-bold flex-shrink-0 mt-0.5">
-                                              {idx + 1}
-                                            </span>
+                                            <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                                             <div className="flex-1">
                                               <span className="font-medium text-foreground capitalize">
                                                 {key.replace(/([A-Z])/g, ' $1')}:

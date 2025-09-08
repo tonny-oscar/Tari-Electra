@@ -920,23 +920,28 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
-  const categories = ['All', 'Water Meter - Prepaid Meter', 'Water Meter - Smart Meter', 'Energy Meter - Prepaid Meter', 'Energy Meter - Smart Meter'];
+  const categories = ['All', 'Water Meter', 'Energy Meter'];
+  // const categories = ['All', 'Water Meter - Prepaid Meter', 'Water Meter - Smart Meter', 'Energy Meter - Prepaid Meter', 'Energy Meter - Smart Meter'];
 
   // Filter and sort products
   const filteredAndSortedProducts = React.useMemo(() => {
     let filtered = products;
 
-    // Filter by category and subcategory
+    // Filter by category only
     if (selectedCategory !== 'All') {
-      if (selectedCategory.includes(' - ')) {
-        const [category, subcategory] = selectedCategory.split(' - ');
-        filtered = filtered.filter(product => 
-          product.category === category && product.subcategory === subcategory
-        );
-      } else {
-        filtered = filtered.filter(product => product.category === selectedCategory);
-      }
+      filtered = filtered.filter(product => product.category === selectedCategory);
     }
+    // Commented out subcategory filtering
+    // if (selectedCategory !== 'All') {
+    //   if (selectedCategory.includes(' - ')) {
+    //     const [category, subcategory] = selectedCategory.split(' - ');
+    //     filtered = filtered.filter(product => 
+    //       product.category === category && product.subcategory === subcategory
+    //     );
+    //   } else {
+    //     filtered = filtered.filter(product => product.category === selectedCategory);
+    //   }
+    // }
 
     // Filter by search term
     if (searchTerm) {
