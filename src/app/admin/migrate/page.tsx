@@ -164,7 +164,7 @@ export default function MigratePage() {
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
-          </Alert>
+          )}
 
           {results.length > 0 && (
             <Card>

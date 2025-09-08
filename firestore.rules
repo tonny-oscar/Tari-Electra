@@ -1,48 +1,9 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /contactMessages/{messageId} {
-      allow create: if true; // Allows anyone to create a message
-      allow read, update, delete: if request.auth != null; // Only authenticated users for other ops
-    }
-    match /blogs/{slug} {
-      allow read: if true; // Publicly readable
-      allow create, update, delete: if request.auth != null; // Admin operations
-    }
-    match /products/{productId} {
-      allow read: if true; // Publicly readable
-      allow create, update, delete: if request.auth != null; // Admin operations
-    }
-    match /blogSubscribers/{email} {
-        allow read, create, update: if true; // Allow anyone to subscribe/update their status
-        allow delete: if request.auth != null; // Admin can delete subscribers
-    }
-    match /settings/{settingId} { // Rules for the new settings collection
-      allow read: if true; // Homepage settings should be publicly readable
-      allow write: if request.auth != null; // Only admin can update settings
-    }
-
-    match /submeterApplications/{applicationId} {
-      allow read: if true; // Allow public read for application status checking
-      allow create: if true; // Allow public submission of applications
-      allow update: if request.auth != null && 
-                   (request.resource.data.status == 'approved' || 
-                    request.resource.data.status == 'rejected'); // Only admin can approve/reject
-    }
-
-    // This rule allows anyone with your Firestore database reference to view, edit,
-    // and delete all data in your Firestore database. It is useful for getting
-    // started, but it is configured to expire after 30 days because it
-    // leaves your app open to attackers. At that time, all client
-    // requests to your Firestore database will be denied.
-    //
-    // Make sure to write security rules for your app before that time, or else
-    // all client requests to your Firestore database will be denied until you Update
-    // your rules.
-    // Consider removing this broader rule if all collections are explicitly defined above.
+    // Allow read/write access on all documents to any user signed in to the application
     match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2025, 7, 28); // Extended date for safety during dev
+      allow read, write: if request.auth != null;
     }
   }
 }
