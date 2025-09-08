@@ -122,3 +122,14 @@ export async function updateBlogPost(id: string, blogData: Partial<BlogPost>): P
     return false;
   }
 }
+
+export async function deleteBlogPost(id: string): Promise<boolean> {
+  try {
+    const blogDoc = doc(db, BLOG_COLLECTION, id);
+    await deleteDoc(blogDoc);
+    return true;
+  } catch (error) {
+    console.error('Error deleting blog post:', error);
+    return false;
+  }
+}

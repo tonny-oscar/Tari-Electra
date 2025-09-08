@@ -1,7 +1,6 @@
 'use client';
 
-
-
+import { motion } from "framer-motion";
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter
 } from "@/components/ui/card";
@@ -13,17 +12,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Gauge, SplitSquareHorizontal, CheckCircle, ShoppingBag, X, Star, ChevronLeft, ChevronRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { Gauge, SplitSquareHorizontal, CheckCircle, ShoppingBag, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Product } from "@/lib/types";
 import Image from "next/image";
 import { Button } from "../ui/button";
-import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/context/CartContext";
-import { useState, useEffect, useRef } from "react";
-import React from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 const sectionVariants = {
   hidden: { opacity: 0 },
@@ -41,26 +38,23 @@ const itemVariants = {
 const DEFAULT_IMAGE = 'https://placehold.co/600x400.png';
 
 export function ProductsSection({ products }: { products: Product[] }) {
-  const hasProducts = products?.length > 0;
-  const { user, isAdmin } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [productList, setProductList] = useState<Product[]>([]);
+  const { user } = useAuth();
   const { addToCart, cartItems } = useCart();
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [scrollContainer, setScrollContainer] = useState<HTMLDivElement | null>(null);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setActiveDropdown(null);
-      }
-    };
+    if (products) {
+      setProductList(products);
+      setIsLoading(false);
+    }
+  }, [products]);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const hasProducts = productList?.length > 0;
 
   const getCartQuantity = (productId: string) => {
     const item = cartItems.find(item => item.id === productId);
@@ -68,31 +62,23 @@ export function ProductsSection({ products }: { products: Product[] }) {
   };
 
   const scrollLeft = () => {
-    if (scrollContainer) {
-      scrollContainer.scrollBy({ left: -320, behavior: 'smooth' });
-    }
+    scrollContainer?.scrollBy({ left: -320, behavior: 'smooth' });
   };
 
   const scrollRight = () => {
-    if (scrollContainer) {
-      scrollContainer.scrollBy({ left: 320, behavior: 'smooth' });
-    }
+    scrollContainer?.scrollBy({ left: 320, behavior: 'smooth' });
   };
-  
-  const filteredProducts = React.useMemo(() => {
-    if (selectedCategory === 'all') {
-      return products;
-    }
-    
+
+  const filteredProducts = useMemo(() => {
+    if (selectedCategory === 'all') return productList;
+
     if (selectedCategory.includes(' - ')) {
       const [category, subcategory] = selectedCategory.split(' - ');
-      return products.filter(product => {
-        return product.category === category && product.subcategory === subcategory;
-      });
+      return productList.filter(p => p.category === category && p.subcategory === subcategory);
     }
-    
-    return products.filter(product => product.category === selectedCategory);
-  }, [products, selectedCategory]);
+
+    return productList.filter(p => p.category === selectedCategory);
+  }, [productList, selectedCategory]);
 
   const getCategoryIcon = (category: string) => {
     const lower = category?.toLowerCase() || '';
@@ -103,21 +89,19 @@ export function ProductsSection({ products }: { products: Product[] }) {
 
   const handleAddToCart = async (product: Product) => {
     if (!user) {
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-      }
+      router.push('/login');
       return;
     }
 
-    if (addingToCart === product.id) return; // Prevent double clicks
-    
-    setAddingToCart(product.id);
-    const currentQuantity = getCartQuantity(product.id);
-    
+    if (addingToCart === product.id) return;
+
+    setAddingToCart(product.id!);
+    const currentQuantity = getCartQuantity(product.id!);
+
     try {
       addToCart(product);
       const newQuantity = currentQuantity + 1;
-      
+
       toast({
         title: "Added to Cart",
         description: `${product.name} (Quantity: ${newQuantity}) added to cart.`,
@@ -129,9 +113,22 @@ export function ProductsSection({ products }: { products: Product[] }) {
         variant: "destructive"
       });
     } finally {
-      setTimeout(() => setAddingToCart(null), 1000); // Reset after 1 second
+      setTimeout(() => setAddingToCart(null), 1000);
     }
   };
+
+  if (isLoading) {
+    return (
+      <section className="py-16 lg:py-24 bg-secondary">
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Loading products...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <motion.section
@@ -144,143 +141,43 @@ export function ProductsSection({ products }: { products: Product[] }) {
     >
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <motion.h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl" variants={itemVariants}>
+          <motion.h2
+            className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
+            variants={itemVariants}
+          >
             Our Services
           </motion.h2>
-          <motion.p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto" variants={itemVariants}>
+          <motion.p
+            className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto"
+            variants={itemVariants}
+          >
             Providing reliable and efficient sub-metering solutions tailored to your needs.
           </motion.p>
-          
-          {/* Category Filter with Hover Dropdowns */}
-          <motion.div className="mt-8 flex justify-center gap-4" variants={itemVariants} ref={dropdownRef}>
-            <Button 
-              variant={selectedCategory === 'all' ? 'default' : 'outline'}
-              onClick={() => {
-                console.log('Clicked All Products');
-                setSelectedCategory('all');
-              }}
-              className="px-6"
-            >
-              All Products
-            </Button>
-            
-            {/* Water Meter Dropdown */}
-            <div className="relative">
-              <Button 
-                variant={selectedCategory === 'Water Meter' || selectedCategory === 'Water Meter - Prepaid' || selectedCategory === 'Water Meter - Smart' ? 'default' : 'outline'}
-                className="px-6 flex items-center gap-2 hover:bg-primary/10"
-                onClick={() => setActiveDropdown(activeDropdown === 'water' ? null : 'water')}
+
+          {/* Category Filter */}
+          <motion.div className="mt-8 flex flex-wrap justify-center gap-3" variants={itemVariants}>
+            {[
+              { key: "all", label: "All Products" },
+              // { key: "Water Meter - Prepaid Meter", label: "💳 Prepaid Water Meters" },
+              // { key: "Water Meter - Smart Meter", label: "🔌 Smart Water Meters" },
+              // { key: "Energy Meter - Prepaid Meter", label: "💳 Prepaid Energy Meters" },
+              // { key: "Energy Meter - Smart Meter", label: "🔌 Smart Energy Meters" },
+            ].map(cat => (
+              <Button
+                key={cat.key}
+                variant={selectedCategory === cat.key ? 'default' : 'outline'}
+                onClick={() => setSelectedCategory(cat.key)}
+                className="px-6"
               >
-                💧 Water Meters
-                <svg className={`w-4 h-4 transition-transform ${activeDropdown === 'water' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                {cat.label}
               </Button>
-              {activeDropdown === 'water' && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-white border-2 border-gray-300 rounded-xl shadow-2xl z-[9999] animate-in fade-in-0 zoom-in-95 duration-200">
-                  <div className="py-2">
-                    <button
-                      onClick={() => {
-                        console.log('Selecting Water Meter category');
-                        setSelectedCategory('Water Meter');
-                        setActiveDropdown(null);
-                      }}
-                      className={`w-full text-left px-4 py-3 text-base hover:bg-blue-100 flex items-center gap-3 font-semibold transition-colors text-gray-800 ${
-                        selectedCategory === 'Water Meter' ? 'bg-blue-50' : ''
-                      }`}
-                    >
-                      💧 All Water Meters
-                    </button>
-                    <button
-                      onClick={() => {
-                        console.log('Selecting Water Meter - Prepaid');
-                        setSelectedCategory('Water Meter - Prepaid');
-                        setActiveDropdown(null);
-                      }}
-                      className={`w-full text-left px-4 py-3 text-base hover:bg-blue-100 flex items-center gap-3 font-semibold transition-colors border-t border-gray-200 text-gray-800 ${
-                        selectedCategory === 'Water Meter - Prepaid' ? 'bg-blue-50' : ''
-                      }`}
-                    >
-                      💳 Prepaid Water Meters
-                    </button>
-                    <button
-                      onClick={() => {
-                        console.log('Selecting Water Meter - Smart');
-                        setSelectedCategory('Water Meter - Smart');
-                        setActiveDropdown(null);
-                      }}
-                      className={`w-full text-left px-4 py-3 text-base hover:bg-blue-100 flex items-center gap-3 font-semibold transition-colors border-t border-gray-200 text-gray-800 ${
-                        selectedCategory === 'Water Meter - Smart' ? 'bg-blue-50' : ''
-                      }`}
-                    >
-                      🔌 Smart Water Meters
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {/* Energy Meter Dropdown */}
-            <div className="relative">
-              <Button 
-                variant={selectedCategory === 'Energy Meter' || selectedCategory === 'Energy Meter - Prepaid' || selectedCategory === 'Energy Meter - Smart' ? 'default' : 'outline'}
-                className="px-6 flex items-center gap-2 hover:bg-primary/10"
-                onClick={() => setActiveDropdown(activeDropdown === 'energy' ? null : 'energy')}
-              >
-                ⚡ Energy Meters
-                <svg className={`w-4 h-4 transition-transform ${activeDropdown === 'energy' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </Button>
-              {activeDropdown === 'energy' && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-white border-2 border-gray-300 rounded-xl shadow-2xl z-[9999] animate-in fade-in-0 zoom-in-95 duration-200">
-                  <div className="py-2">
-                    <button
-                      onClick={() => {
-                        console.log('Selecting Energy Meter category');
-                        setSelectedCategory('Energy Meter');
-                        setActiveDropdown(null);
-                      }}
-                      className={`w-full text-left px-4 py-3 text-base hover:bg-blue-100 flex items-center gap-3 font-semibold transition-colors text-gray-800 ${
-                        selectedCategory === 'Energy Meter' ? 'bg-blue-50' : ''
-                      }`}
-                    >
-                      ⚡ All Energy Meters
-                    </button>
-                    <button
-                      onClick={() => {
-                        console.log('Selecting Energy Meter - Prepaid');
-                        setSelectedCategory('Energy Meter - Prepaid');
-                        setActiveDropdown(null);
-                      }}
-                      className={`w-full text-left px-4 py-3 text-base hover:bg-blue-100 flex items-center gap-3 font-semibold transition-colors border-t border-gray-200 text-gray-800 ${
-                        selectedCategory === 'Energy Meter - Prepaid' ? 'bg-blue-50' : ''
-                      }`}
-                    >
-                      💳 Prepaid Energy Meters
-                    </button>
-                    <button
-                      onClick={() => {
-                        console.log('Selecting Energy Meter - Smart');
-                        setSelectedCategory('Energy Meter - Smart');
-                        setActiveDropdown(null);
-                      }}
-                      className={`w-full text-left px-4 py-3 text-base hover:bg-blue-100 flex items-center gap-3 font-semibold transition-colors border-t border-gray-200 text-gray-800 ${
-                        selectedCategory === 'Energy Meter - Smart' ? 'bg-blue-50' : ''
-                      }`}
-                    >
-                      🔌 Smart Energy Meters
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            ))}
           </motion.div>
         </div>
 
         {hasProducts ? (
           <div className="relative">
-            {/* Left Arrow */}
+            {/* Arrows */}
             <button
               onClick={scrollLeft}
               className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-200 hover:scale-110"
@@ -288,8 +185,6 @@ export function ProductsSection({ products }: { products: Product[] }) {
             >
               <ChevronLeft className="h-6 w-6 text-primary" />
             </button>
-            
-            {/* Right Arrow */}
             <button
               onClick={scrollRight}
               className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-200 hover:scale-110"
@@ -297,92 +192,101 @@ export function ProductsSection({ products }: { products: Product[] }) {
             >
               <ChevronRight className="h-6 w-6 text-primary" />
             </button>
-            
-            <div 
+
+            <div
               ref={setScrollContainer}
-              className="flex overflow-x-auto scrollbar-hide gap-6 pb-4 snap-x snap-mandatory px-12" 
+              className="flex overflow-x-auto scrollbar-hide gap-6 pb-4 snap-x snap-mandatory px-12"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
-              {filteredProducts.map((product) => (
-                <motion.div key={product?.id || Math.random()} variants={itemVariants} className="flex-none w-80 snap-start">
+              {filteredProducts.map((product, index) => (
+                <motion.div
+                  key={product.id ?? `product-${index}`}
+                  variants={itemVariants}
+                  className="flex-none w-80 snap-start"
+                >
                   <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col h-full bg-background overflow-hidden group hover:scale-105">
+                    {/* Product Image */}
                     <div className="h-48 w-full relative bg-muted overflow-hidden">
                       <Image
-                        src={product?.imageUrl || DEFAULT_IMAGE}
-                        alt={product?.name || "Product Image"}
+                        src={product.imageUrl || DEFAULT_IMAGE}
+                        alt={product.name || "Product Image"}
                         fill
                         className="object-contain transition-transform duration-300 group-hover:scale-110 p-2"
                         sizes="320px"
                       />
                       <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-semibold">
-                        {product?.category || 'General'}
+                        {product.category || 'General'}
                       </div>
-                      {(product?.price || 0) > 0 && (
+                      {(product.price || 0) > 0 && (
                         <div className="absolute bottom-2 left-2 bg-background/90 backdrop-blur-sm text-foreground px-3 py-1 rounded-full text-sm font-bold">
                           KES {(product.price || 0).toLocaleString('en-KE')}
                         </div>
                       )}
                       <div className="absolute top-2 left-2 bg-blue-500/90 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                        Stock: {product?.stock || 0}
+                        Stock: {product.stock || 0}
                       </div>
                     </div>
+
+                    {/* Header */}
                     <CardHeader className="items-center text-center pt-6 pb-4">
                       <div className="p-3 bg-primary/10 rounded-full mb-3 inline-block group-hover:bg-primary/20 transition-colors">
-                        {getCategoryIcon(product?.category || '')}
+                        {getCategoryIcon(product.category || '')}
                       </div>
-                      <CardTitle className="text-xl font-semibold line-clamp-2 leading-tight">{product?.name || 'Unnamed Product'}</CardTitle>
+                      <CardTitle className="text-xl font-semibold line-clamp-2 leading-tight">
+                        {product.name || 'Unnamed Product'}
+                      </CardTitle>
                     </CardHeader>
 
+                    {/* Content */}
                     <CardContent className="flex-grow px-6">
                       <CardDescription className="text-sm text-muted-foreground mb-4 text-center line-clamp-3">
-                        {product?.description || 'No description available'}
+                        {product.description || 'No description available'}
                       </CardDescription>
 
-                      {Array.isArray(product?.features) && product.features.length > 0 && (
+                      {Array.isArray(product.features) && product.features.length > 0 && (
                         <div className="space-y-2">
                           <h4 className="text-xs font-semibold text-foreground mb-2">Key Features:</h4>
                           <div className="space-y-1">
-                            {product.features.slice(0, 4).map((feature, index) => (
-                              <div key={`${feature || 'feature'}-${index}`} className="flex items-start text-xs">
+                            {product.features.slice(0, 4).map((feature, idx) => (
+                              <div key={`${feature}-${idx}`} className="flex items-start text-xs">
                                 <CheckCircle className="h-3 w-3 text-primary mr-2 mt-0.5 flex-shrink-0" />
-                                <span className="text-muted-foreground line-clamp-1">{feature || 'Feature'}</span>
+                                <span className="text-muted-foreground line-clamp-1">{feature}</span>
                               </div>
                             ))}
                             {product.features.length > 4 && (
-                              <p className="text-xs text-muted-foreground italic">+{product.features.length - 4} more features</p>
+                              <p className="text-xs text-muted-foreground italic">
+                                +{product.features.length - 4} more features
+                              </p>
                             )}
                           </div>
                         </div>
                       )}
                     </CardContent>
 
+                    {/* Footer */}
                     <CardFooter className="flex-col items-center pt-4 border-t px-6 pb-6">
-                      {(product?.price || 0) === 0 && (
+                      {(product.price || 0) === 0 && (
                         <p className="text-center text-primary font-bold text-lg mb-3">
                           Request Quote
                         </p>
                       )}
                       <div className="space-y-2 w-full">
-                        <Button 
+                        <Button
                           size="sm"
-                          className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300" 
+                          className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300"
                           onClick={() => handleAddToCart(product)}
                           disabled={addingToCart === product.id}
                         >
                           {addingToCart === product.id ? (
                             <>⏳ Adding...</>
                           ) : (
-                            <>🛒 Add to Cart {getCartQuantity(product.id) > 0 && `(${getCartQuantity(product.id)})`}</>
+                            <>🛒 Add to Cart {getCartQuantity(product.id!) > 0 && `(${getCartQuantity(product.id!)})`}</>
                           )}
                         </Button>
                         <div className="flex gap-2">
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button 
-                                variant="outline"
-                                size="sm"
-                                className="flex-1 hover:bg-primary/5" 
-                              >
+                              <Button variant="outline" size="sm" className="flex-1 hover:bg-primary/5">
                                 📖 Learn More
                               </Button>
                             </DialogTrigger>
@@ -390,68 +294,84 @@ export function ProductsSection({ products }: { products: Product[] }) {
                               <DialogHeader>
                                 <DialogTitle className="flex items-center gap-3 text-xl">
                                   <div className="p-2 bg-primary/10 rounded-full">
-                                    {getCategoryIcon(product?.category || '')}
+                                    {getCategoryIcon(product.category || '')}
                                   </div>
-                                  {product?.name || 'Product Details'}
+                                  {product.name || 'Product Details'}
                                 </DialogTitle>
                                 <DialogDescription>
                                   View detailed information about this product
                                 </DialogDescription>
                               </DialogHeader>
-                              
+
                               <div className="space-y-6">
+                                {/* Large image */}
                                 <div className="aspect-video w-full relative bg-muted rounded-lg overflow-hidden">
                                   <Image
-                                    src={product?.imageUrl || DEFAULT_IMAGE}
-                                    alt={product?.name || "Product Image"}
+                                    src={product.imageUrl || DEFAULT_IMAGE}
+                                    alt={product.name || "Product Image"}
                                     fill
                                     className="object-cover"
                                   />
                                 </div>
-                                
+
+                                {/* Description */}
                                 <div>
-                                  <h3 className="font-semibold mb-2 flex items-center gap-2">
-                                    📋 Description
-                                  </h3>
+                                  <h3 className="font-semibold mb-2 flex items-center gap-2">📋 Description</h3>
                                   <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {product?.description || 'No description available'}
+                                    {product.description || 'No description available'}
                                   </p>
                                 </div>
-                                
+
+                                {/* Pricing + Stock */}
                                 <div className="grid grid-cols-2 gap-4">
                                   <div className="bg-primary/5 p-4 rounded-lg">
-                                    <h3 className="font-semibold mb-2 flex items-center gap-2">
-                                      💰 Pricing
-                                    </h3>
+                                    <h3 className="font-semibold mb-2 flex items-center gap-2">💰 Pricing</h3>
                                     <p className="text-2xl font-bold text-primary">
-                                      {(product?.price || 0) > 0 ? `KES ${(product.price || 0).toLocaleString('en-KE')}` : 'Request Quote'}
+                                      {(product.price || 0) > 0
+                                        ? `KES ${(product.price || 0).toLocaleString('en-KE')}`
+                                        : 'Request Quote'}
                                     </p>
                                   </div>
                                   <div className="bg-blue-50 p-4 rounded-lg">
-                                    <h3 className="font-semibold mb-2 flex items-center gap-2">
-                                      📦 Stock
-                                    </h3>
-                                    <p className={`text-2xl font-bold ${
-                                      (product?.stock || 0) > 10 ? 'text-green-600' : 
-                                      (product?.stock || 0) > 0 ? 'text-orange-600' : 'text-red-600'
-                                    }`}>
-                                      {(product?.stock || 0) > 0 ? `${product?.stock || 0} Available` : 'Out of Stock'}
+                                    <h3 className="font-semibold mb-2 flex items-center gap-2">📦 Stock</h3>
+                                    <p
+                                      className={`text-2xl font-bold ${
+                                        (product.stock || 0) > 10
+                                          ? 'text-green-600'
+                                          : (product.stock || 0) > 0
+                                          ? 'text-orange-600'
+                                          : 'text-red-600'
+                                      }`}
+                                    >
+                                      {(product.stock || 0) > 0
+                                        ? `${product.stock || 0} Available`
+                                        : 'Out of Stock'}
                                     </p>
                                   </div>
                                 </div>
-                                
+
                                 {/* Specifications */}
-                                {(product as any)?.specifications && (
+                                {product.specifications && (
                                   <div>
-                                    <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                    <h3 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
                                       🔧 Specifications
                                     </h3>
-                                    <div className="bg-gray-50 p-4 rounded-lg">
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                        {Object.entries((product as any).specifications).map(([key, value]) => (
-                                          <div key={key} className="flex justify-between">
-                                            <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>
-                                            <span>{String(value)}</span>
+                                    <div className="bg-muted/50 p-4 rounded-lg border">
+                                      <div className="grid gap-2">
+                                        {Object.entries(product.specifications).map(([key, value], idx) => (
+                                          <div
+                                            key={key}
+                                            className="flex items-start gap-2 p-2 bg-background/50 rounded-lg"
+                                          >
+                                            <span className="inline-flex items-center justify-center w-5 h-5 bg-primary text-primary-foreground rounded-full text-xs font-bold flex-shrink-0 mt-0.5">
+                                              {idx + 1}
+                                            </span>
+                                            <div className="flex-1">
+                                              <span className="font-medium text-foreground capitalize">
+                                                {key.replace(/([A-Z])/g, ' $1')}:
+                                              </span>
+                                              <span className="ml-2 text-muted-foreground">{String(value)}</span>
+                                            </div>
                                           </div>
                                         ))}
                                       </div>
@@ -459,46 +379,41 @@ export function ProductsSection({ products }: { products: Product[] }) {
                                   </div>
                                 )}
 
-                                {Array.isArray(product?.features) && product.features.length > 0 && (
+                                {/* Features */}
+                                {Array.isArray(product.features) && product.features.length > 0 && (
                                   <div>
-                                    <h3 className="font-semibold mb-3 flex items-center gap-2">
-                                      ⭐ Key Features
-                                    </h3>
+                                    <h3 className="font-semibold mb-3 flex items-center gap-2">⭐ Key Features</h3>
                                     <div className="grid gap-2">
-                                      {product.features.map((feature, index) => (
-                                        <div key={`${feature || 'feature'}-${index}`} className="flex items-start gap-2 p-2 bg-muted/50 rounded-lg">
+                                      {product.features.map((feature, idx) => (
+                                        <div
+                                          key={`${feature}-${idx}`}
+                                          className="flex items-start gap-2 p-2 bg-muted/50 rounded-lg"
+                                        >
                                           <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                                          <span className="text-sm">{feature || 'Feature'}</span>
+                                          <span className="text-sm">{feature}</span>
                                         </div>
                                       ))}
                                     </div>
                                   </div>
                                 )}
-                                
+
+                                {/* Actions */}
                                 <div className="flex gap-3 pt-4 border-t">
-                                  <Button 
-                                    className="flex-1 bg-gradient-to-r from-primary to-primary/80" 
+                                  <Button
+                                    className="flex-1 bg-gradient-to-r from-primary to-primary/80"
                                     onClick={() => handleAddToCart(product)}
                                     disabled={addingToCart === product.id}
                                   >
                                     {addingToCart === product.id ? (
                                       <>⏳ Adding...</>
                                     ) : (
-                                      <>🛒 Add to Cart {getCartQuantity(product.id) > 0 && `(${getCartQuantity(product.id)})`}</>
+                                      <>🛒 Add to Cart {getCartQuantity(product.id!) > 0 && `(${getCartQuantity(product.id!)})`}</>
                                     )}
                                   </Button>
-                                  <Button 
+                                  <Button
                                     variant="outline"
-                                    className="flex-1" 
-                                    onClick={() => {
-                                      if (typeof window !== 'undefined') {
-                                        if (!user) {
-                                          window.location.href = '/login';
-                                        } else {
-                                          window.location.href = '/contact';
-                                        }
-                                      }
-                                    }}
+                                    className="flex-1"
+                                    onClick={() => router.push('/contact')}
                                   >
                                     💬 Get Quote
                                   </Button>
@@ -506,15 +421,12 @@ export function ProductsSection({ products }: { products: Product[] }) {
                               </div>
                             </DialogContent>
                           </Dialog>
-                          <Button 
+
+                          <Button
                             variant="outline"
                             size="sm"
-                            className="flex-1 hover:bg-primary/5" 
-                            onClick={() => {
-                              if (typeof window !== 'undefined') {
-                                window.location.href = '/contact';
-                              }
-                            }}
+                            className="flex-1 hover:bg-primary/5"
+                            onClick={() => router.push('/contact')}
                           >
                             💬 Inquire
                           </Button>
@@ -525,12 +437,13 @@ export function ProductsSection({ products }: { products: Product[] }) {
                 </motion.div>
               ))}
             </div>
+
+            {/* Summary */}
             <div className="flex justify-center mt-6">
               <p className="text-sm text-muted-foreground bg-muted px-4 py-2 rounded-full">
-                {selectedCategory === 'all' 
-                  ? `Scroll horizontally to view all ${products.length} services →`
-                  : `Showing ${filteredProducts.length} ${selectedCategory.replace(' - ', ' ')} products`
-                }
+                {selectedCategory === 'all'
+                  ? `Showing all ${filteredProducts.length} products`
+                  : `Showing ${filteredProducts.length} ${selectedCategory.replace(' - ', ' ')} products`}
               </p>
             </div>
           </div>
@@ -543,3 +456,4 @@ export function ProductsSection({ products }: { products: Product[] }) {
     </motion.section>
   );
 }
+

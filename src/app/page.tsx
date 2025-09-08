@@ -7,16 +7,15 @@ import Link from 'next/link';
 import { AuthButtons } from '@/components/AuthButtons';
 
 export default function HomePage() {
-
   return (
     <div className="min-h-screen" suppressHydrationWarning>
       {/* Hero Section */}
       <section className="relative min-h-screen bg-gradient-to-br from-primary/10 to-secondary/20">
         <div className="container mx-auto px-4 py-12 lg:py-20">
-        {/* Large Zap Icon */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-10">
-          <Zap className="h-96 w-96 text-primary" />
-        </div>
+          {/* Large Zap Icon */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-10">
+            <Zap className="h-96 w-96 text-primary" />
+          </div>
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
               <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight text-foreground mt-8">
@@ -24,26 +23,26 @@ export default function HomePage() {
                 <br />
                 <span className="text-primary">Simplified.</span>
               </h1>
-              
+
               <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed mb-12">
                 Tari provides innovative submetering solutions for property owners, empowering you with 
                 <span className="font-semibold text-primary"> real-time consumption data</span>, 
                 <span className="font-semibold text-primary"> automated billing</span>, and 
                 <span className="font-semibold text-primary"> enhanced operational efficiency</span>.
               </p>
-              
-             <div className="flex flex-col sm:flex-row justify-center gap-6">
+
+              <div className="flex flex-col sm:flex-row justify-center gap-6">
+                {/* ✅ Button redirects to /free-estimate */}
                 <Button
                   asChild
                   size="lg"
                   className="bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 text-lg shadow-xl hover:scale-105 transition-transform"
                 >
-                  <Link href="/contact">
+                  <Link href="/free-estimate">
                     Request a Quote
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-
               </div>
             </div>
           </div>
@@ -64,7 +63,7 @@ export default function HomePage() {
                 way to manage electricity and water consumption across your properties.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {[
                 {
@@ -114,18 +113,18 @@ export default function HomePage() {
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-8">
                   <Award className="h-8 w-8 text-white" />
                 </div>
-                
+
                 <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
                   The Smarter Choice for Utility Submetering.
                 </h2>
-                
+
                 <p className="text-xl text-muted-foreground leading-relaxed mb-8">
                   We empower property owners with advanced technology that delivers tangible results. 
                   From our tamper-proof meters to a comprehensive management dashboard, our solution 
                   is designed to protect your revenue, provide stress-free monitoring, and deliver 
                   a significant return on investment.
                 </p>
-                
+
                 <div className="hover:scale-105 transition-transform">
                   <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 text-lg shadow-xl">
                     <Link href="/products">
@@ -135,7 +134,7 @@ export default function HomePage() {
                   </Button>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-6">
                 {[
                   { icon: Shield, title: 'Tamper-Proof', desc: 'Advanced security features' },
@@ -146,19 +145,19 @@ export default function HomePage() {
                   <div
                     key={index}
                     className="p-6 bg-card rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 border"
-                    >
-                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                        <feature.icon className="h-6 w-6 text-primary" />
-                      </div>
-                      <h4 className="font-bold text-foreground mb-2">{feature.title}</h4>
-                      <p className="text-sm text-muted-foreground">{feature.desc}</p>
+                  >
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                      <feature.icon className="h-6 w-6 text-primary" />
                     </div>
-                  ))}
-                </div>
+                    <h4 className="font-bold text-foreground mb-2">{feature.title}</h4>
+                    <p className="text-sm text-muted-foreground">{feature.desc}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
     </div>
   );
 }

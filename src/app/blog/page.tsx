@@ -75,16 +75,7 @@ export default function BlogPage() {
                       </div>
                     )}
                     <CardContent className={`${index === 0 ? 'lg:w-1/2' : 'flex-1'} p-8`}>
-                      <div className="flex items-center gap-2 text-sm text-primary/70 mb-3">
-                        <Calendar className="h-4 w-4" />
-                        <time className="font-medium">
-                          {post.createdAt?.toDate?.()?.toLocaleDateString('en-US', { 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
-                          }) || 'Recently'}
-                        </time>
-                      </div>
+
                       
                       <Link href={`/blog/${post.slug}`} className="block group-hover:text-primary transition-colors">
                         <h2 className={`${index === 0 ? 'text-3xl' : 'text-2xl'} font-serif font-bold text-gray-900 mb-4 leading-tight`}>

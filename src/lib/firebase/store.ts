@@ -234,22 +234,87 @@ export async function updateOrderStatus(orderId: string, status: number): Promis
 
 export async function updateProductStock(productId: string, quantityPurchased: number): Promise<void> {
   try {
-    const productRef = doc(db, 'products', productId);
-    const productSnap = await getDoc(productRef);
+    const collections = ['products', 'customerProducts', 'homepageProducts'];
     
-    if (productSnap.exists()) {
-      const currentStock = productSnap.data().stock || 0;
-      const newStock = Math.max(0, currentStock - quantityPurchased);
+    for (const collectionName of collections) {
+      const productRef = doc(db, collectionName, productId);
+      const productSnap = await getDoc(productRef);
       
-      await updateDoc(productRef, {
-        stock: newStock,
-        updatedAt: new Date().toISOString(),
-        status: newStock === 0 ? 'inactive' : 'active'
-      });
+      if (productSnap.exists()) {
+        const currentStock = productSnap.data().stock || 0;
+        const newStock = Math.max(0, currentStock - quantityPurchased);
+        
+        await updateDoc(productRef, {
+          stock: newStock,
+          updatedAt: new Date().toISOString(),
+          status: newStock === 0 ? 'inactive' : 'active'
+        });
+        
+        // Check for low stock and send alert
+        await checkLowStock(productId, productSnap.data().name, newStock);
+        break; // Exit after finding the product
+      }
     }
   } catch (error) {
     console.error('Error updating product stock:', error);
     throw error;
+  }
+}
+
+export async function addProductStock(productId: string, quantityAdded: number): Promise<void> {
+  try {
+    const collections = ['products', 'customerProducts', 'homepageProducts'];
+    
+    for (const collectionName of collections) {
+      const productRef = doc(db, collectionName, productId);
+      const productSnap = await getDoc(productRef);
+      
+      if (productSnap.exists()) {
+        const currentStock = productSnap.data().stock || 0;
+        const newStock = currentStock + quantityAdded;
+        
+        await updateDoc(productRef, {
+          stock: newStock,
+          updatedAt: new Date().toISOString(),
+          status: 'active'
+        });
+        break;
+      }
+    }
+  } catch (error) {
+    console.error('Error adding product stock:', error);
+    throw error;
+  }
+}
+
+async function checkLowStock(productId: string, productName: string, currentStock: number): Promise<void> {
+  const LOW_STOCK_THRESHOLD = 10;
+  
+  if (currentStock <= LOW_STOCK_THRESHOLD && currentStock > 0) {
+    // Create low stock notification
+    await addDoc(collection(db, 'notifications'), {
+      type: 'low_stock',
+      productId,
+      productName,
+      currentStock,
+      threshold: LOW_STOCK_THRESHOLD,
+      message: `Low stock alert: ${productName} has only ${currentStock} items remaining`,
+      createdAt: new Date().toISOString(),
+      read: false,
+      priority: currentStock <= 5 ? 'high' : 'medium'
+    });
+  } else if (currentStock === 0) {
+    // Create out of stock notification
+    await addDoc(collection(db, 'notifications'), {
+      type: 'out_of_stock',
+      productId,
+      productName,
+      currentStock: 0,
+      message: `Out of stock: ${productName} is now out of stock`,
+      createdAt: new Date().toISOString(),
+      read: false,
+      priority: 'high'
+    });
   }
 }
 

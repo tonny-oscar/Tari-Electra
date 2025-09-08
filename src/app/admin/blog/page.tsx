@@ -4,13 +4,16 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, FileText, Edit, Eye } from 'lucide-react';
-import { getBlogPosts, type BlogPost } from '@/data/blogPosts';
+import { PlusCircle, FileText, Edit, Eye, Trash2 } from 'lucide-react';
+import { getBlogPosts, deleteBlogPost, type BlogPost } from '@/data/blogPosts';
+import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 
 export default function BlogManagementPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const loadPosts = async () => {
@@ -20,6 +23,38 @@ export default function BlogManagementPage() {
     };
     loadPosts();
   }, []);
+
+  const handleDelete = async (postId: string, postTitle: string) => {
+    if (!confirm(`Are you sure you want to delete "${postTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeleting(postId);
+    try {
+      const success = await deleteBlogPost(postId);
+      if (success) {
+        setPosts(posts.filter(post => post.id !== postId));
+        toast({
+          title: 'Success',
+          description: 'Blog post deleted successfully.',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to delete blog post.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'An error occurred while deleting the post.',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -73,6 +108,19 @@ export default function BlogManagementPage() {
                       <Link href={`/admin/blog/edit/${post.slug}`}>
                         <Edit className="mr-2 h-4 w-4" /> Edit
                       </Link>
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={() => handleDelete(post.id!, post.title)}
+                      disabled={deleting === post.id}
+                    >
+                      {deleting === post.id ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                      ) : (
+                        <Trash2 className="mr-2 h-4 w-4" />
+                      )}
+                      Delete
                     </Button>
                   </div>
                 </div>

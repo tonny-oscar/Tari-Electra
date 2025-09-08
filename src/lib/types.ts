@@ -49,12 +49,17 @@ export type Product = {
   description: string;
   price: number;
   category: string;
+  subcategory?: string;
   imageUrl?: string;
   imageHint?: string;
+  image?: string;
   features: string[];
+  specifications?: Record<string, string> | string[];
   stock: number;
   rating: number;
-  status: 'active' | 'inactive' | 'draft';
+  status?: 'active' | 'inactive' | 'draft';
+  createdAt?: any;
+  updatedAt?: any;
 };
 
 export type ProductFormState = FormState<Product> & {

@@ -288,10 +288,15 @@ export function CustomerDashboard() {
                 name: sanitizeUserInput(data.name || 'Unnamed Product'),
                 price: Number(data.price) || 0,
                 image: sanitizeUserInput(data.image || data.imageUrl || '📦'),
+                imageUrl: sanitizeUserInput(data.imageUrl || ''),
                 stock: Number(data.stock) || 100,
                 description: sanitizeUserInput(data.description || 'No description available'),
                 rating: Number(data.rating) || 4.0,
-                category: sanitizeUserInput(data.category || 'General')
+                category: sanitizeUserInput(data.category || 'General'),
+                subcategory: sanitizeUserInput(data.subcategory || ''),
+                features: Array.isArray(data.features) ? data.features : [],
+                specifications: data.specifications || {},
+                status: data.status || 'active'
               } as Product;
             });
 
@@ -464,6 +469,19 @@ export function CustomerDashboard() {
     if (cart.length === 0 || !user?.uid || !isValidUserId(user.uid)) return;
 
     try {
+      // Check stock availability before placing order
+      for (const item of cart) {
+        const product = products.find(p => p.id === item.id);
+        if (!product || product.stock < item.quantity) {
+          toast({
+            title: 'Insufficient Stock',
+            description: `${item.name} has insufficient stock. Available: ${product?.stock || 0}`,
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+
       const orderData = {
         customerId: user.uid,
         customerEmail: user.email || '',
@@ -479,7 +497,7 @@ export function CustomerDashboard() {
 
       toast({
         title: 'Order Placed!',
-        description: `Order ${orderNumber} has been placed successfully.`,
+        description: `Order ${orderNumber} has been placed successfully. Stock updated automatically.`,
       });
 
       setCart([]);
@@ -902,15 +920,22 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
-  const categories = ['All', 'Water Meter', 'Smart Meter', 'Prepaid Meter', 'Energy Meter'];
+  const categories = ['All', 'Water Meter - Prepaid Meter', 'Water Meter - Smart Meter', 'Energy Meter - Prepaid Meter', 'Energy Meter - Smart Meter'];
 
   // Filter and sort products
   const filteredAndSortedProducts = React.useMemo(() => {
     let filtered = products;
 
-    // Filter by category
+    // Filter by category and subcategory
     if (selectedCategory !== 'All') {
-      filtered = filtered.filter(product => (product.category || 'General') === selectedCategory);
+      if (selectedCategory.includes(' - ')) {
+        const [category, subcategory] = selectedCategory.split(' - ');
+        filtered = filtered.filter(product => 
+          product.category === category && product.subcategory === subcategory
+        );
+      } else {
+        filtered = filtered.filter(product => product.category === selectedCategory);
+      }
     }
 
     // Filter by search term
@@ -1544,7 +1569,7 @@ function ProfileTab({ customerData, user }: {
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                   />
                 ) : (
-                  <p className="p-2 bg-gray-50 rounded">{sanitizeUserInput(customerData.firstName)}</p>
+                  <p className="p-2 bg-muted rounded text-foreground">{sanitizeUserInput(customerData.firstName)}</p>
                 )}
               </div>
               <div>
@@ -1556,18 +1581,18 @@ function ProfileTab({ customerData, user }: {
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   />
                 ) : (
-                  <p className="p-2 bg-gray-50 rounded">{sanitizeUserInput(customerData.lastName)}</p>
+                  <p className="p-2 bg-muted rounded text-foreground">{sanitizeUserInput(customerData.lastName)}</p>
                 )}
               </div>
             </div>
 
             <div>
               <Label>Email Address</Label>
-              <div className="flex items-center p-2 bg-gray-50 rounded">
-                <Mail className="w-4 h-4 mr-2 text-gray-500" />
-                <span>{sanitizeUserInput(customerData.email)}</span>
+              <div className="flex items-center p-2 bg-muted rounded">
+                <Mail className="w-4 h-4 mr-2 text-muted-foreground" />
+                <span className="text-foreground">{sanitizeUserInput(customerData.email)}</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+              <p className="text-xs text-muted-foreground mt-1">Email cannot be changed</p>
             </div>
 
             <div>
@@ -1580,9 +1605,9 @@ function ProfileTab({ customerData, user }: {
                   placeholder="Enter your phone number"
                 />
               ) : (
-                <div className="flex items-center p-2 bg-gray-50 rounded">
-                  <Phone className="w-4 h-4 mr-2 text-gray-500" />
-                  <span>{sanitizeUserInput(customerData.profile?.phone || 'Not provided')}</span>
+                <div className="flex items-center p-2 bg-muted rounded">
+                  <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
+                  <span className="text-foreground">{sanitizeUserInput(customerData.profile?.phone || 'Not provided')}</span>
                 </div>
               )}
             </div>
@@ -1606,9 +1631,9 @@ function ProfileTab({ customerData, user }: {
                   rows={3}
                 />
               ) : (
-                <div className="flex items-start p-2 bg-gray-50 rounded">
-                  <MapPin className="w-4 h-4 mr-2 text-gray-500 mt-0.5" />
-                  <span>{sanitizeUserInput(customerData.profile?.address || 'Not provided')}</span>
+                <div className="flex items-start p-2 bg-muted rounded">
+                  <MapPin className="w-4 h-4 mr-2 text-muted-foreground mt-0.5" />
+                  <span className="text-foreground">{sanitizeUserInput(customerData.profile?.address || 'Not provided')}</span>
                 </div>
               )}
             </div>
@@ -1624,7 +1649,7 @@ function ProfileTab({ customerData, user }: {
                     placeholder="Enter your city"
                   />
                 ) : (
-                  <p className="p-2 bg-gray-50 rounded">{sanitizeUserInput(customerData.profile?.city || 'Not provided')}</p>
+                  <p className="p-2 bg-muted rounded text-foreground">{sanitizeUserInput(customerData.profile?.city || 'Not provided')}</p>
                 )}
               </div>
               <div>
@@ -1637,7 +1662,7 @@ function ProfileTab({ customerData, user }: {
                     placeholder="Enter your country"
                   />
                 ) : (
-                  <p className="p-2 bg-gray-50 rounded">{sanitizeUserInput(customerData.profile?.country || 'Not provided')}</p>
+                  <p className="p-2 bg-muted rounded text-foreground">{sanitizeUserInput(customerData.profile?.country || 'Not provided')}</p>
                 )}
               </div>
             </div>

@@ -1,6 +1,6 @@
 
 import { ProductsSection } from "@/components/sections/ProductsSection";
-import { getProducts } from "@/data/products"; 
+import { getCustomerProducts } from "@/data/customerProducts"; 
 import type { Metadata } from 'next';
 import type { Product } from '@/lib/types';
 import { headers } from 'next/headers'; 
@@ -15,9 +15,9 @@ export default async function ProductsPage() {
   headers();
   noStore();
   
-  console.log('[ProductsPage] Fetching products from Firestore for public page...');
-  const products: Product[] = await getProducts();
-  console.log(`[ProductsPage] Public page fetched ${products.length} products:`, products.map(p => ({ id: p.id, name: p.name, price: p.price })));
+  console.log('[ProductsPage] Fetching products from customerProducts collection...');
+  const products: Product[] = await getCustomerProducts();
+  console.log(`[ProductsPage] Fetched ${products.length} products:`, products.map(p => ({ id: p.id, name: p.name, price: p.price })));
   
   const serializedProducts = products.map(product => ({
     ...product,

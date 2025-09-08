@@ -9,7 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Package, AlertTriangle, Plus, Minus, Save, Bell } from 'lucide-react';
 import { collection, onSnapshot, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { initializeStockMonitoring } from '@/lib/stockAlerts';
+import { StockAlerts } from './StockAlerts';
+import { addProductStock } from '@/lib/firebase/store';
 
 interface Product {
   id: string;
@@ -27,9 +28,6 @@ export function StockManagement() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Initialize stock monitoring
-    const stockMonitorUnsubscribe = initializeStockMonitoring();
-    
     const unsubscribe = onSnapshot(collection(db, 'customerProducts'), (snapshot) => {
       const productsList = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -52,20 +50,37 @@ export function StockManagement() {
 
     return () => {
       unsubscribe();
-      stockMonitorUnsubscribe();
     };
   }, [toast]);
 
   const updateStock = async (productId: string, newStock: number) => {
     try {
-      await updateDoc(doc(db, 'customerProducts', productId), {
-        stock: Math.max(0, newStock),
-        updatedAt: new Date().toISOString()
-      });
+      const product = products.find(p => p.id === productId);
+      const currentStock = product?.stock || 0;
+      const difference = newStock - currentStock;
+      
+      // Update in all collections
+      const collections = ['customerProducts', 'products', 'homepageProducts'];
+      for (const collectionName of collections) {
+        try {
+          await updateDoc(doc(db, collectionName, productId), {
+            stock: Math.max(0, newStock),
+            updatedAt: new Date().toISOString(),
+            status: newStock === 0 ? 'inactive' : 'active'
+          });
+        } catch (error) {
+          // Product might not exist in this collection, continue
+        }
+      }
+      
+      // Use addProductStock if increasing stock
+      if (difference > 0) {
+        await addProductStock(productId, difference);
+      }
 
       toast({
         title: 'Stock Updated',
-        description: 'Product stock has been updated successfully.',
+        description: `Stock ${difference > 0 ? 'increased' : 'decreased'} successfully.`,
       });
 
       // Clear the local update
@@ -133,6 +148,8 @@ export function StockManagement() {
           </Badge>
         </div>
       </div>
+
+      <StockAlerts />
 
       <div className="grid gap-4">
         {products.map((product) => {

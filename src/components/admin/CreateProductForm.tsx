@@ -72,10 +72,31 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       price: parseFloat(formData.get('price') as string),
+      stock: parseInt(formData.get('stock') as string) || 0,
       category: formData.get('category') as string,
       subcategory: formData.get('subcategory') as string,
       features: (formData.get('features') as string)?.split(',').map(f => f.trim()).filter(Boolean) || [],
-      specifications: (formData.get('specifications') as string)?.split(',').map(s => s.trim()).filter(Boolean) || [],
+      specifications: (() => {
+        const specsString = formData.get('specifications') as string;
+        if (!specsString) return {};
+        
+        return specsString.split(',').reduce((acc, spec, index) => {
+          const trimmed = spec.trim();
+          if (!trimmed) return acc;
+          
+          const colonIndex = trimmed.indexOf(':');
+          if (colonIndex > 0) {
+            const key = trimmed.substring(0, colonIndex).trim();
+            const value = trimmed.substring(colonIndex + 1).trim();
+            if (key && value) {
+              acc[key] = value;
+            }
+          } else {
+            acc[`Spec${index + 1}`] = trimmed;
+          }
+          return acc;
+        }, {} as Record<string, string>);
+      })(),
       imageUrl: formData.get('imageUrl') as string,
       imageHint: formData.get('imageHint') as string,
     };
@@ -208,6 +229,12 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="stock">Stock Quantity</Label>
+            <Input id="stock" name="stock" type="number" placeholder="e.g., 100" defaultValue={initialData?.stock?.toString()} min="0" />
+            {formState.fields?.stock && <p className="text-sm text-destructive mt-1">{formState.fields.stock.join(', ')}</p>}
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="category" className="text-sm font-semibold text-gray-700">Category *</Label>
             <div className="relative">
               <select
@@ -290,15 +317,15 @@ export function CreateProductForm({ initialData, currentId, mode = 'create', isH
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="specifications">Specifications (comma-separated)</Label>
+          <Label htmlFor="specifications">Specifications (key:value pairs)</Label>
           <Textarea 
             id="specifications" 
             name="specifications" 
-            placeholder="e.g., Voltage: 240V, Current: 60A, Accuracy: Class 1, Display: LCD" 
+            placeholder="e.g., Voltage:240V, Current:60A, Accuracy:Class 1, Display:LCD" 
             rows={3} 
-            defaultValue={initialData?.specifications?.join(', ') || ''} 
+            defaultValue={initialData?.specifications ? Object.entries(initialData.specifications).map(([key, value]) => `${key}:${value}`).join(', ') : ''} 
           />
-           <p className="text-xs text-muted-foreground">Enter technical specifications separated by commas.</p>
+           <p className="text-xs text-muted-foreground">Enter specifications as key:value pairs separated by commas.</p>
           {formState.fields?.specifications && <p className="text-sm text-destructive mt-1">{formState.fields.specifications.join(', ')}</p>}
         </div>
         

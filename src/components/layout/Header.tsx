@@ -16,6 +16,7 @@ import {
   Menu,
   UserCircle,
   ShoppingBag,
+  ShoppingCart,
   Newspaper,
   Settings,
   Home,
@@ -118,7 +119,7 @@ export function Header() {
           {isCustomer && (
             <Link href="/cart" aria-label="Open cart">
               <Button variant="outline" size="icon" className="relative">
-                <ShoppingBag className="h-5 w-5" />
+                <ShoppingCart className="h-5 w-5" />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 h-4 w-4 text-xs rounded-full bg-primary text-white flex items-center justify-center">
                     {cartCount}
@@ -231,7 +232,7 @@ export function Header() {
                   {isCustomer && (
                     <Button asChild variant="ghost" className="text-lg justify-start px-3 py-2" onClick={closeMobileMenu}>
                       <Link href="/cart">
-                        <ShoppingBag className="h-5 w-5 mr-3" />
+                        <ShoppingCart className="h-5 w-5 mr-3" />
                         Cart ({cartCount})
                       </Link>
                     </Button>

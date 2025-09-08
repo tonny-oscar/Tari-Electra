@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Bell, MessageSquare, FileText } from 'lucide-react';
+import { Bell, MessageSquare, FileText, Package } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getUnreadMessagesCountAction } from '@/app/actions/getUnreadMessagesCountAction';
 import { getPendingSubmeterApplicationsCount } from '@/data/submeterApplications';
@@ -21,9 +21,10 @@ import Link from 'next/link';
 export function NotificationBell() {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [pendingApplications, setPendingApplications] = useState(0);
+  const [stockAlerts, setStockAlerts] = useState(0);
   const pathname = usePathname();
 
-  const totalNotifications = unreadMessages + pendingApplications;
+  const totalNotifications = unreadMessages + pendingApplications + stockAlerts;
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -34,9 +35,21 @@ export function NotificationBell() {
         ]);
         setUnreadMessages(messagesCount);
         setPendingApplications(applicationsCount);
+        
+        // Fetch stock alerts
+        const { collection, query, where, getDocs } = await import('firebase/firestore');
+        const { db } = await import('@/lib/firebase');
+        const alertsQuery = query(
+          collection(db, 'notifications'),
+          where('type', 'in', ['low_stock', 'out_of_stock']),
+          where('read', '==', false)
+        );
+        const alertsSnapshot = await getDocs(alertsQuery);
+        setStockAlerts(alertsSnapshot.size);
       } catch {
         setUnreadMessages(0);
         setPendingApplications(0);
+        setStockAlerts(0);
       }
     };
 
@@ -87,6 +100,19 @@ export function NotificationBell() {
             {pendingApplications > 0 && (
               <Badge variant="secondary" className="ml-2">
                 {pendingApplications}
+              </Badge>
+            )}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/admin/stock" className="flex items-center justify-between w-full">
+            <div className="flex items-center">
+              <Package className="h-4 w-4 mr-2" />
+              Stock Alerts
+            </div>
+            {stockAlerts > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {stockAlerts}
               </Badge>
             )}
           </Link>

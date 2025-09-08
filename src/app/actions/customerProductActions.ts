@@ -28,15 +28,21 @@ export async function deleteCustomerProductAction(id: string) {
 
 export async function addCustomerProductAction(productData: any) {
   try {
-    // Process features and specifications from comma-separated strings to arrays
+    // Process features and specifications properly
     const processedData = {
       ...productData,
       features: typeof productData.features === 'string' 
         ? productData.features.split(',').map((f: string) => f.trim()).filter(Boolean)
         : productData.features || [],
       specifications: typeof productData.specifications === 'string' 
-        ? productData.specifications.split(',').map((s: string) => s.trim()).filter(Boolean)
-        : productData.specifications || [],
+        ? productData.specifications.split(',').reduce((acc: Record<string, string>, spec: string, index: number) => {
+            const trimmed = spec.trim();
+            if (trimmed) {
+              acc[`spec${index + 1}`] = trimmed;
+            }
+            return acc;
+          }, {})
+        : productData.specifications || {},
     };
     
     const id = await addCustomerProduct(processedData);
@@ -63,15 +69,21 @@ export async function addCustomerProductAction(productData: any) {
 
 export async function updateCustomerProductAction(id: string, productData: any) {
   try {
-    // Process features and specifications from comma-separated strings to arrays
+    // Process features and specifications properly
     const processedData = {
       ...productData,
       features: typeof productData.features === 'string' 
         ? productData.features.split(',').map((f: string) => f.trim()).filter(Boolean)
         : productData.features || [],
       specifications: typeof productData.specifications === 'string' 
-        ? productData.specifications.split(',').map((s: string) => s.trim()).filter(Boolean)
-        : productData.specifications || [],
+        ? productData.specifications.split(',').reduce((acc: Record<string, string>, spec: string, index: number) => {
+            const trimmed = spec.trim();
+            if (trimmed) {
+              acc[`spec${index + 1}`] = trimmed;
+            }
+            return acc;
+          }, {})
+        : productData.specifications || {},
     };
     
     const success = await updateCustomerProduct(id, processedData);

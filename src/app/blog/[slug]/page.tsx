@@ -86,21 +86,9 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
             <CardContent className="p-8 md:p-12">
               <header className="mb-8">
                 <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 text-gray-900 leading-tight">{post.title}</h1>
-                <div className="flex items-center gap-6 text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    <time className="font-medium">
-                      {post.createdAt?.toDate?.()?.toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      }) || 'Recently'}
-                    </time>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    <span className="font-medium">Tari Electra Team</span>
-                  </div>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <User className="h-5 w-5" />
+                  <span className="font-medium">Tari Electra Team</span>
                 </div>
               </header>
 
