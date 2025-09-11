@@ -36,7 +36,6 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
       ...doc.data(),
     })) as BlogPost[];
     
-    // Sort in JavaScript instead of Firestore
     return posts.sort((a, b) => {
       const aTime = a.createdAt?.toDate?.() || new Date(0);
       const bTime = b.createdAt?.toDate?.() || new Date(0);
@@ -58,7 +57,6 @@ export async function getPublishedBlogPosts(): Promise<BlogPost[]> {
       ...doc.data(),
     })) as BlogPost[];
     
-    // Filter and sort in JavaScript instead of Firestore
     return posts
       .filter(post => post.published === true)
       .sort((a, b) => {
@@ -82,7 +80,6 @@ export async function getBlogPost(slug: string): Promise<BlogPost | null> {
       ...doc.data(),
     })) as BlogPost[];
     
-    // Find post by slug in JavaScript
     const post = posts.find(p => p.slug === slug);
     return post || null;
   } catch (error) {

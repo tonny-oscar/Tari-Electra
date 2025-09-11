@@ -33,7 +33,7 @@ export default function HomePage() {
 
               <div className="flex flex-col sm:flex-row justify-center gap-6">
                 {/* ✅ Button redirects to /free-estimate */}
-                <Button
+                {/* <Button
                   asChild
                   size="lg"
                   className="bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 text-lg shadow-xl hover:scale-105 transition-transform"
@@ -42,7 +42,7 @@ export default function HomePage() {
                     Request a Quote
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
-                </Button>
+                </Button> */}
               </div>
             </div>
           </div>
