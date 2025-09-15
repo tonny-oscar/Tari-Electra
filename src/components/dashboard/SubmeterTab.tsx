@@ -92,7 +92,6 @@ export function SubmeterTab({ applications }: SubmeterTabProps) {
         description: 'Your submeter application has been submitted successfully. We will review it and get back to you soon.',
       });
 
-      // Reset form
       setFormData({
         fullName: '',
         email: '',

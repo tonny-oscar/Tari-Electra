@@ -5,7 +5,7 @@ export const testimonials: Testimonial[] = [
     id: '1',
     name: 'Macharia',
     role: 'Landlord',
-    company: '', // Company not specified, can be empty or omitted
+    company: '', 
     avatarUrl: 'https://placehold.co/100x100.png',
     avatarFallback: 'M',
     quote: 'Tari sub-meters have ensured each tenant pays for their own usage. It’s a game changer for managing my properties efficiently.',

@@ -42,7 +42,6 @@ type NavItem = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 };
 
-// ✅ Make sure Home always points to "/" (landing page, not login)
 const mainNavItems: NavItem[] = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/products', label: 'Products', icon: ShoppingBag },
@@ -115,19 +114,7 @@ export function Header() {
         <div className="flex items-center gap-2 md:gap-3">
           <ThemeToggle />
 
-          {/* Cart for customers */}
-          {isCustomer && (
-            <Link href="/cart" aria-label="Open cart">
-              <Button variant="outline" size="icon" className="relative">
-                <ShoppingCart className="h-5 w-5" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 w-4 text-xs rounded-full bg-primary text-white flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
-              </Button>
-            </Link>
-          )}
+
 
           {/* Authentication */}
           {loading ? (
@@ -229,20 +216,7 @@ export function Header() {
                     );
                   })}
 
-                  {isCustomer && (
-                    <Button asChild variant="ghost" className="text-lg justify-start px-3 py-2" onClick={closeMobileMenu}>
-                      <Link href="/cart">
-                        <ShoppingCart className="h-5 w-5 mr-3" />
-                        Cart ({cartCount})
-                      </Link>
-                    </Button>
-                  )}
 
-                  {isCustomer && (
-                    <p className="text-sm px-3 py-1 text-muted-foreground">
-                      Total: KES {cartTotal.toLocaleString('en-KE')}
-                    </p>
-                  )}
 
                   <hr className="my-3" />
 

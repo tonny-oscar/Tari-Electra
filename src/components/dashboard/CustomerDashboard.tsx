@@ -1357,7 +1357,7 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
           return (
             <Card key={order.id}>
               <CardHeader>
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-center">
                   <div>
                     <CardTitle className="text-lg">
                       Order {order.orderNumber || `#${order.id.slice(-8)}`}
@@ -1435,7 +1435,7 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
                         const StageIcon = stage.icon;
 
                         return (
-                          <div key={stage.id} className="flex items-center">
+                          <div key={stage.id} className="flex flex-col items-center">
                             <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${isCompleted
                               ? 'bg-blue-600 border-blue-600 text-white'
                               : isCurrent
@@ -1444,15 +1444,13 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
                               }`}>
                               <StageIcon className="w-4 h-4" />
                             </div>
-                            <div className="ml-2 hidden sm:block">
-                              <p className={`text-xs font-medium ${isCompleted || isCurrent ? 'text-blue-600' : 'text-gray-400'
-                                }`}>
-                                {stage.name}
-                              </p>
-                            </div>
+                            <p className={`text-xs font-medium mt-2 text-center ${isCompleted || isCurrent ? 'text-blue-600' : 'text-gray-400'
+                              }`}>
+                              {stage.name}
+                            </p>
                             {index < trackingStages.length - 1 && (
-                              <div className={`w-8 sm:w-16 h-0.5 mx-2 ${order.status > stage.id ? 'bg-blue-600' : 'bg-gray-300'
-                                }`} />
+                              <div className={`absolute w-16 h-0.5 mt-4 ${order.status > stage.id ? 'bg-blue-600' : 'bg-gray-300'
+                                }`} style={{ left: '50%', transform: 'translateX(-50%)' }} />
                             )}
                           </div>
                         );

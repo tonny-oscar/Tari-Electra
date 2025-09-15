@@ -35,7 +35,14 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
-const DEFAULT_IMAGE = 'https://placehold.co/600x400.png';
+const isValidUrl = (string: string) => {
+  try {
+    new URL(string);
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 export function ProductsSection({ products }: { products: Product[] }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -207,13 +214,19 @@ export function ProductsSection({ products }: { products: Product[] }) {
                   <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col h-full bg-background overflow-hidden group hover:scale-105">
                     {/* Product Image */}
                     <div className="h-48 w-full relative bg-muted overflow-hidden">
-                      <Image
-                        src={product.imageUrl || DEFAULT_IMAGE}
-                        alt={product.name || "Product Image"}
-                        fill
-                        className="object-contain transition-transform duration-300 group-hover:scale-110 p-2"
-                        sizes="320px"
-                      />
+                      {product.imageUrl && isValidUrl(product.imageUrl) ? (
+                        <Image
+                          src={product.imageUrl}
+                          alt={product.name || "Product Image"}
+                          fill
+                          className="object-contain transition-transform duration-300 group-hover:scale-110 p-2"
+                          sizes="320px"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ShoppingBag className="h-16 w-16 text-muted-foreground/50" />
+                        </div>
+                      )}
                       <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-semibold">
                         {product.category || 'General'}
                       </div>
@@ -270,20 +283,7 @@ export function ProductsSection({ products }: { products: Product[] }) {
                           Request Quote
                         </p>
                       )}
-                      <div className="space-y-2 w-full">
-                        <Button
-                          size="sm"
-                          className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300"
-                          onClick={() => handleAddToCart(product)}
-                          disabled={addingToCart === product.id}
-                        >
-                          {addingToCart === product.id ? (
-                            <>⏳ Adding...</>
-                          ) : (
-                            <>🛒 Add to Cart {getCartQuantity(product.id!) > 0 && `(${getCartQuantity(product.id!)})`}</>
-                          )}
-                        </Button>
-                        <div className="flex gap-2">
+                      <div className="flex gap-2 w-full">
                           <Dialog>
                             <DialogTrigger asChild>
                               <Button variant="outline" size="sm" className="flex-1 hover:bg-primary/5">
@@ -306,12 +306,18 @@ export function ProductsSection({ products }: { products: Product[] }) {
                               <div className="space-y-6">
                                 {/* Large image */}
                                 <div className="aspect-video w-full relative bg-muted rounded-lg overflow-hidden">
-                                  <Image
-                                    src={product.imageUrl || DEFAULT_IMAGE}
-                                    alt={product.name || "Product Image"}
-                                    fill
-                                    className="object-cover"
-                                  />
+                                  {product.imageUrl && isValidUrl(product.imageUrl) ? (
+                                    <Image
+                                      src={product.imageUrl}
+                                      alt={product.name || "Product Image"}
+                                      fill
+                                      className="object-contain"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <ShoppingBag className="h-24 w-24 text-muted-foreground/50" />
+                                    </div>
+                                  )}
                                 </div>
 
                                 {/* Description */}
@@ -398,19 +404,7 @@ export function ProductsSection({ products }: { products: Product[] }) {
                                 {/* Actions */}
                                 <div className="flex gap-3 pt-4 border-t">
                                   <Button
-                                    className="flex-1 bg-gradient-to-r from-primary to-primary/80"
-                                    onClick={() => handleAddToCart(product)}
-                                    disabled={addingToCart === product.id}
-                                  >
-                                    {addingToCart === product.id ? (
-                                      <>⏳ Adding...</>
-                                    ) : (
-                                      <>🛒 Add to Cart {getCartQuantity(product.id!) > 0 && `(${getCartQuantity(product.id!)})`}</>
-                                    )}
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    className="flex-1"
+                                    className="w-full"
                                     onClick={() => router.push('/contact')}
                                   >
                                     💬 Get Quote
@@ -429,7 +423,6 @@ export function ProductsSection({ products }: { products: Product[] }) {
                             💬 Inquire
                           </Button>
                         </div>
-                      </div>
                     </CardFooter>
                   </Card>
                 </motion.div>
