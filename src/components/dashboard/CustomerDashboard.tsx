@@ -124,7 +124,7 @@ export function CustomerDashboard() {
   // Order tracking stages
   const trackingStages: TrackingStage[] = [
     { id: 1, name: 'Order Received', icon: CheckCircle, color: 'bg-green-100 text-green-800' },
-    { id: 2, name: 'Order Consolidated', icon: Package, color: 'bg-blue-100 text-blue-800' },
+    // { id: 2, name: 'Order Consolidated', icon: Package, color: 'bg-blue-100 text-blue-800' },
     { id: 3, name: 'Order Packaged', icon: Package, color: 'bg-purple-100 text-purple-800' },
     { id: 4, name: 'Order Dispatched', icon: Truck, color: 'bg-orange-100 text-orange-800' }
   ];
@@ -1433,7 +1433,6 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
                         const isCompleted = order.status >= stage.id;
                         const isCurrent = order.status === stage.id;
                         const StageIcon = stage.icon;
-
                         return (
                           <div key={stage.id} className="flex flex-col items-center">
                             <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${isCompleted
