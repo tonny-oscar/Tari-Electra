@@ -47,6 +47,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { SubmeterTab } from './SubmeterTab';
 
+const trackingStages: TrackingStage[] = [
+  { id: 1, name: "Order Received", icon: CheckCircle, color: "bg-green-100 text-green-800" },
+  { id: 3, name: "Order Packaged", icon: Package, color: "bg-purple-100 text-purple-800" },
+  { id: 4, name: "Order Dispatched", icon: Truck, color: "bg-orange-100 text-orange-800" },
+];
+
 // Utility function to sanitize strings for logging
 const sanitizeForLog = (str: string): string => {
   return str.replace(/[\r\n\t]/g, ' ').substring(0, 100);
@@ -121,14 +127,12 @@ export function CustomerDashboard() {
     return () => unsubscribe();
   }, [user, toast]);
 
-  // Order tracking stages
-  const trackingStages: TrackingStage[] = [
-    { id: 1, name: 'Order Received', icon: CheckCircle, color: 'bg-green-100 text-green-800' },
-    // { id: 2, name: 'Order Consolidated', icon: Package, color: 'bg-blue-100 text-blue-800' },
-    { id: 3, name: 'Order Packaged', icon: Package, color: 'bg-purple-100 text-purple-800' },
-    { id: 4, name: 'Order Dispatched', icon: Truck, color: 'bg-orange-100 text-orange-800' }
-  ];
-
+// Order tracking stages
+// const trackingStages: TrackingStage[] = [
+//   { id: 1, name: "Order Received", icon: CheckCircle, color: "bg-green-100 text-green-800" },
+//   { id: 3, name: "Order Packaged", icon: Package, color: "bg-purple-100 text-purple-800" },
+//   { id: 4, name: "Order Dispatched", icon: Truck, color: "bg-orange-100 text-orange-800" },
+// ];
   // Authentication check and data loading
   useEffect(() => {
     let isSubscribed = true;
@@ -287,7 +291,7 @@ export function CustomerDashboard() {
                 id: doc.id,
                 name: sanitizeUserInput(data.name || 'Unnamed Product'),
                 price: Number(data.price) || 0,
-                image: sanitizeUserInput(data.image || data.imageUrl || '📦'),
+                image: sanitizeUserInput(data.image || data.imageUrl || ''),
                 imageUrl: sanitizeUserInput(data.imageUrl || ''),
                 stock: Number(data.stock) || 100,
                 description: sanitizeUserInput(data.description || 'No description available'),
@@ -1321,6 +1325,50 @@ function CartTab({ cart, updateCartQuantity, removeFromCart, getCartTotal, place
   );
 }
 
+// Profile Tab Component
+function ProfileTab({ customerData, user }: { customerData: any; user: any }) {
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Profile</h1>
+
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-600">Name</p>
+              <p className="font-medium">
+                {customerData?.firstName || customerData?.lastName
+                  ? `${customerData?.firstName || ''} ${customerData?.lastName || ''}`.trim()
+                  : user?.displayName || 'N/A'}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Email</p>
+              <p className="font-medium">{customerData?.email || user?.email || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Phone</p>
+              <p className="font-medium">{customerData?.profile?.phone || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Address</p>
+              <p className="font-medium">
+                {customerData?.profile?.address ||
+                  [customerData?.profile?.city, customerData?.profile?.country]
+                    .filter(Boolean)
+                    .join(', ') ||
+                  'N/A'}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+
+
 // Orders Tab Component
 function OrdersTab({ orders, trackingStages, setActiveTab }: {
   orders: Order[];
@@ -1357,43 +1405,49 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
           return (
             <Card key={order.id}>
               <CardHeader>
-                <div className="flex justify-between items-center">
+                {/* Responsive layout for order info */}
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                  {/* Left side: title, date, total, items */}
                   <div>
                     <CardTitle className="text-lg">
                       Order {order.orderNumber || `#${order.id.slice(-8)}`}
                     </CardTitle>
-                    <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600 mt-1">
                       <span className="flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
                         {new Date(order.createdAt).toLocaleDateString()}
                       </span>
-                      <span>•</span>
                       <span>KSH {order.total.toLocaleString('en-KE')}</span>
-                      <span>•</span>
                       <span>{order.items.length} items</span>
                     </div>
                   </div>
-                  <div className="text-right">
+
+                  {/* Right side: status + tracking */}
+                  <div className="sm:text-right">
                     {currentStage && (
-                      <Badge className={currentStage.color}>
+                      <Badge className={`flex items-center ${currentStage.color}`}>
                         <StageIcon className="w-3 h-3 mr-1" />
                         {currentStage.name}
                       </Badge>
                     )}
                     {order.trackingNumber && (
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-gray-500 mt-1 break-words">
                         Tracking: {order.trackingNumber}
                       </p>
                     )}
                   </div>
                 </div>
               </CardHeader>
+
               <CardContent>
                 <div className="space-y-4">
                   {/* Order Items */}
                   <div className="space-y-2">
                     {order.items.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                      <div
+                        key={index}
+                        className="flex items-center justify-between py-2 border-b last:border-b-0"
+                      >
                         <div className="flex items-center space-x-3">
                           <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
                             {item.image && item.image !== '📦' && !item.image.startsWith('http') ? (
@@ -1409,7 +1463,17 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
                                 }}
                               />
                             ) : null}
-                            <div className={`text-lg text-gray-400 ${item.image && item.image.startsWith('http') ? 'hidden' : item.image && item.image !== '📦' ? 'hidden' : ''}`}>📦</div>
+                            <div
+                              className={`text-lg text-gray-400 ${
+                                item.image && item.image.startsWith('http')
+                                  ? 'hidden'
+                                  : item.image && item.image !== '📦'
+                                  ? 'hidden'
+                                  : ''
+                              }`}
+                            >
+                              📦
+                            </div>
                           </div>
                           <div>
                             <p className="font-medium">{sanitizeUserInput(item.name)}</p>
@@ -1424,48 +1488,6 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
                       </div>
                     ))}
                   </div>
-
-                  {/* Order Progress */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-medium mb-3">Order Progress</h4>
-                    <div className="flex items-center justify-between">
-                      {trackingStages.map((stage, index) => {
-                        const isCompleted = order.status >= stage.id;
-                        const isCurrent = order.status === stage.id;
-                        const StageIcon = stage.icon;
-                        return (
-                          <div key={stage.id} className="flex flex-col items-center">
-                            <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${isCompleted
-                              ? 'bg-blue-600 border-blue-600 text-white'
-                              : isCurrent
-                                ? 'border-blue-600 text-blue-600'
-                                : 'border-gray-300 text-gray-400'
-                              }`}>
-                              <StageIcon className="w-4 h-4" />
-                            </div>
-                            <p className={`text-xs font-medium mt-2 text-center ${isCompleted || isCurrent ? 'text-blue-600' : 'text-gray-400'
-                              }`}>
-                              {stage.name}
-                            </p>
-                            {index < trackingStages.length - 1 && (
-                              <div className={`absolute w-16 h-0.5 mt-4 ${order.status > stage.id ? 'bg-blue-600' : 'bg-gray-300'
-                                }`} style={{ left: '50%', transform: 'translateX(-50%)' }} />
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Estimated Delivery */}
-                  {order.estimatedDelivery && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Estimated Delivery:</span>
-                      <span className="font-medium">
-                        {new Date(order.estimatedDelivery).toLocaleDateString()}
-                      </span>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1476,240 +1498,317 @@ function OrdersTab({ orders, trackingStages, setActiveTab }: {
   );
 }
 
-// Profile Tab Component
-function ProfileTab({ customerData, user }: {
-  customerData: CustomerData;
-  user: any;
-}) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: customerData.firstName,
-    lastName: customerData.lastName,
-    phone: customerData.profile?.phone || '',
-    address: customerData.profile?.address || '',
-    city: customerData.profile?.city || '',
-    country: customerData.profile?.country || ''
-  });
-  const { toast } = useToast();
+// {/* Orders List */}
+// <div className="space-y-6">
+//   {orders.map((order) => (
+//     <div key={order.id} className="bg-gray-50 p-4 rounded-lg">
+//       <h4 className="font-medium mb-3">Order Progress</h4>
 
-  const handleSave = async () => {
-    try {
-      await updateDoc(doc(db, 'customers', user.uid), {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        profile: {
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
-          country: formData.country
-        },
-        updatedAt: new Date().toISOString()
-      });
+//       {/* Responsive progress tracker */}
+//       <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+//         {trackingStages.map((stage, index) => {
+//           const isCompleted = order.status >= stage.id;
+//           const isCurrent = order.status === stage.id;
+//           const StageIcon = stage.icon;
 
-      toast({
-        title: 'Profile Updated',
-        description: 'Your profile has been updated successfully.',
-      });
-      setIsEditing(false);
-    } catch (error) {
-      console.error('Error updating profile:', sanitizeForLog(String(error)));
-      toast({
-        title: 'Update Failed',
-        description: 'Failed to update profile. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  };
+//           return (
+//             <div
+//               key={stage.id}
+//               className="flex flex-col items-center sm:flex-1 relative"
+//             >
+//               {/* Circle */}
+//               <div
+//                 className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
+//                   isCompleted
+//                     ? "bg-blue-600 border-blue-600 text-white"
+//                     : isCurrent
+//                     ? "border-blue-600 text-blue-600"
+//                     : "border-gray-300 text-gray-400"
+//                 }`}
+//               >
+//                 <StageIcon className="w-4 h-4" />
+//               </div>
 
-  const handleCancel = () => {
-    setFormData({
-      firstName: customerData.firstName,
-      lastName: customerData.lastName,
-      phone: customerData.profile?.phone || '',
-      address: customerData.profile?.address || '',
-      city: customerData.profile?.city || '',
-      country: customerData.profile?.country || ''
-    });
-    setIsEditing(false);
-  };
+//               {/* Stage Name */}
+//               <p
+//                 className={`text-xs font-medium mt-2 text-center ${
+//                   isCompleted || isCurrent ? "text-blue-600" : "text-gray-400"
+//                 }`}
+//               >
+//                 {stage.name}
+//               </p>
 
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Profile Settings</h1>
-        {!isEditing ? (
-          <Button onClick={() => setIsEditing(true)}>
-            <Settings className="w-4 h-4 mr-2" />
-            Edit Profile
-          </Button>
-        ) : (
-          <div className="space-x-2">
-            <Button variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave}>
-              Save Changes
-            </Button>
-          </div>
-        )}
-      </div>
+//               {/* Connector Line */}
+//               {index < trackingStages.length - 1 && (
+//                 <>
+//                   {/* Horizontal line (desktop) */}
+//                   <div
+//                     className={`hidden sm:block absolute top-4 left-1/2 w-full h-0.5 -z-10 ${
+//                       order.status > stage.id ? "bg-blue-600" : "bg-gray-300"
+//                     }`}
+//                   />
+//                   {/* Vertical line (mobile) */}
+//                   <div
+//                     className={`sm:hidden absolute left-1/2 top-8 h-full w-0.5 -z-10 ${
+//                       order.status > stage.id ? "bg-blue-600" : "bg-gray-300"
+//                     }`}
+//                   />
+//                 </>
+//               )}
+//             </div>
+//           );
+//         })}
+//       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Personal Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="firstName">First Name</Label>
-                {isEditing ? (
-                  <Input
-                    id="firstName"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  />
-                ) : (
-                  <p className="p-2 bg-muted rounded text-foreground">{sanitizeUserInput(customerData.firstName)}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="lastName">Last Name</Label>
-                {isEditing ? (
-                  <Input
-                    id="lastName"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  />
-                ) : (
-                  <p className="p-2 bg-muted rounded text-foreground">{sanitizeUserInput(customerData.lastName)}</p>
-                )}
-              </div>
-            </div>
+//       {/* Estimated Delivery */}
+//       {order.estimatedDelivery && (
+//         <div className="flex items-center justify-between text-sm mt-3">
+//           <span className="text-gray-600">Estimated Delivery:</span>
+//           <span className="font-medium">
+//             {new Date(order.estimatedDelivery).toLocaleDateString()}
+//           </span>
+//         </div>
+//       )}
+//     </div>
+//   ))}
+// </div>
 
-            <div>
-              <Label>Email Address</Label>
-              <div className="flex items-center p-2 bg-muted rounded">
-                <Mail className="w-4 h-4 mr-2 text-muted-foreground" />
-                <span className="text-foreground">{sanitizeUserInput(customerData.email)}</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Email cannot be changed</p>
-            </div>
 
-            <div>
-              <Label htmlFor="phone">Phone Number</Label>
-              {isEditing ? (
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="Enter your phone number"
-                />
-              ) : (
-                <div className="flex items-center p-2 bg-muted rounded">
-                  <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
-                  <span className="text-foreground">{sanitizeUserInput(customerData.profile?.phone || 'Not provided')}</span>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Address Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Address Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="address">Street Address</Label>
-              {isEditing ? (
-                <Textarea
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Enter your street address"
-                  rows={3}
-                />
-              ) : (
-                <div className="flex items-start p-2 bg-muted rounded">
-                  <MapPin className="w-4 h-4 mr-2 text-muted-foreground mt-0.5" />
-                  <span className="text-foreground">{sanitizeUserInput(customerData.profile?.address || 'Not provided')}</span>
-                </div>
-              )}
-            </div>
+// // Profile Tab Component
+// function ProfileTab({ customerData, user }: {
+//   customerData: CustomerData;
+//   user: any;
+// }) {
+//   const [isEditing, setIsEditing] = useState(false);
+//   const [formData, setFormData] = useState({
+//     firstName: customerData.firstName,
+//     lastName: customerData.lastName,
+//     phone: customerData.profile?.phone || '',
+//     address: customerData.profile?.address || '',
+//     city: customerData.profile?.city || '',
+//     country: customerData.profile?.country || ''
+//   });
+//   const { toast } = useToast();
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="city">City</Label>
-                {isEditing ? (
-                  <Input
-                    id="city"
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    placeholder="Enter your city"
-                  />
-                ) : (
-                  <p className="p-2 bg-muted rounded text-foreground">{sanitizeUserInput(customerData.profile?.city || 'Not provided')}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="country">Country</Label>
-                {isEditing ? (
-                  <Input
-                    id="country"
-                    value={formData.country}
-                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                    placeholder="Enter your country"
-                  />
-                ) : (
-                  <p className="p-2 bg-muted rounded text-foreground">{sanitizeUserInput(customerData.profile?.country || 'Not provided')}</p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+//   const handleSave = async () => {
+//     try {
+//       await updateDoc(doc(db, 'customers', user.uid), {
+//         firstName: formData.firstName,
+//         lastName: formData.lastName,
+//         profile: {
+//           phone: formData.phone,
+//           address: formData.address,
+//           city: formData.city,
+//           country: formData.country
+//         },
+//         updatedAt: new Date().toISOString()
+//       });
 
-      {/* Account Stats */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Statistics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <User className="w-8 h-8 text-blue-600" />
-              </div>
-              <p className="text-sm text-gray-600">Member Since</p>
-              <p className="font-semibold">
-                {user?.metadata?.creationTime
-                  ? new Date(user.metadata.creationTime).toLocaleDateString()
-                  : 'N/A'
-                }
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Package className="w-8 h-8 text-green-600" />
-              </div>
-              <p className="text-sm text-gray-600">Total Orders</p>
-              <p className="font-semibold">{customerData.orders?.length || 0}</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Star className="w-8 h-8 text-purple-600" />
-              </div>
-              <p className="text-sm text-gray-600">Customer Status</p>
-              <p className="font-semibold">
-                {customerData.role ? (customerData.role === 'customer' ? 'Regular Customer' : customerData.role.charAt(0).toUpperCase() + customerData.role.slice(1)) : 'Regular Customer'}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+//       toast({
+//         title: 'Profile Updated',
+//         description: 'Your profile has been updated successfully.',
+//       });
+//       setIsEditing(false);
+//     } catch (error) {
+//       console.error('Error updating profile:', sanitizeForLog(String(error)));
+//       toast({
+//         title: 'Update Failed',
+//         description: 'Failed to update profile. Please try again.',
+//         variant: 'destructive',
+//       });
+//     }
+//   };
+
+//   const handleCancel = () => {
+//     setFormData({
+//       firstName: customerData.firstName,
+//       lastName: customerData.lastName,
+//       phone: customerData.profile?.phone || '',
+//       address: customerData.profile?.address || '',
+//       city: customerData.profile?.city || '',
+//       country: customerData.profile?.country || ''
+//     });
+//     setIsEditing(false);
+//   };
+
+//   return (
+//     <div className="space-y-6">
+//       <div className="flex justify-between items-center">
+//         <h1 className="text-2xl font-bold">Profile Settings</h1>
+//         {!isEditing ? (
+//           <Button onClick={() => setIsEditing(true)}>
+//             <Settings className="w-4 h-4 mr-2" />
+//             Edit Profile
+//           </Button>
+//         ) : (
+//           <div className="space-x-2">
+//             <Button variant="outline" onClick={handleCancel}>
+//               Cancel
+//             </Button>
+//             <Button onClick={handleSave}>
+//               Save Changes
+//             </Button>
+//           </div>
+//         )}
+//       </div>
+
+//       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+//         {/* Personal Information */}
+//         <Card>
+//           <CardHeader>
+//             <CardTitle>Personal Information</CardTitle>
+//           </CardHeader>
+//           <CardContent className="space-y-4">
+//             <div className="grid grid-cols-2 gap-4">
+//               <div>
+//                 <Label htmlFor="firstName">First Name</Label>
+//                 {isEditing ? (
+//                   <Input
+//                     id="firstName"
+//                     value={formData.firstName}
+//                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+//                   />
+//                 ) : (
+//                   <p className="p-2 bg-muted rounded text-foreground">{sanitizeUserInput(customerData.firstName)}</p>
+//                 )}
+//               </div>
+//               <div>
+//                 <Label htmlFor="lastName">Last Name</Label>
+//                 {isEditing ? (
+//                   <Input
+//                     id="lastName"
+//                     value={formData.lastName}
+//                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+//                   />
+//                 ) : (
+//                   <p className="p-2 bg-muted rounded text-foreground">{sanitizeUserInput(customerData.lastName)}</p>
+//                 )}
+//               </div>
+//             </div>
+
+//             <div>
+//               <Label>Email Address</Label>
+//               <div className="flex items-center p-2 bg-muted rounded">
+//                 <Mail className="w-4 h-4 mr-2 text-muted-foreground" />
+//                 <span className="text-foreground">{sanitizeUserInput(customerData.email)}</span>
+//               </div>
+//               <p className="text-xs text-muted-foreground mt-1">Email cannot be changed</p>
+//             </div>
+
+//             <div>
+//               <Label htmlFor="phone">Phone Number</Label>
+//               {isEditing ? (
+//                 <Input
+//                   id="phone"
+//                   value={formData.phone}
+//                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+//                   placeholder="Enter your phone number"
+//                 />
+//               ) : (
+//                 <div className="flex items-center p-2 bg-muted rounded">
+//                   <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
+//                   <span className="text-foreground">{sanitizeUserInput(customerData.profile?.phone || 'Not provided')}</span>
+//                 </div>
+//               )}
+//             </div>
+//           </CardContent>
+//         </Card>
+
+//         {/* Address Information */}
+//         <Card>
+//           <CardHeader>
+//             <CardTitle>Address Information</CardTitle>
+//           </CardHeader>
+//           <CardContent className="space-y-4">
+//             <div>
+//               <Label htmlFor="address">Street Address</Label>
+//               {isEditing ? (
+//                 <Textarea
+//                   id="address"
+//                   value={formData.address}
+//                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+//                   placeholder="Enter your street address"
+//                   rows={3}
+//                 />
+//               ) : (
+//                 <div className="flex items-start p-2 bg-muted rounded">
+//                   <MapPin className="w-4 h-4 mr-2 text-muted-foreground mt-0.5" />
+//                   <span className="text-foreground">{sanitizeUserInput(customerData.profile?.address || 'Not provided')}</span>
+//                 </div>
+//               )}
+//             </div>
+
+//             <div className="grid grid-cols-2 gap-4">
+//               <div>
+//                 <Label htmlFor="city">City</Label>
+//                 {isEditing ? (
+//                   <Input
+//                     id="city"
+//                     value={formData.city}
+//                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+//                     placeholder="Enter your city"
+//                   />
+//                 ) : (
+//                   <p className="p-2 bg-muted rounded text-foreground">{sanitizeUserInput(customerData.profile?.city || 'Not provided')}</p>
+//                 )}
+//               </div>
+//               <div>
+//                 <Label htmlFor="country">Country</Label>
+//                 {isEditing ? (
+//                   <Input
+//                     id="country"
+//                     value={formData.country}
+//                     onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+//                     placeholder="Enter your country"
+//                   />
+//                 ) : (
+//                   <p className="p-2 bg-muted rounded text-foreground">{sanitizeUserInput(customerData.profile?.country || 'Not provided')}</p>
+//                 )}
+//               </div>
+//             </div>
+//           </CardContent>
+//         </Card>
+//       </div>
+
+//       {/* Account Stats */}
+//       <Card>
+//         <CardHeader>
+//           <CardTitle>Account Statistics</CardTitle>
+//         </CardHeader>
+//         <CardContent>
+//           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+//             <div className="text-center">
+//               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+//                 <User className="w-8 h-8 text-blue-600" />
+//               </div>
+//               <p className="text-sm text-gray-600">Member Since</p>
+//               <p className="font-semibold">
+//                 {user?.metadata?.creationTime
+//                   ? new Date(user.metadata.creationTime).toLocaleDateString()
+//                   : 'N/A'
+//                 }
+//               </p>
+//             </div>
+//             <div className="text-center">
+//               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+//                 <Package className="w-8 h-8 text-green-600" />
+//               </div>
+//               <p className="text-sm text-gray-600">Total Orders</p>
+//               <p className="font-semibold">{customerData.orders?.length || 0}</p>
+//             </div>
+//             <div className="text-center">
+//               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
+//                 <Star className="w-8 h-8 text-purple-600" />
+//               </div>
+//               <p className="text-sm text-gray-600">Customer Status</p>
+//               <p className="font-semibold">
+//                 {customerData.role ? (customerData.role === 'customer' ? 'Regular Customer' : customerData.role.charAt(0).toUpperCase() + customerData.role.slice(1)) : 'Regular Customer'}
+//               </p>
+//             </div>
+//           </div>
+//         </CardContent>
+//       </Card>
+//     </div>
+//   );
+// }
