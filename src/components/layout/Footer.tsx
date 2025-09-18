@@ -38,7 +38,7 @@ export function Footer() {
               </li>
             </ul>
             <div className="mt-4 flex space-x-3">
-              <Link href="https://www.facebook.com/tari.africa" aria-label="Facebook page for Tari Electra" className="text-muted-foreground hover:text-primary" target="_blank" rel="noopener noreferrer">
+              <Link href="https://www.facebook.com/profile.php?id=61552317838139" aria-label="Facebook page for Tari Electra" className="text-muted-foreground hover:text-primary" target="_blank" rel="noopener noreferrer">
                 <Facebook className="h-6 w-6" />
               </Link>
               {/* Add other social links here */}
