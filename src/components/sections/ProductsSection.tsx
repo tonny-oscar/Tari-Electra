@@ -22,6 +22,9 @@ import { useCart } from "@/context/CartContext";
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+import { db } from "@/lib/firebase/client";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+
 const sectionVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -52,6 +55,7 @@ export function ProductsSection({ products }: { products: Product[] }) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [scrollContainer, setScrollContainer] = useState<HTMLDivElement | null>(null);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
+  const [buyingNow, setBuyingNow] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -92,6 +96,55 @@ export function ProductsSection({ products }: { products: Product[] }) {
     if (lower.includes('meter')) return <Gauge className="h-10 w-10 text-primary" />;
     if (lower.includes('service')) return <SplitSquareHorizontal className="h-10 w-10 text-primary" />;
     return <ShoppingBag className="h-10 w-10 text-primary" />;
+  };
+
+  // ✅ Save purchase to Firestore and redirect
+  const handleBuyNow = async (product: Product) => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please log in before purchasing.",
+      });
+      router.push("/login");
+      return;
+    }
+
+    if (buyingNow === product.id) return;
+    setBuyingNow(product.id ?? "processing");
+
+    try {
+      await addDoc(collection(db, "customerProducts"), {
+        userId: user.uid,
+        productId: product.id ?? null,
+        name: product.name ?? null,
+        description: product.description ?? null,
+        price: product.price ?? 0,
+        category: product.category ?? "General",
+        subcategory: product.subcategory ?? null,
+        imageUrl: product.imageUrl ?? null,
+        features: product.features ?? [],
+        specifications: product.specifications ?? {},
+        stock: product.stock ?? 0,
+        purchasedAt: serverTimestamp(),
+      });
+
+      toast({
+        title: "Purchase Successful",
+        description: `${product.name ?? "Product"} has been added to your products.`,
+      });
+
+      // Redirect to the customer dashboard (user specified URL)
+      router.push("/customer/dashboard/");
+    } catch (error) {
+      console.error("Buy Now error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to complete purchase. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setBuyingNow(null);
+    }
   };
 
   const handleAddToCart = async (product: Product) => {
@@ -163,13 +216,7 @@ export function ProductsSection({ products }: { products: Product[] }) {
 
           {/* Category Filter */}
           <motion.div className="mt-8 flex flex-wrap justify-center gap-3" variants={itemVariants}>
-            {[
-              { key: "all", label: "All Products" },
-              // { key: "Water Meter - Prepaid Meter", label: "💳 Prepaid Water Meters" },
-              // { key: "Water Meter - Smart Meter", label: "🔌 Smart Water Meters" },
-              // { key: "Energy Meter - Prepaid Meter", label: "💳 Prepaid Energy Meters" },
-              // { key: "Energy Meter - Smart Meter", label: "🔌 Smart Energy Meters" },
-            ].map(cat => (
+            {[{ key: "all", label: "All Products" }].map(cat => (
               <Button
                 key={cat.key}
                 variant={selectedCategory === cat.key ? 'default' : 'outline'}
@@ -184,17 +231,17 @@ export function ProductsSection({ products }: { products: Product[] }) {
 
         {hasProducts ? (
           <div className="relative">
-            {/* Arrows */}
+            {/* Arrows (hidden on small screens) */}
             <button
               onClick={scrollLeft}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-200 hover:scale-110"
+              className="hidden sm:block absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-200 hover:scale-110"
               aria-label="Scroll left"
             >
               <ChevronLeft className="h-6 w-6 text-primary" />
             </button>
             <button
               onClick={scrollRight}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-200 hover:scale-110"
+              className="hidden sm:block absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-200 hover:scale-110"
               aria-label="Scroll right"
             >
               <ChevronRight className="h-6 w-6 text-primary" />
@@ -202,25 +249,25 @@ export function ProductsSection({ products }: { products: Product[] }) {
 
             <div
               ref={setScrollContainer}
-              className="flex overflow-x-auto scrollbar-hide gap-6 pb-4 snap-x snap-mandatory px-12"
+              className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory px-4 sm:px-12"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {filteredProducts.map((product, index) => (
                 <motion.div
                   key={product.id ?? `product-${index}`}
                   variants={itemVariants}
-                  className="flex-none w-80 snap-start"
+                  className="flex-none w-full sm:w-80 md:w-80 lg:w-96 snap-start"
                 >
-                  <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col h-full bg-background overflow-hidden group hover:scale-105">
+                  <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col h-full bg-background overflow-hidden group hover:scale-[1.02]">
                     {/* Product Image */}
-                    <div className="h-48 w-full relative bg-muted overflow-hidden">
+                    <div className="h-56 sm:h-48 w-full relative bg-muted overflow-hidden">
                       {product.imageUrl && isValidUrl(product.imageUrl) ? (
                         <Image
                           src={product.imageUrl}
                           alt={product.name || "Product Image"}
                           fill
                           className="object-contain transition-transform duration-300 group-hover:scale-110 p-2"
-                          sizes="320px"
+                          sizes="(max-width: 640px) 100vw, 320px"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
@@ -283,146 +330,155 @@ export function ProductsSection({ products }: { products: Product[] }) {
                           Request Quote
                         </p>
                       )}
-                      <div className="flex gap-2 w-full">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="flex-1 hover:bg-primary/5">
-                                📖 Learn More
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                              <DialogHeader>
-                                <DialogTitle className="flex items-center gap-3 text-xl">
-                                  <div className="p-2 bg-primary/10 rounded-full">
-                                    {getCategoryIcon(product.category || '')}
-                                  </div>
-                                  {product.name || 'Product Details'}
-                                </DialogTitle>
-                                <DialogDescription>
-                                  View detailed information about this product
-                                </DialogDescription>
-                              </DialogHeader>
-
-                              <div className="space-y-6">
-                                {/* Large image */}
-                                <div className="aspect-video w-full relative bg-muted rounded-lg overflow-hidden">
-                                  {product.imageUrl && isValidUrl(product.imageUrl) ? (
-                                    <Image
-                                      src={product.imageUrl}
-                                      alt={product.name || "Product Image"}
-                                      fill
-                                      className="object-contain"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center">
-                                      <ShoppingBag className="h-24 w-24 text-muted-foreground/50" />
-                                    </div>
-                                  )}
+                      <div className="flex flex-col sm:flex-row gap-2 w-full">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="w-full sm:flex-1 hover:bg-primary/5">
+                              📖 Learn More
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-3 text-xl">
+                                <div className="p-2 bg-primary/10 rounded-full">
+                                  {getCategoryIcon(product.category || '')}
                                 </div>
+                                {product.name || 'Product Details'}
+                              </DialogTitle>
+                              <DialogDescription>
+                                View detailed information about this product
+                              </DialogDescription>
+                            </DialogHeader>
 
-                                {/* Description */}
-                                <div>
-                                  <h3 className="font-semibold mb-2 flex items-center gap-2">📋 Description</h3>
-                                  <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {product.description || 'No description available'}
-                                  </p>
-                                </div>
-
-                                {/* Pricing + Stock */}
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div className="bg-primary/5 p-4 rounded-lg">
-                                    <h3 className="font-semibold mb-2 flex items-center gap-2">💰 Pricing</h3>
-                                    <p className="text-2xl font-bold text-primary">
-                                      {(product.price || 0) > 0
-                                        ? `KES ${(product.price || 0).toLocaleString('en-KE')}`
-                                        : 'Request Quote'}
-                                    </p>
-                                  </div>
-                                  <div className="bg-blue-50 p-4 rounded-lg">
-                                    <h3 className="font-semibold mb-2 flex items-center gap-2">📦 Stock</h3>
-                                    <p
-                                      className={`text-2xl font-bold ${
-                                        (product.stock || 0) > 10
-                                          ? 'text-green-600'
-                                          : (product.stock || 0) > 0
-                                          ? 'text-orange-600'
-                                          : 'text-red-600'
-                                      }`}
-                                    >
-                                      {(product.stock || 0) > 0
-                                        ? `${product.stock || 0} Available`
-                                        : 'Out of Stock'}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Specifications */}
-                                {product.specifications && (
-                                  <div>
-                                    <h3 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
-                                      🔧 Specifications
-                                    </h3>
-                                    <div className="bg-muted/50 p-4 rounded-lg border">
-                                      <div className="grid gap-2">
-                                        {Object.entries(product.specifications).map(([key, value]) => (
-                                          <div
-                                            key={key}
-                                            className="flex items-start gap-2 p-2 bg-background/50 rounded-lg"
-                                          >
-                                            <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                                            <div className="flex-1">
-                                              <span className="font-medium text-foreground capitalize">
-                                                {key.replace(/([A-Z])/g, ' $1')}:
-                                              </span>
-                                              <span className="ml-2 text-muted-foreground">{String(value)}</span>
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
+                            <div className="space-y-6">
+                              {/* Large image */}
+                              <div className="aspect-video w-full relative bg-muted rounded-lg overflow-hidden">
+                                {product.imageUrl && isValidUrl(product.imageUrl) ? (
+                                  <Image
+                                    src={product.imageUrl}
+                                    alt={product.name || "Product Image"}
+                                    fill
+                                    className="object-contain"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <ShoppingBag className="h-24 w-24 text-muted-foreground/50" />
                                   </div>
                                 )}
+                              </div>
 
-                                {/* Features */}
-                                {Array.isArray(product.features) && product.features.length > 0 && (
-                                  <div>
-                                    <h3 className="font-semibold mb-3 flex items-center gap-2">⭐ Key Features</h3>
+                              {/* Description */}
+                              <div>
+                                <h3 className="font-semibold mb-2 flex items-center gap-2">📋 Description</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                  {product.description || 'No description available'}
+                                </p>
+                              </div>
+
+                              {/* Pricing + Stock */}
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-primary/5 p-4 rounded-lg">
+                                  <h3 className="font-semibold mb-2 flex items-center gap-2">💰 Pricing</h3>
+                                  <p className="text-2xl font-bold text-primary">
+                                    {(product.price || 0) > 0
+                                      ? `KES ${(product.price || 0).toLocaleString('en-KE')}`
+                                      : 'Request Quote'}
+                                  </p>
+                                </div>
+                                <div className="bg-blue-50 p-4 rounded-lg">
+                                  <h3 className="font-semibold mb-2 flex items-center gap-2">📦 Stock</h3>
+                                  <p
+                                    className={`text-2xl font-bold ${
+                                      (product.stock || 0) > 10
+                                        ? 'text-green-600'
+                                        : (product.stock || 0) > 0
+                                        ? 'text-orange-600'
+                                        : 'text-red-600'
+                                    }`}
+                                  >
+                                    {(product.stock || 0) > 0
+                                      ? `${product.stock || 0} Available`
+                                      : 'Out of Stock'}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Specifications */}
+                              {product.specifications && (
+                                <div>
+                                  <h3 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
+                                    🔧 Specifications
+                                  </h3>
+                                  <div className="bg-muted/50 p-4 rounded-lg border">
                                     <div className="grid gap-2">
-                                      {product.features.map((feature, idx) => (
+                                      {Object.entries(product.specifications).map(([key, value]) => (
                                         <div
-                                          key={`${feature}-${idx}`}
-                                          className="flex items-start gap-2 p-2 bg-muted/50 rounded-lg"
+                                          key={key}
+                                          className="flex items-start gap-2 p-2 bg-background/50 rounded-lg"
                                         >
                                           <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                                          <span className="text-sm">{feature}</span>
+                                          <div className="flex-1">
+                                            <span className="font-medium text-foreground capitalize">
+                                              {key.replace(/([A-Z])/g, ' $1')}:
+                                            </span>
+                                            <span className="ml-2 text-muted-foreground">{String(value)}</span>
+                                          </div>
                                         </div>
                                       ))}
                                     </div>
                                   </div>
-                                )}
-
-                                {/* Actions */}
-                                <div className="flex gap-3 pt-4 border-t">
-                                  <Button
-                                    className="w-full"
-                                    onClick={() => router.push('/contact')}
-                                  >
-                                    💬 Get Quote
-                                  </Button>
                                 </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                              )}
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 hover:bg-primary/5"
-                            onClick={() => router.push('/contact')}
-                          >
-                            💬 Inquire
-                          </Button>
-                        </div>
+                              {/* Features */}
+                              {Array.isArray(product.features) && product.features.length > 0 && (
+                                <div>
+                                  <h3 className="font-semibold mb-3 flex items-center gap-2">⭐ Key Features</h3>
+                                  <div className="grid gap-2">
+                                    {product.features.map((feature, idx) => (
+                                      <div
+                                        key={`${feature}-${idx}`}
+                                        className="flex items-start gap-2 p-2 bg-muted/50 rounded-lg"
+                                      >
+                                        <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                                        <span className="text-sm">{feature}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Actions */}
+                              <div className="flex gap-3 pt-4 border-t">
+                                <Button
+                                  className="w-full"
+                                  onClick={() => router.push('/contact')}
+                                >
+                                  💬 Get Quote
+                                </Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:flex-1 hover:bg-primary/5"
+                          onClick={() => router.push('/contact')}
+                        >
+                          💬 Inquire
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          disabled={buyingNow === product.id}
+                          className="w-full sm:flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                          onClick={() => handleBuyNow(product)}
+                        >
+                          {buyingNow === product.id ? "⏳ Processing..." : "🛒 Buy Now"}
+                        </Button>
+                      </div>
                     </CardFooter>
                   </Card>
                 </motion.div>
@@ -447,4 +503,3 @@ export function ProductsSection({ products }: { products: Product[] }) {
     </motion.section>
   );
 }
-
