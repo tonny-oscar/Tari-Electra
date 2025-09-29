@@ -3,46 +3,47 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const { to, message } = await request.json();
-    
-    // Validate required fields
+
+    // Validate input
     if (!to || !message) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
-    
-    // Validate Twilio credentials
-    if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
-      console.error('Twilio credentials not configured');
+
+    // Validate Africa'sTalking credentials
+    const username = process.env.AFRICASTALKING_USERNAME;
+    const apiKey = process.env.AFRICASTALKING_API_KEY;
+    const senderId = process.env.AFRICASTALKING_SENDER_ID; // optional
+
+    if (!username || !apiKey) {
+      console.error('Africa’sTalking credentials not configured');
       return NextResponse.json({ error: 'SMS service not configured' }, { status: 500 });
     }
 
-    // Using Twilio
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const fromNumber = process.env.TWILIO_PHONE_NUMBER;
-
-    const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
+    // Send SMS via Africa'sTalking REST API
+    const response = await fetch('https://api.africastalking.com/version1/messaging', {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
+        'apiKey': apiKey,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        From: fromNumber || '',
-        To: to,
-        Body: message,
+        username,
+        to, // comma-separated list for multiple recipients
+        message,
+        ...(senderId ? { from: senderId } : {}),
       }),
     });
 
     if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Twilio error:', errorData);
-      throw new Error('Failed to send SMS');
+      const text = await response.text();
+      console.error('Africa’sTalking error:', text);
+      return NextResponse.json({ error: 'Failed to send SMS', details: text }, { status: 500 });
     }
 
     const result = await response.json();
     return NextResponse.json({ success: true, result });
-  } catch (error) {
+  } catch (error: any) {
     console.error('SMS API error:', error);
-    return NextResponse.json({ error: 'Failed to send SMS' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to send SMS', details: error.message }, { status: 500 });
   }
 }
