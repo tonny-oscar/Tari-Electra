@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -11,7 +10,7 @@ import {
   Newspaper,
   MessageSquare,
   ShoppingBag,
-  Settings as SettingsIcon, // Renamed to avoid conflict with component
+  Settings as SettingsIcon,
   Settings,
   ImageIcon,
 } from 'lucide-react';
@@ -31,6 +30,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { Loader2 } from 'lucide-react'; 
 import { NotificationBell } from '@/components/admin/NotificationBell';
 import { useToast } from '@/hooks/use-toast';
+import ResellerApplications from '@/components/admin/ResellerApplications';
 
 const navLinks = [
   { href: '/admin', label: 'Dashboard', icon: Home },
@@ -42,75 +42,59 @@ const navLinks = [
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
   { href: '/admin/homepage', label: 'Homepage Settings', icon: SettingsIcon },
   { href: '/admin/submeter-requests', label: 'Sub-Meter Applications', icon: CircleUser },
+  { href: '/admin/reseller-applications', label: 'Reseller Applications', icon: CircleUser },
 ];
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AdminLayout() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [isAdminRouteAllowed, setIsAdminRouteAllowed] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log(`[AdminLayout] Auth State: loading=${loading}, user=${user ? user.email : 'null'}`);
-
     if (loading) {
-      console.log('[AdminLayout] Auth is loading. Waiting...');
       setIsAdminRouteAllowed(false);
       return;
     }
 
     if (!user) {
-      console.log('[AdminLayout] No user authenticated. Redirecting to login.');
       router.push('/login?redirect=/admin');
       setIsAdminRouteAllowed(false);
       return;
     }
 
-    // Check if user is admin
-    const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'morgan.rotich@tarielectra.africa').split(',').map(email => email.trim());
+    const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'morgan.rotich@tarielectra.africa')
+      .split(',')
+      .map(email => email.trim());
     const isAdmin = ADMIN_EMAILS.includes(user.email?.trim() || '');
     
     if (!isAdmin) {
-      console.log(`[AdminLayout] User ${user.email} is not an admin. Redirecting to login.`);
       router.push('/login');
       setIsAdminRouteAllowed(false);
       return;
     }
     
-    console.log(`[AdminLayout] User ${user.email} is authenticated as admin. Granting access.`);
     setIsAdminRouteAllowed(true);
-
   }, [user, loading, router, toast]);
 
   const handleLogout = async () => {
     await logout();
   };
 
-  if (loading) {
+  if (loading || !user || !isAdminRouteAllowed) {
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground">Loading Admin Area...</p>
+        <p className="mt-4 text-muted-foreground">
+          {loading ? "Loading Admin Area..." : "Verifying access..."}
+        </p>
       </div>
     );
   }
 
-  if (!user || !isAdminRouteAllowed) {
-    return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground">Verifying access...</p>
-      </div>
-    );
-  }
-
-  console.log('[AdminLayout] Render: Access VERIFIED, rendering admin content for', user.email);
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+      {/* Sidebar */}
       <div className="hidden border-r bg-muted/40 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
@@ -140,15 +124,13 @@ export default function AdminLayout({
           </div>
         </div>
       </div>
+
+      {/* Main content */}
       <div className="flex flex-col">
         <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
           <Sheet>
             <SheetTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="shrink-0 md:hidden"
-              >
+              <Button variant="outline" size="icon" className="shrink-0 md:hidden">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
@@ -164,26 +146,25 @@ export default function AdminLayout({
                   <span>Tari Electra Admin</span>
                 </Link>
                 {navLinks.map(link => (
-                    <Link
-                        key={link.label}
-                        href={link.href}
-                        className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                    >
-                        <link.icon className="h-5 w-5" />
-                        {link.label}
-                    </Link>
+                  <Link
+                    key={link.label}
+                    href={link.href}
+                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                  >
+                    <link.icon className="h-5 w-5" />
+                    {link.label}
+                  </Link>
                 ))}
               </nav>
               <div className="mt-auto">
                 <Button size="sm" className="w-full" asChild variant="outline">
-                    <Link href="/">View Public Site</Link>
+                  <Link href="/">View Public Site</Link>
                 </Button>
               </div>
             </SheetContent>
           </Sheet>
-          <div className="w-full flex-1">
-            {/* Optional Search Form can go here */}
-          </div>
+
+          <div className="w-full flex-1"></div>
           <NotificationBell />
           <ThemeToggle />
           <DropdownMenu>
@@ -196,10 +177,8 @@ export default function AdminLayout({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Admin User</p> 
-                    <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email}
-                    </p>
+                  <p className="text-sm font-medium leading-none">Admin User</p> 
+                  <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -207,8 +186,10 @@ export default function AdminLayout({
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
+
+        {/* Main Section: display Reseller Applications here */}
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
-          {children}
+          <ResellerApplications />
         </main>
       </div>
     </div>

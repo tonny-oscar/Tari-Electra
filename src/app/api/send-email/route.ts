@@ -1,4 +1,3 @@
-// src/app/api/send-email/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -25,10 +24,10 @@ export async function POST(req: NextRequest) {
     // Prepare email payload
     const emailPayload = {
       sender: { email: shopEmail, name: "Tari Electra" },
-      to: [{ email: to }],                      // customer
-      cc: [{ email: shopEmail }],               // shop owner notified
+      to: [{ email: to }],                     
+      cc: [{ email: shopEmail }],               
       subject,
-      htmlContent: html,                         // the email HTML
+      html: html,                        
     };
 
     // Call Brevo API
