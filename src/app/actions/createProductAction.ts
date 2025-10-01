@@ -51,12 +51,14 @@ export async function createProductAction(
     const featuresString = features || ''; 
     const featuresArray = featuresString.split(',').map(f => f.trim()).filter(f => f.length > 0);
     
-    const productToAdd: Omit<Product, 'id'> = {
+    const productToAdd = {
       ...restOfData,
+      description: restOfData.description || 'No description',
+      category: restOfData.category || 'General',
       features: featuresArray,
-      imageUrl: imageUrl || undefined, 
-      imageHint: imageHint || undefined,
-      status: 'active',
+      imageUrl: imageUrl || '', 
+      imageHint: imageHint || '',
+      status: 'active' as const,
       stock: 100,
       rating: 4.0,
     };
