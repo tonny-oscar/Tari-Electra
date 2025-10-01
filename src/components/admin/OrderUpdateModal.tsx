@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
+import { db } from '@/lib/firebase';
 import {
   Dialog,
   DialogContent,
@@ -23,12 +23,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-
-interface Order {
-  id: string;
-  status: number;
-  trackingNumber?: string;
-}
+import { Order } from '@/lib/firebase/store';
 
 interface TrackingStage {
   id: number;
@@ -114,7 +109,7 @@ export function OrderUpdateModal({ order, isOpen, onClose, trackingStages }: Ord
       <DialogContent className="sm:max-w-lg bg-gradient-to-br from-white to-blue-50/30 border-0 shadow-2xl">
         <DialogHeader className="text-center pb-2">
           <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-            Update Order #{order.id.slice(-8)}
+            Update Order {order.orderNumber || `#${order.id.slice(-8)}`}
           </DialogTitle>
           <DialogDescription className="text-gray-600">
             Update status and tracking information

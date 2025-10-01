@@ -2,30 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Package, Edit, Calendar, User, DollarSign } from 'lucide-react';
 import { OrderUpdateModal } from '@/components/admin/OrderUpdateModal';
-
-interface Order {
-  id: string;
-  userId: string;
-  customerEmail: string;
-  customerName?: string;
-  customerPhone?: string;
-  items: any[];
-  total: number;
-  status: number;
-  createdAt: any;
-  trackingNumber?: string;
-  statusHistory?: Array<{
-    status: number;
-    timestamp: any;
-    notes?: string;
-  }>;
-}
+import { Order } from '@/lib/firebase/store';
 
 const trackingStages = [
   { id: 1, name: 'Order Placed', color: 'bg-blue-100 text-blue-800' },
@@ -35,9 +18,9 @@ const trackingStages = [
 ];
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -50,7 +33,7 @@ export default function AdminOrdersPage() {
       const ordersList = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      })) as Order[];
+      })) as any[];
       
       setOrders(ordersList);
       setLoading(false);
@@ -111,7 +94,7 @@ export default function AdminOrdersPage() {
                           </span>
                           <span className="flex items-center">
                             <DollarSign className="w-4 h-4 mr-1" />
-                            KSH {order.total.toFixed(2)}
+                            KSH {(order.total || 0).toFixed(2)}
                           </span>
                         </div>
                         <div className="text-sm text-gray-700">
@@ -145,17 +128,17 @@ export default function AdminOrdersPage() {
                 <CardContent>
                   <div className="space-y-4">
                     <div>
-                      <h4 className="font-medium mb-2">Order Items ({order.items.length})</h4>
+                      <h4 className="font-medium mb-2">Order Items ({order.items?.length || 0})</h4>
                       <div className="space-y-2">
-                        {order.items.slice(0, 3).map((item, index) => (
+                        {(order.items || []).slice(0, 3).map((item: any, index: number) => (
                           <div key={index} className="flex justify-between text-sm">
                             <span>{item.name} × {item.quantity}</span>
                             <span>KSH {(item.price * item.quantity).toFixed(2)}</span>
                           </div>
                         ))}
-                        {order.items.length > 3 && (
+                        {(order.items?.length || 0) > 3 && (
                           <p className="text-sm text-gray-500">
-                            +{order.items.length - 3} more items
+                            +{(order.items?.length || 0) - 3} more items
                           </p>
                         )}
                       </div>
