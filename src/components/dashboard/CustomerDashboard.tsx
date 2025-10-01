@@ -495,8 +495,8 @@ const placeOrder = async () => {
     const orderData = {
       customerId: user.uid,
       customerEmail: user.email || '',
-      customerName: `${customerData.firstName} ${customerData.lastName}`,
-      customerPhone: customerData.phone || '',
+      customerName: `${customerData?.firstName || ''} ${customerData?.lastName || ''}`.trim(),
+      customerPhone: customerData?.profile?.phone || '',
       items: cart,
       total: getCartTotal(),
       status: 1,
@@ -723,7 +723,7 @@ const handleLogout = async () => {
             )}
             {activeTab === 'submeters' && (
               <SubmeterTab
-                applications={submeterApplications}
+                applications={submeterApplications.filter(app => app.id).map(app => ({ ...app, id: app.id! }))}
               />
             )}
           </div>
@@ -989,7 +989,7 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
     if (searchTerm) {
       filtered = filtered.filter(product => 
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchTerm.toLowerCase())
+        (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -1153,7 +1153,7 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
               <CardContent className="p-6">
                 <div className="mb-4">
                   <h3 className="font-semibold text-lg mb-2 line-clamp-2">{sanitizeUserInput(product.name)}</h3>
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{sanitizeUserInput(product.description)}</p>
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{sanitizeUserInput(product.description || '')}</p>
                   <div className="flex items-center space-x-1 mb-3">
                     {[...Array(5)].map((_, i) => (
                       <Star
