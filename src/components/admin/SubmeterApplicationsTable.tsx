@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, where, orderBy, QueryConstraint } from 'firebase/firestore';
-import { db } from '@/lib/firebase'; // Adjust path as needed
+import { db } from '@/lib/firebase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';

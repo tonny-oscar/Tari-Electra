@@ -19,6 +19,7 @@ const signupSchema = z
   .object({
     firstName: z.string().min(1, { message: 'First name is required' }),
     lastName: z.string().min(1, { message: 'Last name is required' }),
+    phone: z.string().min(1, { message: 'Phone number is required' }),
     email: z.string().email({ message: 'Invalid email address' }),
     password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
     confirmPassword: z.string(),
@@ -55,29 +56,61 @@ export function SignupFormCustomer() {
       await setDoc(doc(db, 'customers', user.uid), {
         firstName: data.firstName,
         lastName: data.lastName,
+        phone: data.phone,
         email: data.email,
         role: 'customer',
         createdAt: new Date().toISOString(),
         orders: [],
       });
 
-      await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: data.email,
-          subject: 'Welcome to Tari Electra!',
-          html: `<h2>Welcome to Tari Electra!</h2>
-                 <p>Hello ${data.firstName}, thank you for creating an account with us 🚀</p>`,
-        }),
-      });
+      // Send welcome email
+      try {
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: data.email,
+            subject: 'Welcome to Tari Electra!',
+            html: `<h2>Welcome to Tari Electra!</h2>
+                   <p>Hello ${data.firstName}, thank you for creating an account with us 🚀</p>`,
+          }),
+        });
+      } catch (emailError) {
+        console.error('Email sending failed:', emailError);
+      }
+
+      // Send welcome SMS
+      try {
+        await fetch('/api/send-sms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: data.phone,
+            message: `Welcome to Tari Electra, ${data.firstName}! Your account has been created successfully. Visit our website to explore our electrical solutions.`,
+          }),
+        });
+      } catch (smsError) {
+        console.error('SMS sending failed:', smsError);
+      }
 
       toast({ title: 'Account Created!', description: 'Redirecting to your dashboard...' });
       router.push('/customer/dashboard');
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Signup failed');
-      toast({ title: 'Signup Failed', description: err.message, variant: 'destructive' });
+      let errorMessage = 'Account creation failed. Please try again.';
+      
+      if (err.code === 'auth/email-already-in-use') {
+        errorMessage = 'An account with this email already exists. Please use a different email or try logging in.';
+      } else if (err.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak. Please choose a stronger password.';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (err.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      }
+      
+      setError(errorMessage);
+      toast({ title: 'Signup Failed', description: errorMessage, variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -104,6 +137,12 @@ export function SignupFormCustomer() {
           <Input id="lastName" {...register('lastName')} />
           {errors.lastName && <p className="text-sm text-red-500">{errors.lastName.message}</p>}
         </div>
+      </div>
+
+      <div>
+        <Label htmlFor="phone">Phone Number</Label>
+        <Input id="phone" type="tel" {...register('phone')} />
+        {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
       </div>
 
       <div>

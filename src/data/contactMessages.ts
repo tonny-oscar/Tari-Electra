@@ -1,5 +1,5 @@
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase/client';
 import type { ContactMessage } from '@/lib/types';
 import {
   collection,

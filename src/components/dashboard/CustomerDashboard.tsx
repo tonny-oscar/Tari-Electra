@@ -38,6 +38,7 @@ import {
   type SubmeterApplication
 } from '@/lib/firebase/firestore';
 import { signOut } from 'firebase/auth';
+import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -494,7 +495,7 @@ export function CustomerDashboard() {
         status: 1,
         createdAt: new Date().toISOString(),
         estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        trackingNumber: `TRK${Date.now()}`
+        trackingNumber: `TRK${Math.random().toString(36).substr(2, 6).toUpperCase()}`
       };
 
       const { orderId, orderNumber } = await createOrder(orderData);
@@ -507,11 +508,21 @@ export function CustomerDashboard() {
       setCart([]);
       setActiveTab('orders');
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error placing order:', sanitizeForLog(String(error)));
+      let errorMessage = 'Unable to place your order. Please try again.';
+      
+      if (error.code === 'permission-denied') {
+        errorMessage = 'You do not have permission to place orders. Please log in again.';
+      } else if (error.code === 'unavailable') {
+        errorMessage = 'Service temporarily unavailable. Please try again in a few moments.';
+      } else if (error.message?.includes('network')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      }
+      
       toast({
         title: 'Order Failed',
-        description: 'Failed to place order. Please try again.',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
@@ -572,35 +583,57 @@ export function CustomerDashboard() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Zap className="w-12 h-12 text-white" />
-              </div>
-              <span className="font-bold text-xl text-gray-800">Tari Electra</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                Welcome, {sanitizeUserInput(customerData.firstName)} {sanitizeUserInput(customerData.lastName)}
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            <div className="flex items-center">
+              <span className="text-sm sm:text-base text-gray-600">
+                Welcome, {sanitizeUserInput(customerData.firstName)}
               </span>
+            </div>
+            <div className="flex items-center">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleLogout}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm"
               >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
+                <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Logout</span>
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar Navigation */}
-          <div className="lg:w-64">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
+          {/* Mobile Navigation */}
+          <div className="lg:hidden">
+            <div className="flex overflow-x-auto gap-2 pb-2">
+              {tabs.map(tab => {
+                const TabIcon = tab.icon;
+                return (
+                  <Button
+                    key={tab.id}
+                    variant={activeTab === tab.id ? "default" : "outline"}
+                    size="sm"
+                    className="flex-shrink-0 text-xs"
+                    onClick={() => setActiveTab(tab.id)}
+                  >
+                    <TabIcon className="w-3 h-3 mr-1" />
+                    {tab.name}
+                    {tab.badge && tab.badge > 0 && (
+                      <Badge variant="secondary" className="ml-1 text-xs">
+                        {tab.badge}
+                      </Badge>
+                    )}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Desktop Sidebar Navigation */}
+          <div className="hidden lg:block lg:w-64">
             <Card>
               <CardContent className="p-6">
                 <nav className="space-y-2">

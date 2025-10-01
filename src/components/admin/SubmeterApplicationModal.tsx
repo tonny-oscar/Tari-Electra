@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db, storage } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase/client';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { SubmeterApplication } from '@/lib/types/submeter';
 import {

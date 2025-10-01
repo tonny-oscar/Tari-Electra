@@ -98,53 +98,19 @@ export function ProductsSection({ products }: { products: Product[] }) {
     return <ShoppingBag className="h-10 w-10 text-primary" />;
   };
 
-  // ✅ Save purchase to Firestore and redirect
+  // Redirect to customer dashboard products
   const handleBuyNow = async (product: Product) => {
     if (!user) {
       toast({
         title: "Login Required",
-        description: "Please log in before purchasing.",
+        description: "Please log in to view products.",
       });
       router.push("/login");
       return;
     }
 
-    if (buyingNow === product.id) return;
-    setBuyingNow(product.id ?? "processing");
-
-    try {
-      await addDoc(collection(db, "customerProducts"), {
-        userId: user.uid,
-        productId: product.id ?? null,
-        name: product.name ?? null,
-        description: product.description ?? null,
-        price: product.price ?? 0,
-        category: product.category ?? "General",
-        subcategory: product.subcategory ?? null,
-        imageUrl: product.imageUrl ?? null,
-        features: product.features ?? [],
-        specifications: product.specifications ?? {},
-        stock: product.stock ?? 0,
-        purchasedAt: serverTimestamp(),
-      });
-
-      toast({
-        title: "Purchase Successful",
-        description: `${product.name ?? "Product"} has been added to your products.`,
-      });
-
-      // Redirect to the customer dashboard (user specified URL)
-      router.push("/customer/dashboard/");
-    } catch (error) {
-      console.error("Buy Now error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to complete purchase. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setBuyingNow(null);
-    }
+    // Redirect to customer dashboard products
+    router.push("/customer/dashboard");
   };
 
   const handleAddToCart = async (product: Product) => {
@@ -215,13 +181,13 @@ export function ProductsSection({ products }: { products: Product[] }) {
           </motion.p>
 
           {/* Category Filter */}
-          <motion.div className="mt-8 flex flex-wrap justify-center gap-3" variants={itemVariants}>
+          <motion.div className="mt-8 flex flex-wrap justify-center gap-2 sm:gap-3 px-4" variants={itemVariants}>
             {[{ key: "all", label: "All Products" }].map(cat => (
               <Button
                 key={cat.key}
                 variant={selectedCategory === cat.key ? 'default' : 'outline'}
                 onClick={() => setSelectedCategory(cat.key)}
-                className="px-6"
+                className="px-4 sm:px-6 text-sm"
               >
                 {cat.label}
               </Button>
@@ -249,18 +215,18 @@ export function ProductsSection({ products }: { products: Product[] }) {
 
             <div
               ref={setScrollContainer}
-              className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory px-4 sm:px-12"
+              className="flex overflow-x-auto gap-4 sm:gap-6 pb-6 snap-x snap-mandatory px-2 sm:px-4 lg:px-12"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {filteredProducts.map((product, index) => (
                 <motion.div
                   key={product.id ?? `product-${index}`}
                   variants={itemVariants}
-                  className="flex-none w-full sm:w-80 md:w-80 lg:w-96 snap-start"
+                  className="flex-none w-72 sm:w-80 md:w-80 lg:w-96 snap-start"
                 >
                   <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col h-full bg-background overflow-hidden group hover:scale-[1.02]">
                     {/* Product Image */}
-                    <div className="h-56 sm:h-48 w-full relative bg-muted overflow-hidden">
+                    <div className="h-48 sm:h-48 w-full relative bg-muted overflow-hidden">
                       {product.imageUrl && isValidUrl(product.imageUrl) ? (
                         <Image
                           src={product.imageUrl}
@@ -288,17 +254,17 @@ export function ProductsSection({ products }: { products: Product[] }) {
                     </div>
 
                     {/* Header */}
-                    <CardHeader className="items-center text-center pt-6 pb-4">
+                    <CardHeader className="items-center text-center pt-4 sm:pt-6 pb-3 sm:pb-4 px-4 sm:px-6">
                       <div className="p-3 bg-primary/10 rounded-full mb-3 inline-block group-hover:bg-primary/20 transition-colors">
                         {getCategoryIcon(product.category || '')}
                       </div>
-                      <CardTitle className="text-xl font-semibold line-clamp-2 leading-tight">
+                      <CardTitle className="text-lg sm:text-xl font-semibold line-clamp-2 leading-tight">
                         {product.name || 'Unnamed Product'}
                       </CardTitle>
                     </CardHeader>
 
                     {/* Content */}
-                    <CardContent className="flex-grow px-6">
+                    <CardContent className="flex-grow px-4 sm:px-6">
                       <CardDescription className="text-sm text-muted-foreground mb-4 text-center line-clamp-3">
                         {product.description || 'No description available'}
                       </CardDescription>
@@ -324,20 +290,20 @@ export function ProductsSection({ products }: { products: Product[] }) {
                     </CardContent>
 
                     {/* Footer */}
-                    <CardFooter className="flex-col items-center pt-4 border-t px-6 pb-6">
+                    <CardFooter className="flex-col items-center pt-4 border-t px-4 sm:px-6 pb-4 sm:pb-6">
                       {(product.price || 0) === 0 && (
-                        <p className="text-center text-primary font-bold text-lg mb-3">
+                        <p className="text-center text-primary font-bold text-base sm:text-lg mb-3">
                           Request Quote
                         </p>
                       )}
-                      <div className="flex flex-col sm:flex-row gap-2 w-full">
+                      <div className="flex flex-col gap-2 w-full">
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="w-full sm:flex-1 hover:bg-primary/5">
+                            <Button variant="outline" size="sm" className="w-full text-xs sm:text-sm hover:bg-primary/5">
                               📖 Learn More
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-0">
                             <DialogHeader>
                               <DialogTitle className="flex items-center gap-3 text-xl">
                                 <div className="p-2 bg-primary/10 rounded-full">
@@ -461,23 +427,25 @@ export function ProductsSection({ products }: { products: Product[] }) {
                           </DialogContent>
                         </Dialog>
 
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full sm:flex-1 hover:bg-primary/5"
-                          onClick={() => router.push('/contact')}
-                        >
-                          💬 Inquire
-                        </Button>
+                        <div className="flex gap-2 w-full">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 text-xs sm:text-sm hover:bg-primary/5"
+                            onClick={() => router.push('/contact')}
+                          >
+                            💬 Inquire
+                          </Button>
 
-                        <Button
-                          size="sm"
-                          disabled={buyingNow === product.id}
-                          className="w-full sm:flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
-                          onClick={() => handleBuyNow(product)}
-                        >
-                          {buyingNow === product.id ? "⏳ Processing..." : "🛒 Buy Now"}
-                        </Button>
+                          <Button
+                            size="sm"
+                            disabled={buyingNow === product.id}
+                            className="flex-1 text-xs sm:text-sm bg-primary text-primary-foreground hover:bg-primary/90"
+                            onClick={() => handleBuyNow(product)}
+                          >
+                            {buyingNow === product.id ? "⏳ Processing..." : "🛒 Buy Now"}
+                          </Button>
+                        </div>
                       </div>
                     </CardFooter>
                   </Card>

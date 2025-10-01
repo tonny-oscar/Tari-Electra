@@ -11,9 +11,10 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export function ResellerSignupForm() {
-  const { register, handleSubmit, reset } = useForm();
+  const { register, handleSubmit, reset, watch } = useForm();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const watchOccupation = watch('occupation');
 
   const onSubmit = async (data: any) => {
     setLoading(true);
@@ -45,8 +46,8 @@ export function ResellerSignupForm() {
       <Label>Phone Number</Label>
       <Input {...register('phone', { required: true })} />
 
-      <Label>Email Address (optional)</Label>
-      <Input {...register('email')} />
+      <Label>Email Address</Label>
+      <Input {...register('email', { required: true })} />
 
       <Label>Occupation</Label>
       <select {...register('occupation', { required: true })} className="w-full border rounded">
@@ -58,8 +59,15 @@ export function ResellerSignupForm() {
         <option>Other</option>
       </select>
 
-      <Label>Business / Shop Name (optional)</Label>
-      <Input {...register('businessName')} />
+      {watchOccupation === 'Other' && (
+        <div>
+          <Label>Please specify your occupation</Label>
+          <Input {...register('otherOccupation', { required: watchOccupation === 'Other' })} placeholder="Enter your occupation" />
+        </div>
+      )}
+
+      <Label>Business / Shop Name</Label>
+      <Input {...register('businessName', { required: true })} />
 
       <Label>Location</Label>
       <Input {...register('location', { required: true })} />
@@ -77,6 +85,13 @@ export function ResellerSignupForm() {
         <option>Other</option>
       </select>
 
+      {watch('currentRegion') === 'Other' && (
+        <div>
+          <Label>Please specify your current region</Label>
+          <Input {...register('otherCurrentRegion', { required: watch('currentRegion') === 'Other' })} placeholder="Enter your current region" />
+        </div>
+      )}
+
       <Label>Interested Region(s) to Resell</Label>
       <div className="grid grid-cols-2 gap-2">
         {['Nairobi','Central','Coast','Eastern','North Eastern','Nyanza','Rift Valley','Western','Other'].map(r => (
@@ -87,8 +102,8 @@ export function ResellerSignupForm() {
         ))}
       </div>
 
-      <Label>Years of Experience (optional)</Label>
-      <Input {...register('experience')} />
+      <Label>Years of Experience</Label>
+      <Input {...register('experience', { required: true })} />
 
       <Label>Do you already sell related products/services?</Label>
       <select {...register('alreadySelling', { required: true })} className="w-full border rounded">

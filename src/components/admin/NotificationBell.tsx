@@ -36,16 +36,20 @@ export function NotificationBell() {
         setUnreadMessages(messagesCount);
         setPendingApplications(applicationsCount);
         
-        // Fetch stock alerts
-        const { collection, query, where, getDocs } = await import('firebase/firestore');
-        const { db } = await import('@/lib/firebase');
-        const alertsQuery = query(
-          collection(db, 'notifications'),
-          where('type', 'in', ['low_stock', 'out_of_stock']),
-          where('read', '==', false)
-        );
-        const alertsSnapshot = await getDocs(alertsQuery);
-        setStockAlerts(alertsSnapshot.size);
+        // Fetch stock alerts with simplified query
+        try {
+          const { collection, getDocs } = await import('firebase/firestore');
+          const { db } = await import('@/lib/firebase/client');
+          const alertsSnapshot = await getDocs(collection(db, 'notifications'));
+          const unreadStockAlerts = alertsSnapshot.docs.filter(doc => {
+            const data = doc.data();
+            return (data.type === 'low_stock' || data.type === 'out_of_stock') && !data.read;
+          });
+          setStockAlerts(unreadStockAlerts.length);
+        } catch (error) {
+          console.log('Stock alerts query failed, using fallback');
+          setStockAlerts(0);
+        }
       } catch {
         setUnreadMessages(0);
         setPendingApplications(0);

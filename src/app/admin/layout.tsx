@@ -30,7 +30,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { Loader2 } from 'lucide-react';
 import { NotificationBell } from '@/components/admin/NotificationBell';
 import { useToast } from '@/hooks/use-toast';
-import ResellerApplications from '@/components/admin/ResellerApplications';
+
 
 const navLinks = [
   { href: '/admin', label: 'Dashboard', icon: Home },
@@ -40,7 +40,7 @@ const navLinks = [
   { href: '/admin/homepage-products', label: 'Homepage Products', icon: ImageIcon },
   { href: '/admin/orders', label: 'Orders Management', icon: ShoppingBag },
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
-  { href: '/admin/homepage', label: 'Homepage Settings', icon: SettingsIcon },
+  // { href: '/admin/homepage', label: 'Homepage Settings', icon: SettingsIcon },
   { href: '/admin/submeter-requests', label: 'Sub-Meter Applications', icon: CircleUser },
   { href: '/admin/reseller-applications', label: 'Reseller Applications', icon: CircleUser },
 ];
@@ -104,10 +104,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar */}
       <div className="hidden border-r bg-muted/40 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
-          <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-            <Link href="/admin" className="flex items-center gap-2 font-semibold text-primary">
-              <LayoutDashboard className="h-6 w-6" />
-              <span>Tari Electra Admin</span>
+          <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 bg-gradient-to-r from-primary/5 to-secondary/5">
+            <Link href="/admin" className="flex items-center gap-3 font-bold text-foreground hover:text-primary transition-colors group">
+              <div className="relative p-2 bg-gradient-to-br from-primary to-secondary rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                <LayoutDashboard className="h-5 w-5 text-white" />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-xl"></div>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Tari Electra</span>
+                <span className="text-xs text-muted-foreground font-medium">Admin Panel</span>
+              </div>
             </Link>
           </div>
 
@@ -150,10 +156,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <nav className="grid gap-2 text-lg font-medium">
                 <Link
                   href="/admin"
-                  className="flex items-center gap-2 text-lg font-semibold text-primary mb-4"
+                  className="flex items-center gap-3 text-lg font-bold text-foreground hover:text-primary transition-colors group mb-4"
                 >
-                  <LayoutDashboard className="h-6 w-6" />
-                  <span>Tari Electra Admin</span>
+                  <div className="relative p-2 bg-gradient-to-br from-primary to-secondary rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                    <LayoutDashboard className="h-5 w-5 text-white" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-xl"></div>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Tari Electra</span>
+                    <span className="text-xs text-muted-foreground font-medium">Admin Panel</span>
+                  </div>
                 </Link>
                 {navLinks.map(link => (
                   <Link

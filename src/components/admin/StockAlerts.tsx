@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, onSnapshot, updateDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,19 +28,21 @@ export function StockAlerts() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const q = query(
-      collection(db, 'notifications'),
-      where('type', 'in', ['low_stock', 'out_of_stock']),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const alerts = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Notification[];
+    const unsubscribe = onSnapshot(collection(db, 'notifications'), (snapshot) => {
+      const alerts = (snapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Notification[])
+        .filter(alert => 
+          (alert.type === 'low_stock' || alert.type === 'out_of_stock')
+        )
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
       setNotifications(alerts);
+      setLoading(false);
+    }, (error) => {
+      console.error('Error fetching notifications:', error);
       setLoading(false);
     });
 

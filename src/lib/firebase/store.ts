@@ -144,6 +144,7 @@ export async function createOrder(data: Omit<Order, 'id' | 'orderNumber'> & { or
     const orderData = {
       ...data,
       orderNumber,
+      trackingNumber: `TRK${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
       createdAt: new Date().toISOString(),
       status: 1
     };
@@ -165,8 +166,11 @@ export async function createOrder(data: Omit<Order, 'id' | 'orderNumber'> & { or
         body: JSON.stringify({
           to: data.customerEmail,
           subject: `Order Confirmation - ${orderNumber}`,
-          orderData: order,
-          type: 'order_confirmation'
+          html: `<h2>Order Confirmation</h2>
+                 <p>Thank you for your order!</p>
+                 <p><strong>Order Number:</strong> ${orderNumber}</p>
+                 <p><strong>Total:</strong> KES ${data.total.toLocaleString()}</p>
+                 <p>We'll notify you when your order ships.</p>`
         })
       });
       

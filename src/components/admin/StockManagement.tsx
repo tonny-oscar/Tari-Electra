@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Package, AlertTriangle, Plus, Minus, Save, Bell } from 'lucide-react';
 import { collection, onSnapshot, updateDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase/client';
 import { StockAlerts } from './StockAlerts';
 import { addProductStock } from '@/lib/firebase/store';
 

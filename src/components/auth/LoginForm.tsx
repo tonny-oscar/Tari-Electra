@@ -73,12 +73,27 @@ export function LoginForm() {
       router.push('/customer/dashboard');
 
     } catch (err: any) {
-      const message = err?.message || 'Failed to login. Please check your credentials.';
       console.error('Login error:', err);
-      setError(message);
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (err.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
+      } else if (err.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password. Please try again.';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (err.code === 'auth/user-disabled') {
+        errorMessage = 'This account has been disabled. Please contact support.';
+      } else if (err.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed login attempts. Please try again later.';
+      } else if (err.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      }
+      
+      setError(errorMessage);
       toast({
         title: 'Login Failed',
-        description: message,
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
