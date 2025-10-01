@@ -35,7 +35,7 @@ export async function GET() {
   ${posts.map(post => `
   <url>
     <loc>${baseUrl}/blog/${post.slug}</loc>
-    <lastmod>${typeof post.date === 'string' ? new Date(post.date).toISOString() : post.date.toDate().toISOString()}</lastmod>
+    <lastmod>${new Date().toISOString()}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>`).join('')}
