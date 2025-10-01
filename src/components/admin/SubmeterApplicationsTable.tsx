@@ -12,20 +12,7 @@ import { FileText, Eye, Download, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 import SubmeterApplicationModal from './SubmeterApplicationModal'; // Adjust path as needed
 import DocumentPreviewModal from './DocumentPreviewModal'; // Adjust path as needed
-
-// Define your SubmeterApplication type as needed
-type SubmeterApplication = {
-  id: string;
-  fullName?: string;
-  email?: string;
-  propertyType?: string;
-  applicationType?: string;
-  utilityServices?: string[] | string;
-  status?: string;
-  submissionDate?: any;
-  documents?: { url: string; name: string }[];
-  approvalDocumentUrl?: string;
-};
+import { SubmeterApplication } from '@/lib/types/submeter';
 
 type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
@@ -232,12 +219,12 @@ export default function SubmeterApplicationsTable() {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{app.fullName ?? ''}</p>
-                          <p className="text-sm text-muted-foreground">{app.email ?? ''}</p>
+                          <p className="font-medium">{app.fullName || ''}</p>
+                          <p className="text-sm text-muted-foreground">{app.email || ''}</p>
                         </div>
                       </TableCell>
-                      <TableCell className="capitalize">{app.propertyType ?? ''}</TableCell>
-                      <TableCell className="capitalize">{app.applicationType ?? ''}</TableCell>
+                      <TableCell className="capitalize">{app.propertyType || ''}</TableCell>
+                      <TableCell className="capitalize">{app.applicationType || ''}</TableCell>
                       <TableCell>
                         {app.utilityServices
                           ? Array.isArray(app.utilityServices)
@@ -247,8 +234,8 @@ export default function SubmeterApplicationsTable() {
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant={getBadgeVariant(app.status ?? '')}
-                          className={getBadgeColor(app.status ?? '')}
+                          variant={getBadgeVariant(app.status || '')}
+                          className={getBadgeColor(app.status || '')}
                         >
                           {app.status}
                         </Badge>
