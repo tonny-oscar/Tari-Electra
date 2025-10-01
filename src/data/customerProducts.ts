@@ -59,7 +59,7 @@ export async function getCustomerProduct(id: string): Promise<Product | null> {
   }
 }
 
-export async function addCustomerProduct(productData: Omit<Product, 'id'>): Promise<string | null> {
+export async function addCustomerProduct(productData: any): Promise<string | null> {
   try {
     if (!db) {
       console.error('Firestore db instance not available');
