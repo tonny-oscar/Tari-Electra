@@ -101,7 +101,7 @@ export default function AdminOrdersPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle className="text-lg">
-                        Order #{order.id.slice(-8)}
+                        Order {order.orderNumber || `#${order.id.slice(-8)}`}
                       </CardTitle>
                       <div className="space-y-1 mt-2">
                         <div className="flex items-center space-x-4 text-sm text-gray-600">
