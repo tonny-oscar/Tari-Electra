@@ -40,21 +40,44 @@ export function initializeProductListeners() {
     // Listen for product changes
     const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
       const productsList = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          name: data.name || 'Unnamed Product',
-          description: data.description || '',
-          price: Number(data.price) || 0,
-          category: data.category || 'General',
-          imageUrl: data.imageUrl || '',
-          imageHint: data.imageHint || '',
-          features: data.features || [],
-          stock: Number(data.stock) || 0,
-          rating: Number(data.rating) || 0,
-          status: data.status || 'active'
-        } as Product;
-      });
+  const data = doc.data();
+  return {
+    id: doc.id,
+    name: data.name || 'Unnamed Product',
+    description: data.description || '',
+    price: Number(data.price) || 0,
+    category: data.category || 'General',
+    imageUrl: data.imageUrl || '',
+    imageHint: data.imageHint || '',
+    features: data.features || [],
+    stock: Number(data.stock) || 0,
+    rating: Number(data.rating) || 0,
+    status: data.status || 'active',
+    createdAt: data.createdAt
+      ? new Date(data.createdAt.seconds * 1000).toISOString()
+      : new Date().toISOString(),       // fallback
+    updatedAt: data.updatedAt
+      ? new Date(data.updatedAt.seconds * 1000).toISOString()
+      : undefined,
+  } as Product;
+});
+
+      // const productsList = snapshot.docs.map(doc => {
+      //   const data = doc.data();
+      //   return {
+      //     id: doc.id,
+      //     name: data.name || 'Unnamed Product',
+      //     description: data.description || '',
+      //     price: Number(data.price) || 0,
+      //     category: data.category || 'General',
+      //     imageUrl: data.imageUrl || '',
+      //     imageHint: data.imageHint || '',
+      //     features: data.features || [],
+      //     stock: Number(data.stock) || 0,
+      //     rating: Number(data.rating) || 0,
+      //     status: data.status || 'active'
+      //   } as Product;
+      // });
 
       setProducts(productsList);
       // Set featured products (e.g., top 4 products by rating)

@@ -292,18 +292,20 @@ export function CustomerDashboard() {
                 id: doc.id,
                 name: sanitizeUserInput(data.name || 'Unnamed Product'),
                 price: Number(data.price) || 0,
-                image: sanitizeUserInput(data.image || data.imageUrl || ''),
-                imageUrl: sanitizeUserInput(data.imageUrl || ''),
-                stock: Number(data.stock) || 100,
-                description: sanitizeUserInput(data.description || 'No description available'),
-                rating: Number(data.rating) || 4.0,
-                category: sanitizeUserInput(data.category || 'General'),
-                subcategory: sanitizeUserInput(data.subcategory || ''),
-                features: Array.isArray(data.features) ? data.features : [],
+                image: data.image || '',
+                imageUrl: data.imageUrl || '',
+                stock: data.stock || 0,
+                description: data.description || '',
+                rating: data.rating || 0,
+                category: data.category || '',
+                subcategory: data.subcategory || '',
+                features: data.features || [],
                 specifications: data.specifications || {},
-                status: data.status || 'active',
-                createdAt: data.createdAt || new Date().toISOString()
-              } as Product;
+                status: data.status || 'inactive',
+                createdAt: data.createdAt
+                  ? new Date(data.createdAt.seconds * 1000).toISOString()
+                  : new Date().toISOString(),
+              };
             });
 
             console.log('Processed products:', productsList);
@@ -400,151 +402,153 @@ export function CustomerDashboard() {
 
   // Cart functions
  
- 
- const addToCart = (product: Product) => {
-    if (product.stock <= 0) {
-      toast({
-        title: 'Out of Stock',
-        description: `${product.name} is currently out of stock.`,
-        variant: 'destructive',
-      });
-      return;
+ // ---- CART MANAGEMENT ----
+const addToCart = (product: Product) => {
+  if (product.stock <= 0) {
+    toast({
+      title: 'Out of Stock',
+      description: `${product.name} is currently out of stock.`,
+      variant: 'destructive',
+    });
+    return;
+  }
+
+  const existingItem = cart.find(item => item.id === product.id);
+  const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
+
+  if (currentQuantityInCart >= product.stock) {
+    toast({
+      title: 'Stock Limit Reached',
+      description: `Only ${product.stock} items available for ${product.name}.`,
+      variant: 'destructive',
+    });
+    return;
+  }
+
+  if (existingItem) {
+    setCart(cart.map(item =>
+      item.id === product.id
+        ? { ...item, quantity: item.quantity + 1 }
+        : item
+    ));
+  } else {
+    setCart([...cart, { ...product, quantity: 1 }]);
+  }
+
+  toast({
+    title: 'Added to Cart',
+    description: `${product.name} added to your cart.`,
+  });
+};
+
+const removeFromCart = (productId: string) => {
+  setCart(cart.filter(item => item.id !== productId));
+};
+
+const updateCartQuantity = (productId: string, change: number) => {
+  const product = products.find(p => p.id === productId);
+  if (!product) return;
+
+  setCart(cart.map(item => {
+    if (item.id === productId) {
+      const newQuantity = item.quantity + change;
+
+      // Prevent exceeding stock
+      if (change > 0 && newQuantity > product.stock) {
+        toast({
+          title: 'Stock Limit Reached',
+          description: `Only ${product.stock} items available for ${product.name}.`,
+          variant: 'destructive',
+        });
+        return item;
+      }
+
+      // Remove if quantity drops to 0
+      return newQuantity > 0 ? { ...item, quantity: newQuantity } : item;
+    }
+    return item;
+  }).filter(item => item.quantity > 0));
+};
+
+const getCartTotal = () => {
+  return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+};
+
+// ---- ORDER PLACEMENT ----
+const placeOrder = async () => {
+  if (cart.length === 0 || !user?.uid || !isValidUserId(user.uid)) return;
+
+  try {
+    // Check stock before placing order
+    for (const item of cart) {
+      const product = products.find(p => p.id === item.id);
+      if (!product || product.stock < item.quantity) {
+        toast({
+          title: 'Insufficient Stock',
+          description: `${item.name} has insufficient stock. Available: ${product?.stock || 0}`,
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
-    const existingItem = cart.find(item => item.id === product.id);
-    const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
+    const orderData = {
+      customerId: user.uid,
+      customerEmail: user.email || '',
+      customerName: `${customerData.firstName} ${customerData.lastName}`,
+      customerPhone: customerData.phone || '',
+      items: cart,
+      total: getCartTotal(),
+      status: 1,
+      createdAt: new Date().toISOString(),
+      estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      trackingNumber: `TRK${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+    };
 
+    const { orderId, orderNumber } = await createOrder(orderData);
 
-    if (currentQuantityInCart >= product.stock) {
-      toast({
-        title: 'Stock Limit Reached',
-        description: `Only ${product.stock} items available for ${product.name}.`,
-        variant: 'destructive',
-      });
-      return;
-    }
+    toast({
+      title: 'Order Placed!',
+      description: `Order ${orderNumber} has been placed successfully.`,
+    });
 
-    if (existingItem) {
-      setCart(cart.map(item =>
-        item.id === product.id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      ));
-    } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
+    setCart([]);
+    setActiveTab('orders');
+  } catch (error: any) {
+    console.error('Error placing order:', sanitizeForLog(String(error)));
+
+    let errorMessage = 'Unable to place your order. Please try again.';
+
+    if (error.code === 'permission-denied') {
+      errorMessage = 'You do not have permission to place orders. Please log in again.';
+    } else if (error.code === 'unavailable') {
+      errorMessage = 'Service temporarily unavailable. Please try again in a few moments.';
+    } else if (error.message?.toLowerCase().includes('network')) {
+      errorMessage = 'Network error. Please check your internet connection.';
     }
 
     toast({
-      title: 'Added to Cart',
-      description: `${product.name} added to your cart.`,
+      title: 'Order Failed',
+      description: errorMessage,
+      variant: 'destructive',
     });
-  };
+  }
+};
 
-  const updateCartQuantity = (productId: string, change: number) => {
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
+// ---- LOGOUT ----
+const handleLogout = async () => {
+  try {
+    await signOut(auth);
+    router.push('/login');
+    toast({
+      title: 'Logged Out',
+      description: 'You have been successfully logged out.',
+    });
+  } catch (error) {
+    console.error('Logout error:', sanitizeForLog(String(error)));
+  }
+};
 
-    setCart(cart.map(item => {
-      if (item.id === productId) {
-        const newQuantity = item.quantity + change;
-
-        if (change > 0 && newQuantity > product.stock) {
-          toast({
-            title: 'Stock Limit Reached',
-            description: `Only ${product.stock} items available for ${product.name}.`,
-            variant: 'destructive',
-          });
-          return item;
-        }
-
-        return newQuantity > 0 ? { ...item, quantity: newQuantity } : item;
-      }
-      return item;
-    }).filter(item => item.quantity > 0));
-  };
-
-  const removeFromCart = (productId: string) => {
-    setCart(cart.filter(item => item.id !== productId));
-  };
-
-  const getCartTotal = () => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
-
-  const placeOrder = async () => {
-    if (cart.length === 0 || !user?.uid || !isValidUserId(user.uid)) return;
-
-    try {
-      // Check stock availability before placing order
-      for (const item of cart) {
-        const product = products.find(p => p.id === item.id);
-        if (!product || product.stock < item.quantity) {
-          toast({
-            title: 'Insufficient Stock',
-            description: `${item.name} has insufficient stock. Available: ${product?.stock || 0}`,
-            variant: 'destructive',
-          });
-          return;
-        }
-      }
-
-      const orderData = {
-        customerId: user.uid,
-        customerEmail: user.email || '',
-        customerName: `${customerData.firstName} ${customerData.lastName}`,
-        customerPhone: customerData.phone || '',
-        items: cart,
-        total: getCartTotal(),
-        status: 1,
-        createdAt: new Date().toISOString(),
-        estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        trackingNumber: `TRK${Math.random().toString(36).substr(2, 6).toUpperCase()}`
-      };
-
-      const { orderId, orderNumber } = await createOrder(orderData);
-
-      toast({
-        title: 'Order Placed!',
-        description: `Order ${orderNumber} has been placed successfully. Stock updated automatically.`,
-      });
-
-      setCart([]);
-      setActiveTab('orders');
-
-    } catch (error: any) {
-      console.error('Error placing order:', sanitizeForLog(String(error)));
-      let errorMessage = 'Unable to place your order. Please try again.';
-      
-      if (error.code === 'permission-denied') {
-        errorMessage = 'You do not have permission to place orders. Please log in again.';
-      } else if (error.code === 'unavailable') {
-        errorMessage = 'Service temporarily unavailable. Please try again in a few moments.';
-      } else if (error.message?.includes('network')) {
-        errorMessage = 'Network error. Please check your internet connection and try again.';
-      }
-      
-      toast({
-        title: 'Order Failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    }
-  };
-
-
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.push('/login');
-      toast({
-        title: 'Logged Out',
-        description: 'You have been successfully logged out.',
-      });
-    } catch (error) {
-      console.error('Logout error:', sanitizeForLog(String(error)));
-    }
-  };
 
   if (loading || isLoading) {
     return (
