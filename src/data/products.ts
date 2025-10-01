@@ -72,7 +72,7 @@ export async function findProduct(id: string): Promise<Product | undefined> {
 }
 
 export async function addProduct(
-  productData: Omit<Product, 'id'>
+  productData: any
 ): Promise<Product | null> {
   console.log('[FirestoreProducts - addProduct] Attempting to add product to Firestore:', productData);
   try {
@@ -81,16 +81,18 @@ export async function addProduct(
       throw new Error('Firestore instance is not available');
     }
     const productForFirestore = {
-      ...productData,
+      name: productData.name || 'Unnamed Product',
+      description: productData.description || 'No description',
       price: Number(productData.price) || 0,
       features: Array.isArray(productData.features) ? productData.features : [],
       specifications: Array.isArray(productData.specifications) ? productData.specifications : [],
       imageUrl: productData.imageUrl || 'https://placehold.co/600x400.png',
-      imageHint: productData.imageHint || productData.name.split(' ').slice(0,2).join(' ').toLowerCase() || 'product image',
+      imageHint: productData.imageHint || productData.name?.split(' ').slice(0,2).join(' ').toLowerCase() || 'product image',
       category: productData.category || 'General',
       subcategory: productData.subcategory || '',
       stock: productData.stock || 100,
       rating: productData.rating || 4.0,
+      status: productData.status || 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
     };
