@@ -29,7 +29,7 @@ interface Order {
 
 const trackingStages = [
   { id: 1, name: 'Order Placed', color: 'bg-blue-100 text-blue-800' },
-  // { id: 2, name: 'Processing', color: 'bg-yellow-100 text-yellow-800' },
+
   { id: 3, name: 'Shipped', color: 'bg-purple-100 text-purple-800' },
   { id: 4, name: 'Delivered', color: 'bg-green-100 text-green-800' },
 ];

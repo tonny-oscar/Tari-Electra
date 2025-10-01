@@ -40,7 +40,7 @@ const navLinks = [
   { href: '/admin/homepage-products', label: 'Homepage Products', icon: ImageIcon },
   { href: '/admin/orders', label: 'Orders Management', icon: ShoppingBag },
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
-  // { href: '/admin/homepage', label: 'Homepage Settings', icon: SettingsIcon },
+
   { href: '/admin/submeter-requests', label: 'Sub-Meter Applications', icon: CircleUser },
   { href: '/admin/reseller-applications', label: 'Reseller Applications', icon: CircleUser },
 ];

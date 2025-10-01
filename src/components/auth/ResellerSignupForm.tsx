@@ -27,6 +27,23 @@ export function ResellerSignupForm() {
 
       toast({ title: 'Application Sent', description: 'We’ll review your application soon.' });
       reset();
+      // Create notification for admin
+      await addDoc(collection(db, 'notifications'), {
+        type: 'reseller_application',
+        title: 'New Reseller Application',
+        message: `New reseller application from ${data.fullName}`,
+        createdAt: serverTimestamp(),
+        read: false,
+        priority: 'medium',
+        data: {
+          applicantName: data.fullName,
+          applicantEmail: data.email,
+          occupation: data.occupation
+        }
+      });
+
+      toast({ title: 'Application Sent', description: 'We\'ll review your application soon.' });
+      reset();
     } catch (err) {
       console.error(err);
       toast({ title: 'Error', description: 'Failed to submit application', variant: 'destructive' });

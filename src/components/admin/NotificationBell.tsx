@@ -22,9 +22,10 @@ export function NotificationBell() {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [pendingApplications, setPendingApplications] = useState(0);
   const [stockAlerts, setStockAlerts] = useState(0);
+  const [resellerApplications, setResellerApplications] = useState(0);
   const pathname = usePathname();
 
-  const totalNotifications = unreadMessages + pendingApplications + stockAlerts;
+  const totalNotifications = unreadMessages + pendingApplications + stockAlerts + resellerApplications;
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -33,6 +34,20 @@ export function NotificationBell() {
           getUnreadMessagesCountAction(),
           getPendingSubmeterApplicationsCount()
         ]);
+        
+        // Fetch reseller applications count
+        try {
+          const { collection, getDocs, query, where } = await import('firebase/firestore');
+          const { db } = await import('@/lib/firebase/client');
+          const resellerQuery = query(
+            collection(db, 'resellerApplications'),
+            where('status', '==', 'pending')
+          );
+          const resellerSnapshot = await getDocs(resellerQuery);
+          setResellerApplications(resellerSnapshot.size);
+        } catch (error) {
+          setResellerApplications(0);
+        }
         setUnreadMessages(messagesCount);
         setPendingApplications(applicationsCount);
         
@@ -117,6 +132,19 @@ export function NotificationBell() {
             {stockAlerts > 0 && (
               <Badge variant="destructive" className="ml-2">
                 {stockAlerts}
+              </Badge>
+            )}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/admin/reseller-applications" className="flex items-center justify-between w-full">
+            <div className="flex items-center">
+              <FileText className="h-4 w-4 mr-2" />
+              Reseller Applications
+            </div>
+            {resellerApplications > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {resellerApplications}
               </Badge>
             )}
           </Link>

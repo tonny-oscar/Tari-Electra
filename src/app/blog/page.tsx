@@ -6,6 +6,7 @@ import { FileText, Calendar, ArrowRight } from 'lucide-react';
 import { getPublishedBlogPosts, type BlogPost } from '@/data/blogPosts';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { BlogSubscription } from '@/components/BlogSubscription';
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -24,7 +25,7 @@ export default function BlogPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-5xl mx-auto">
-          {/* Classic Header */}
+
           <div className="text-center mb-16">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-6">
               <FileText className="h-8 w-8 text-primary" />
@@ -103,6 +104,11 @@ export default function BlogPage() {
             ))}
           </div>
         )}
+
+
+        <div className="mt-16">
+          <BlogSubscription />
+        </div>
         </div>
       </div>
     </div>

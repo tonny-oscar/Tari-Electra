@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Package, AlertTriangle, Plus, Minus, Save, Bell } from 'lucide-react';
-import { collection, onSnapshot, updateDoc, doc } from 'firebase/firestore';
+import { Package, AlertTriangle, Plus, Minus, Save, Bell, Trash2 } from 'lucide-react';
+import { collection, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
 import { StockAlerts } from './StockAlerts';
 import { addProductStock } from '@/lib/firebase/store';
@@ -120,6 +120,35 @@ export function StockManagement() {
     }));
   };
 
+  const deleteProduct = async (productId: string) => {
+    if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const collections = ['customerProducts', 'products', 'homepageProducts'];
+      for (const collectionName of collections) {
+        try {
+          await deleteDoc(doc(db, collectionName, productId));
+        } catch (error) {
+          // Product might not exist in this collection, continue
+        }
+      }
+
+      toast({
+        title: 'Product Deleted',
+        description: 'Product has been successfully deleted.',
+      });
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: 'Delete Failed',
+        description: 'Failed to delete product. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -217,16 +246,25 @@ export function StockManagement() {
                       )}
                     </div>
 
-                    {hasChanges && (
+                    <div className="flex gap-2">
+                      {hasChanges && (
+                        <Button
+                          onClick={() => updateStock(product.id, currentStock)}
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <Save className="w-4 h-4 mr-1" />
+                          Save
+                        </Button>
+                      )}
                       <Button
-                        onClick={() => updateStock(product.id, currentStock)}
+                        onClick={() => deleteProduct(product.id)}
                         size="sm"
-                        className="bg-green-600 hover:bg-green-700"
+                        variant="destructive"
                       >
-                        <Save className="w-4 h-4 mr-1" />
-                        Save
+                        <Trash2 className="w-4 h-4" />
                       </Button>
-                    )}
+                    </div>
                   </div>
                 </div>
               </CardContent>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { collection, query, onSnapshot, orderBy, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Eye, CheckCircle, XCircle, Clock, User, Mail, Phone, MapPin, Building } from 'lucide-react';
+import { Eye, CheckCircle, XCircle, Clock, User, Mail, Phone, MapPin, Building, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
@@ -46,12 +46,13 @@ export default function ResellerApplications() {
   useEffect(() => {
     const q = query(
       collection(db, 'resellerApplications'),
-      orderBy('submissionDate', 'desc')
+      orderBy('createdAt', 'desc')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const apps = snapshot.docs.map(doc => ({
         id: doc.id,
+        submissionDate: doc.data().createdAt || doc.data().submissionDate,
         ...doc.data()
       })) as ResellerApplication[];
       
@@ -65,7 +66,9 @@ export default function ResellerApplications() {
     return () => unsubscribe();
   }, []);
 
-  const handleStatusUpdate = async (applicationId: string, newStatus: 'approved' | 'rejected') => {
+  const handleStatusUpdate = useCallback(async (applicationId: string, newStatus: 'approved' | 'rejected') => {
+    if (!selectedApplication) return;
+    
     setIsUpdating(true);
     try {
       const updateData: any = {
@@ -85,9 +88,36 @@ export default function ResellerApplications() {
 
       await updateDoc(doc(db, 'resellerApplications', applicationId), updateData);
 
+      // Send email notification
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: selectedApplication.email,
+          subject: `Reseller Application ${newStatus === 'approved' ? 'Approved' : 'Rejected'} - Tari Electra`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+                <h1 style="color: white; margin: 0;">Tari Electra</h1>
+              </div>
+              <div style="padding: 30px; background: #f9f9f9;">
+                <h2 style="color: #333;">Dear ${selectedApplication.fullName},</h2>
+                <p style="color: #666; line-height: 1.6;">Your reseller application has been <strong style="color: ${newStatus === 'approved' ? '#10b981' : '#ef4444'};">${newStatus}</strong>.</p>
+                ${newStatus === 'approved' 
+                  ? '<p style="color: #666; line-height: 1.6;">Welcome to the Tari Electra reseller network! We will contact you soon with next steps.</p>'
+                  : '<p style="color: #666; line-height: 1.6;">Thank you for your interest. You may reapply in the future.</p>'
+                }
+                ${adminNotes.trim() ? `<div style="background: white; padding: 20px; border-left: 4px solid #667eea; margin: 20px 0;"><strong>Admin Notes:</strong><br/>${adminNotes.trim()}</div>` : ''}
+                <p style="color: #666; line-height: 1.6;">Best regards,<br/>Tari Electra Team</p>
+              </div>
+            </div>
+          `
+        })
+      });
+
       toast({
         title: 'Success!',
-        description: `Application ${newStatus} successfully.`,
+        description: `Application ${newStatus} and email sent successfully.`,
       });
 
       setIsModalOpen(false);
@@ -102,13 +132,129 @@ export default function ResellerApplications() {
     } finally {
       setIsUpdating(false);
     }
-  };
+  }, [selectedApplication, adminNotes, toast]);
 
-  const openModal = (application: ResellerApplication) => {
-    setSelectedApplication(application);
-    setAdminNotes(application.adminNotes || '');
-    setIsModalOpen(true);
-  };
+
+
+  const downloadPDF = useCallback((application: ResellerApplication) => {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Reseller Application - ${application.fullName}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; margin: -40px -40px 30px -40px; }
+          .section { margin: 25px 0; }
+          .section h3 { color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 5px; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 15px 0; }
+          .info-item { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+          .info-item strong { color: #495057; }
+          .status { padding: 8px 16px; border-radius: 20px; font-weight: bold; text-transform: uppercase; }
+          .status.approved { background: #d4edda; color: #155724; }
+          .status.rejected { background: #f8d7da; color: #721c24; }
+          .status.pending { background: #fff3cd; color: #856404; }
+          .notes { background: #e3f2fd; padding: 20px; border-left: 4px solid #2196f3; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>TARI ELECTRA</h1>
+          <h2>Reseller Application</h2>
+        </div>
+        
+        <div class="section">
+          <div class="info-grid">
+            <div class="info-item">
+              <strong>Application Date:</strong><br/>
+              ${formatDate(application.submissionDate)}
+            </div>
+            <div class="info-item">
+              <strong>Status:</strong><br/>
+              <span class="status ${application.status}">${application.status}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Personal Information</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <strong>Full Name:</strong><br/>
+              ${application.fullName}
+            </div>
+            <div class="info-item">
+              <strong>Email:</strong><br/>
+              ${application.email}
+            </div>
+            <div class="info-item">
+              <strong>Phone:</strong><br/>
+              ${application.phone}
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Business Information</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <strong>Business Name:</strong><br/>
+              ${application.businessName || 'Not provided'}
+            </div>
+            <div class="info-item">
+              <strong>Business Type:</strong><br/>
+              ${application.businessType || 'Not provided'}
+            </div>
+          </div>
+          <div class="info-item">
+            <strong>Business Address:</strong><br/>
+            ${application.businessAddress || 'Not provided'}
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Application Details</h3>
+          <div class="info-item">
+            <strong>Experience:</strong><br/>
+            ${application.experience || 'Not provided'}
+          </div>
+          <div class="info-item">
+            <strong>Why Reseller:</strong><br/>
+            ${application.whyReseller || 'Not provided'}
+          </div>
+          <div class="info-item">
+            <strong>Expected Sales:</strong><br/>
+            ${application.expectedSales || 'Not provided'}
+          </div>
+        </div>
+
+        ${application.adminNotes ? `
+          <div class="section">
+            <h3>Admin Notes</h3>
+            <div class="notes">
+              ${application.adminNotes}
+            </div>
+          </div>
+        ` : ''}
+        
+        <div style="text-align: center; margin-top: 40px; color: #666; font-size: 12px;">
+          Generated on ${new Date().toLocaleDateString()} | Tari Electra Reseller Application
+        </div>
+      </body>
+      </html>
+    `;
+    
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `reseller-application-${application.fullName.replace(/\s+/g, '-')}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, []);
 
   const getBadgeVariant = (status: string) => {
     switch (status) {
@@ -126,18 +272,33 @@ export default function ResellerApplications() {
     }
   };
 
-  const filteredApplications = applications.filter(app => {
-    if (activeTab === 'all') return true;
-    return app.status === activeTab;
-  });
+  const filteredApplications = useMemo(() => {
+    return applications.filter(app => {
+      if (activeTab === 'all') return true;
+      return app.status === activeTab;
+    });
+  }, [applications, activeTab]);
 
-  const formatDate = (dateValue: any) => {
+  const applicationStats = useMemo(() => ({
+    total: applications.length,
+    pending: applications.filter(app => app.status === 'pending').length,
+    approved: applications.filter(app => app.status === 'approved').length,
+    rejected: applications.filter(app => app.status === 'rejected').length
+  }), [applications]);
+
+  const formatDate = useCallback((dateValue: any) => {
     if (!dateValue) return 'N/A';
     if (typeof dateValue?.toDate === 'function') {
       return format(dateValue.toDate(), 'PPP');
     }
     return format(new Date(dateValue), 'PPP');
-  };
+  }, []);
+
+  const openModal = useCallback((application: ResellerApplication) => {
+    setSelectedApplication(application);
+    setAdminNotes(application.adminNotes || '');
+    setIsModalOpen(true);
+  }, []);
 
   if (loading) {
     return (
@@ -157,10 +318,10 @@ export default function ResellerApplications() {
         <h1 className="text-2xl font-bold">Reseller Applications</h1>
         <div className="flex gap-2">
           <Badge variant="secondary">
-            Total: {applications.length}
+            Total: {applicationStats.total}
           </Badge>
           <Badge variant="outline">
-            Pending: {applications.filter(app => app.status === 'pending').length}
+            Pending: {applicationStats.pending}
           </Badge>
         </div>
       </div>
@@ -168,16 +329,16 @@ export default function ResellerApplications() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="all">
-            All Applications ({applications.length})
+            All Applications ({applicationStats.total})
           </TabsTrigger>
           <TabsTrigger value="pending">
-            Pending ({applications.filter(app => app.status === 'pending').length})
+            Pending ({applicationStats.pending})
           </TabsTrigger>
           <TabsTrigger value="approved">
-            Approved ({applications.filter(app => app.status === 'approved').length})
+            Approved ({applicationStats.approved})
           </TabsTrigger>
           <TabsTrigger value="rejected">
-            Rejected ({applications.filter(app => app.status === 'rejected').length})
+            Rejected ({applicationStats.rejected})
           </TabsTrigger>
         </TabsList>
 
@@ -211,45 +372,15 @@ export default function ResellerApplications() {
                   </TableHeader>
                   <TableBody>
                     {filteredApplications.map((app) => (
-                      <TableRow key={app.id}>
-                        <TableCell>
-                          {formatDate(app.submissionDate)}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{app.fullName}</p>
-                            <p className="text-sm text-muted-foreground">{app.email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{app.businessName || 'N/A'}</p>
-                            <p className="text-sm text-muted-foreground">{app.businessType || 'N/A'}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Phone className="w-3 h-3" />
-                            <span className="text-sm">{app.phone}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getBadgeVariant(app.status)} className="flex items-center gap-1 w-fit">
-                            {getStatusIcon(app.status)}
-                            {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openModal(app)}
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Details
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+                      <ApplicationRow 
+                        key={app.id} 
+                        application={app} 
+                        onView={openModal}
+                        onDownload={downloadPDF}
+                        formatDate={formatDate}
+                        getBadgeVariant={getBadgeVariant}
+                        getStatusIcon={getStatusIcon}
+                      />
                     ))}
                   </TableBody>
                 </Table>
@@ -274,11 +405,11 @@ export default function ResellerApplications() {
                   <div>
                     <h3 className="font-semibold mb-2">Application Info</h3>
                     <p><strong>Submitted:</strong> {formatDate(selectedApplication.submissionDate)}</p>
-                    <p><strong>Status:</strong> 
+                    <div><strong>Status:</strong> 
                       <Badge variant={getBadgeVariant(selectedApplication.status)} className="ml-2">
                         {selectedApplication.status.charAt(0).toUpperCase() + selectedApplication.status.slice(1)}
                       </Badge>
-                    </p>
+                    </div>
                   </div>
                   <div>
                     <h3 className="font-semibold mb-2">Status Dates</h3>
@@ -426,3 +557,72 @@ export default function ResellerApplications() {
     </div>
   );
 }
+
+// Memoized table row component for better performance
+const ApplicationRow = React.memo(({ 
+  application, 
+  onView, 
+  onDownload, 
+  formatDate, 
+  getBadgeVariant, 
+  getStatusIcon 
+}: {
+  application: ResellerApplication;
+  onView: (app: ResellerApplication) => void;
+  onDownload: (app: ResellerApplication) => void;
+  formatDate: (date: any) => string;
+  getBadgeVariant: (status: string) => any;
+  getStatusIcon: (status: string) => React.ReactNode;
+}) => (
+  <TableRow>
+    <TableCell>
+      {formatDate(application.submissionDate)}
+    </TableCell>
+    <TableCell>
+      <div>
+        <p className="font-medium">{application.fullName}</p>
+        <p className="text-sm text-muted-foreground">{application.email}</p>
+      </div>
+    </TableCell>
+    <TableCell>
+      <div>
+        <p className="font-medium">{application.businessName || 'N/A'}</p>
+        <p className="text-sm text-muted-foreground">{application.businessType || 'N/A'}</p>
+      </div>
+    </TableCell>
+    <TableCell>
+      <div className="flex items-center gap-1">
+        <Phone className="w-3 h-3" />
+        <span className="text-sm">{application.phone}</span>
+      </div>
+    </TableCell>
+    <TableCell>
+      <Badge variant={getBadgeVariant(application.status)} className="flex items-center gap-1 w-fit">
+        {getStatusIcon(application.status)}
+        {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+      </Badge>
+    </TableCell>
+    <TableCell>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onView(application)}
+        >
+          <Eye className="w-4 h-4 mr-2" />
+          View
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onDownload(application)}
+        >
+          <Download className="w-4 h-4 mr-2" />
+          PDF
+        </Button>
+      </div>
+    </TableCell>
+  </TableRow>
+));
+
+ApplicationRow.displayName = 'ApplicationRow';

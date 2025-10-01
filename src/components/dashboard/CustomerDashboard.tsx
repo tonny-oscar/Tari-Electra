@@ -610,28 +610,35 @@ export function CustomerDashboard() {
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
           {/* Mobile Navigation */}
           <div className="lg:hidden">
-            <div className="flex overflow-x-auto gap-2 pb-2">
-              {tabs.map(tab => {
-                const TabIcon = tab.icon;
-                return (
-                  <Button
-                    key={tab.id}
-                    variant={activeTab === tab.id ? "default" : "outline"}
-                    size="sm"
-                    className="flex-shrink-0 text-xs"
-                    onClick={() => setActiveTab(tab.id)}
-                  >
-                    <TabIcon className="w-3 h-3 mr-1" />
-                    {tab.name}
-                    {tab.badge && tab.badge > 0 && (
-                      <Badge variant="secondary" className="ml-1 text-xs">
-                        {tab.badge}
-                      </Badge>
-                    )}
-                  </Button>
-                );
-              })}
-            </div>
+            <Card className="mb-4">
+              <CardContent className="p-3">
+                <div className="grid grid-cols-3 gap-2">
+                  {tabs.map(tab => {
+                    const TabIcon = tab.icon;
+                    return (
+                      <Button
+                        key={tab.id}
+                        variant={activeTab === tab.id ? "default" : "ghost"}
+                        size="sm"
+                        className="flex flex-col items-center justify-center h-16 text-xs relative"
+                        onClick={() => setActiveTab(tab.id)}
+                      >
+                        <TabIcon className="w-5 h-5 mb-1" />
+                        <span className="text-center leading-tight">{tab.name}</span>
+                        {tab.badge && tab.badge > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                          >
+                            {tab.badge}
+                          </Badge>
+                        )}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Desktop Sidebar Navigation */}
@@ -960,29 +967,20 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
   const categories = ['All', 'Water Meter', 'Energy Meter'];
-  // const categories = ['All', 'Water Meter - Prepaid Meter', 'Water Meter - Smart Meter', 'Energy Meter - Prepaid Meter', 'Energy Meter - Smart Meter'];
+
 
   // Filter and sort products
   const filteredAndSortedProducts = React.useMemo(() => {
     let filtered = products;
 
-    // Filter by category only
+
     if (selectedCategory !== 'All') {
       filtered = filtered.filter(product => product.category === selectedCategory);
     }
-    // Commented out subcategory filtering
-    // if (selectedCategory !== 'All') {
-    //   if (selectedCategory.includes(' - ')) {
-    //     const [category, subcategory] = selectedCategory.split(' - ');
-    //     filtered = filtered.filter(product => 
-    //       product.category === category && product.subcategory === subcategory
-    //     );
-    //   } else {
-    //     filtered = filtered.filter(product => product.category === selectedCategory);
-    //   }
-    // }
 
-    // Filter by search term
+
+
+
     if (searchTerm) {
       filtered = filtered.filter(product => 
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -990,7 +988,7 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
       );
     }
 
-    // Sort products
+
     filtered.sort((a, b) => {
       let aValue, bValue;
       

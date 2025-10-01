@@ -14,9 +14,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './client'; // Make sure this points to your Firebase instance
 
-// ====================
-// Product Types
-// ====================
+
 export interface Product {
   id: string;
   name: string;
@@ -31,16 +29,12 @@ export interface Product {
   updatedAt?: string;
 }
 
-// ====================
-// Cart Types
-// ====================
+
 export interface CartItem extends Product {
   quantity: number;
 }
 
-// ====================
-// Order Types
-// ====================
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -57,9 +51,7 @@ export interface Order {
   trackingNumber?: string;
 }
 
-// ====================
-// Product Operations
-// ====================
+
 
 export async function getProducts(options?: {
   active?: boolean;
@@ -113,11 +105,9 @@ export async function getProduct(productId: string): Promise<Product | null> {
   }
 }
 
-// ====================
-// Order Operations
-// ====================
 
-// Generate custom order number
+
+
 async function generateOrderNumber(): Promise<string> {
   try {
     const ordersRef = collection(db, 'orders');
@@ -151,7 +141,7 @@ export async function createOrder(data: Omit<Order, 'id' | 'orderNumber'> & { or
       status: 1
     };
     
-    // Update stock for each item in the order
+
     for (const item of data.items) {
       await updateProductStock(item.id, item.quantity);
     }
@@ -159,9 +149,9 @@ export async function createOrder(data: Omit<Order, 'id' | 'orderNumber'> & { or
     const docRef = await addDoc(collection(db, 'orders'), orderData);
     const order = { id: docRef.id, ...orderData } as Order;
     
-    // Send notifications
+
     try {
-      // Send email notification
+
       await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -176,7 +166,7 @@ export async function createOrder(data: Omit<Order, 'id' | 'orderNumber'> & { or
         })
       });
       
-      // Send SMS notification if phone provided
+
       if (data.customerPhone) {
         const formattedPhone = data.customerPhone.startsWith('+') ? data.customerPhone : 
                               data.customerPhone.startsWith('0') ? `+254${data.customerPhone.slice(1)}` : 
@@ -234,9 +224,7 @@ export async function updateOrderStatus(orderId: string, status: number): Promis
   }
 }
 
-// ====================
-// Stock Management
-// ====================
+
 
 export async function updateProductStock(productId: string, quantityPurchased: number): Promise<void> {
   try {
@@ -256,9 +244,9 @@ export async function updateProductStock(productId: string, quantityPurchased: n
           status: newStock === 0 ? 'inactive' : 'active'
         });
         
-        // Check for low stock and send alert
+
         await checkLowStock(productId, productSnap.data().name, newStock);
-        break; // Exit after finding the product
+        break;
       }
     }
   } catch (error) {
@@ -297,7 +285,7 @@ async function checkLowStock(productId: string, productName: string, currentStoc
   const LOW_STOCK_THRESHOLD = 10;
   
   if (currentStock <= LOW_STOCK_THRESHOLD && currentStock > 0) {
-    // Create low stock notification
+
     await addDoc(collection(db, 'notifications'), {
       type: 'low_stock',
       productId,
@@ -310,7 +298,7 @@ async function checkLowStock(productId: string, productName: string, currentStoc
       priority: currentStock <= 5 ? 'high' : 'medium'
     });
   } else if (currentStock === 0) {
-    // Create out of stock notification
+
     await addDoc(collection(db, 'notifications'), {
       type: 'out_of_stock',
       productId,
@@ -324,9 +312,7 @@ async function checkLowStock(productId: string, productName: string, currentStoc
   }
 }
 
-// ====================
-// Cart Operations
-// ====================
+
 
 export async function saveCart(customerId: string, items: CartItem[]): Promise<void> {
   try {
@@ -356,9 +342,7 @@ export async function getCustomerCart(customerId: string): Promise<CartItem[]> {
   }
 }
 
-// ====================
-// Dashboard Stats
-// ====================
+
 
 export async function getCustomerDashboardStats(customerId: string) {
   try {
