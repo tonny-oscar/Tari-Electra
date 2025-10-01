@@ -490,6 +490,8 @@ export function CustomerDashboard() {
       const orderData = {
         customerId: user.uid,
         customerEmail: user.email || '',
+        customerName: `${customerData.firstName} ${customerData.lastName}`,
+        customerPhone: customerData.phone || '',
         items: cart,
         total: getCartTotal(),
         status: 1,

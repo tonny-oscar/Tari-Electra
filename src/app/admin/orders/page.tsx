@@ -13,6 +13,8 @@ interface Order {
   id: string;
   userId: string;
   customerEmail: string;
+  customerName?: string;
+  customerPhone?: string;
   items: any[];
   total: number;
   status: number;
@@ -101,19 +103,31 @@ export default function AdminOrdersPage() {
                       <CardTitle className="text-lg">
                         Order #{order.id.slice(-8)}
                       </CardTitle>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                        <span className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {new Date(order.createdAt?.toDate?.() || order.createdAt).toLocaleDateString()}
-                        </span>
-                        <span className="flex items-center">
-                          <User className="w-4 h-4 mr-1" />
-                          {order.customerEmail}
-                        </span>
-                        <span className="flex items-center">
-                          <DollarSign className="w-4 h-4 mr-1" />
-                          KSH {order.total.toFixed(2)}
-                        </span>
+                      <div className="space-y-1 mt-2">
+                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                          <span className="flex items-center">
+                            <Calendar className="w-4 h-4 mr-1" />
+                            {new Date(order.createdAt?.toDate?.() || order.createdAt).toLocaleDateString()}
+                          </span>
+                          <span className="flex items-center">
+                            <DollarSign className="w-4 h-4 mr-1" />
+                            KSH {order.total.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          <div className="flex items-center">
+                            <User className="w-4 h-4 mr-1" />
+                            <span className="font-medium">{order.customerName || 'N/A'}</span>
+                          </div>
+                          <div className="ml-5 text-gray-600">
+                            📧 {order.customerEmail}
+                          </div>
+                          {order.customerPhone && (
+                            <div className="ml-5 text-gray-600">
+                              📞 {order.customerPhone}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
