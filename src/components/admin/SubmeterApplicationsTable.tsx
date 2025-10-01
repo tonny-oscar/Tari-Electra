@@ -300,7 +300,7 @@ export default function SubmeterApplicationsTable() {
 
       {isDetailsModalOpen && selectedApplication && (
         <SubmeterApplicationModal
-          application={selectedApplication}
+          application={selectedApplication as any}
           isOpen={isDetailsModalOpen}
           onClose={() => setIsDetailsModalOpen(false)}
         />

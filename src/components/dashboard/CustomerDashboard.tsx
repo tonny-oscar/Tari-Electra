@@ -301,7 +301,8 @@ export function CustomerDashboard() {
                 subcategory: sanitizeUserInput(data.subcategory || ''),
                 features: Array.isArray(data.features) ? data.features : [],
                 specifications: data.specifications || {},
-                status: data.status || 'active'
+                status: data.status || 'active',
+                createdAt: data.createdAt || new Date().toISOString()
               } as Product;
             });
 
