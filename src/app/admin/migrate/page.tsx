@@ -39,7 +39,7 @@ export default function MigratePage() {
         for (const docSnapshot of snapshot.docs) {
           const data = docSnapshot.data();
           let needsUpdate = false;
-          let newSpecifications = {};
+          let newSpecifications: { [key: string]: string } = {};
 
           if (data.specifications) {
             // Handle array specifications
