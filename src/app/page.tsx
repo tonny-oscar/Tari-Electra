@@ -116,10 +116,7 @@ export default function HomePage() {
                 </h2>
 
                 <p className="text-xl text-muted-foreground leading-relaxed mb-8">
-                  We empower property owners with advanced technology that delivers tangible results. 
-                  From our tamper-proof meters to a comprehensive management dashboard, our solution 
-                  is designed to protect your revenue, provide stress-free monitoring, and deliver 
-                  a significant return on investment.
+                  Stop revenue loss and billing disputes for good. Our solution ensures hassle-free revenue collection with tamper-proof meters that prevent manipulation. You get automated payments, clear consumption tracking, and total peace of mind—all designed to protect your income and maximize your returns.
                 </p>
 
                 <div className="hover:scale-105 transition-transform">
