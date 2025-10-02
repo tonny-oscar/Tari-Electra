@@ -25,4 +25,5 @@ export const adminStorage = {
   })
 };
 
-export default {};
+const adminConfig = {};
+export default adminConfig;
