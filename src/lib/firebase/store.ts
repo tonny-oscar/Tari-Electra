@@ -12,7 +12,8 @@ import {
   limit,
   type DocumentData,
 } from 'firebase/firestore';
-import { db } from './client'; // Make sure this points to your Firebase instance
+import { db } from './client';
+import { sendOrderStatusEmail, sendOrderStatusSMS } from '../notifications/orderNotifications';
 
 
 export interface Product {
@@ -152,34 +153,21 @@ export async function createOrder(data: Omit<Order, 'id' | 'orderNumber'> & { or
 
     try {
 
-      await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: data.customerEmail,
-          subject: `Order Confirmation - ${orderNumber}`,
-          html: `<h2>Order Confirmation</h2>
-                 <p>Thank you for your order!</p>
-                 <p><strong>Order Number:</strong> ${orderNumber}</p>
-                 <p><strong>Total:</strong> KES ${data.total.toLocaleString()}</p>
-                 <p>We'll notify you when your order ships.</p>`
-        })
-      });
+      const notificationData = {
+        customerName: data.customerName || 'Customer',
+        customerEmail: data.customerEmail,
+        customerPhone: data.customerPhone,
+        orderNumber,
+        orderTotal: data.total,
+        trackingNumber: orderData.trackingNumber,
+        statusName: 'Order Confirmed',
+      };
+      
+      await sendOrderStatusEmail(notificationData);
       
 
       if (data.customerPhone) {
-        const formattedPhone = data.customerPhone.startsWith('+') ? data.customerPhone : 
-                              data.customerPhone.startsWith('0') ? `+254${data.customerPhone.slice(1)}` : 
-                              `+254${data.customerPhone}`;
-        
-        await fetch('/api/send-sms', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: formattedPhone,
-            message: `Hi! Your Tari Electra order ${orderNumber} for KES ${data.total} has been confirmed. We'll notify you when it ships. Track: tari.africa`
-          })
-        });
+        await sendOrderStatusSMS(notificationData);
       }
     } catch (notificationError) {
       console.error('Notification error:', notificationError);

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase/client';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -22,8 +23,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail, MessageSquare } from 'lucide-react';
 import { Order } from '@/lib/firebase/store';
+import { sendOrderStatusEmail, sendOrderStatusSMS } from '@/lib/notifications/orderNotifications';
 
 interface TrackingStage {
   id: number;
@@ -42,17 +44,19 @@ export function OrderUpdateModal({ order, isOpen, onClose, trackingStages }: Ord
   const [status, setStatus] = useState<string>('');
   const [trackingNumber, setTrackingNumber] = useState('');
   const [notes, setNotes] = useState('');
+  const [sendEmail, setSendEmail] = useState(true);
+  const [sendSMS, setSendSMS] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
 
   // Reset form when order changes
-  useState(() => {
+  useEffect(() => {
     if (order) {
       setStatus(order.status.toString());
       setTrackingNumber(order.trackingNumber || '');
       setNotes('');
     }
-  });
+  }, [order]);
 
   const handleUpdate = async () => {
     if (!order) return;
@@ -84,9 +88,45 @@ export function OrderUpdateModal({ order, isOpen, onClose, trackingStages }: Ord
 
       await updateDoc(orderRef, updateData);
 
+      // Send notifications if enabled
+      const statusInfo = trackingStages.find(stage => stage.id === parseInt(status));
+      const notificationData = {
+        customerName: order.customerName || 'Customer',
+        customerEmail: order.customerEmail || '',
+        customerPhone: order.customerPhone,
+        orderNumber: order.orderNumber || `#${order.id.slice(-8)}`,
+        orderTotal: order.total || 0,
+        trackingNumber: trackingNumber.trim() || undefined,
+        statusName: statusInfo?.name || 'Updated',
+        notes: notes.trim() || undefined,
+      };
+
+      const notifications = [];
+      
+      if (sendEmail && order.customerEmail) {
+        notifications.push(
+          sendOrderStatusEmail(notificationData).catch(err => 
+            console.error('Email notification failed:', err)
+          )
+        );
+      }
+      
+      if (sendSMS && order.customerPhone) {
+        notifications.push(
+          sendOrderStatusSMS(notificationData).catch(err => 
+            console.error('SMS notification failed:', err)
+          )
+        );
+      }
+
+      // Wait for notifications to complete
+      if (notifications.length > 0) {
+        await Promise.allSettled(notifications);
+      }
+
       toast({
         title: 'Success!',
-        description: 'Order updated successfully',
+        description: `Order updated successfully${notifications.length > 0 ? ' and notifications sent' : ''}`,
       });
 
       onClose();
@@ -154,6 +194,38 @@ export function OrderUpdateModal({ order, isOpen, onClose, trackingStages }: Ord
               rows={3}
               className="mt-2 border-purple-200 focus:border-purple-400 resize-none"
             />
+          </div>
+
+          <div className="bg-white/70 rounded-xl p-4 border border-orange-100">
+            <Label className="text-sm font-semibold text-gray-700 mb-3 block">Notifications</Label>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="sendEmail" 
+                  checked={sendEmail} 
+                  onCheckedChange={(checked) => setSendEmail(checked as boolean)}
+                  disabled={!order?.customerEmail}
+                />
+                <Label htmlFor="sendEmail" className="text-sm flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  Send email notification
+                  {!order?.customerEmail && <span className="text-gray-400">(No email available)</span>}
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="sendSMS" 
+                  checked={sendSMS} 
+                  onCheckedChange={(checked) => setSendSMS(checked as boolean)}
+                  disabled={!order?.customerPhone}
+                />
+                <Label htmlFor="sendSMS" className="text-sm flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  Send SMS notification
+                  {!order?.customerPhone && <span className="text-gray-400">(No phone available)</span>}
+                </Label>
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-3 pt-4">

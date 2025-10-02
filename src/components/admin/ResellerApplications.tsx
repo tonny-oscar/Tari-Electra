@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Eye, CheckCircle, XCircle, Clock, User, Mail, Phone, MapPin, Building, Download } from 'lucide-react';
+import { sendResellerApplicationEmail, sendResellerApplicationSMS } from '@/lib/notifications/orderNotifications';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
@@ -88,36 +89,36 @@ export default function ResellerApplications() {
 
       await updateDoc(doc(db, 'resellerApplications', applicationId), updateData);
 
+      // Send notifications
+      const notifications = [];
+      
       // Send email notification
-      await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: selectedApplication.email,
-          subject: `Reseller Application ${newStatus === 'approved' ? 'Approved' : 'Rejected'} - Tari Electra`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
-                <h1 style="color: white; margin: 0;">Tari Electra</h1>
-              </div>
-              <div style="padding: 30px; background: #f9f9f9;">
-                <h2 style="color: #333;">Dear ${selectedApplication.fullName},</h2>
-                <p style="color: #666; line-height: 1.6;">Your reseller application has been <strong style="color: ${newStatus === 'approved' ? '#10b981' : '#ef4444'};">${newStatus}</strong>.</p>
-                ${newStatus === 'approved' 
-                  ? '<p style="color: #666; line-height: 1.6;">Welcome to the Tari Electra reseller network! We will contact you soon with next steps.</p>'
-                  : '<p style="color: #666; line-height: 1.6;">Thank you for your interest. You may reapply in the future.</p>'
-                }
-                ${adminNotes.trim() ? `<div style="background: white; padding: 20px; border-left: 4px solid #667eea; margin: 20px 0;"><strong>Admin Notes:</strong><br/>${adminNotes.trim()}</div>` : ''}
-                <p style="color: #666; line-height: 1.6;">Best regards,<br/>Tari Electra Team</p>
-              </div>
-            </div>
-          `
-        })
-      });
+      notifications.push(
+        sendResellerApplicationEmail(
+          selectedApplication.email,
+          selectedApplication.fullName,
+          newStatus,
+          adminNotes.trim() || undefined
+        ).catch(err => console.error('Email notification failed:', err))
+      );
+      
+      // Send SMS notification if phone is available
+      if (selectedApplication.phone) {
+        notifications.push(
+          sendResellerApplicationSMS(
+            selectedApplication.phone,
+            selectedApplication.fullName,
+            newStatus
+          ).catch(err => console.error('SMS notification failed:', err))
+        );
+      }
+      
+      // Wait for notifications to complete
+      await Promise.allSettled(notifications);
 
       toast({
         title: 'Success!',
-        description: `Application ${newStatus} and email sent successfully.`,
+        description: `Application ${newStatus} and notifications sent successfully.`,
       });
 
       setIsModalOpen(false);

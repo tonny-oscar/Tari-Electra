@@ -985,7 +985,6 @@ function ProductsTab({ products, addToCart, cart, isLoading }: {
 
 
 
-
     if (searchTerm) {
       filtered = filtered.filter(product => 
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
