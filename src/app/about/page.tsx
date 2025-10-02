@@ -73,16 +73,12 @@ export default function AboutPage() {
                   },
                   {
                     step: '3',
-                    title: 'System Configuration',
-                    description: 'We tailor the system for you, setting up payment integrations and monitoring protocols.'
+                    title: 'Seamless Activation & Go-Live',
+                    description: 'We handle the entire setup to get you started, instantly activating your revenue stream and connecting your properties to our secure billing platform.'
                   },
+                  
                   {
                     step: '4',
-                    title: 'Training & Handover',
-                    description: 'We provide full training to your staff on system operation and basic troubleshooting.'
-                  },
-                  {
-                    step: '5',
                     title: 'Ongoing Support',
                     description: 'We stand by our solutions with 24/7 technical support, regular system updates, and warranty services.'
                   }

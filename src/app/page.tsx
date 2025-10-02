@@ -8,7 +8,7 @@ import { AuthButtons } from '@/components/AuthButtons';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen" suppressHydrationWarning>
+    <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative min-h-screen bg-gradient-to-br from-primary/10 to-secondary/20">
         <div className="container mx-auto px-4 py-12 lg:py-20">
