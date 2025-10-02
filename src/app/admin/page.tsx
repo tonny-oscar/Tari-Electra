@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Newspaper, LayoutDashboard, ShoppingBag, MessageSquare, ImageIcon } from "lucide-react";
+import { Newspaper, LayoutDashboard, ShoppingBag, MessageSquare, ImageIcon, TestTube } from "lucide-react";
 
 export default function AdminDashboardPage() {
   return (
@@ -98,6 +98,22 @@ export default function AdminDashboardPage() {
                 </p>
                 <Button asChild>
                   <Link href="/admin/submeter-requests">Manage Applications</Link>
+                </Button>
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-lg transition-shadow border-orange-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <TestTube className="h-5 w-5 text-orange-600" />
+                  System Testing
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Test APIs, security, performance, and functionality.
+                </p>
+                <Button asChild variant="outline" className="border-orange-200 text-orange-600 hover:bg-orange-50">
+                  <Link href="/test" target="_blank">Open Testing Dashboard</Link>
                 </Button>
               </CardContent>
             </Card>
