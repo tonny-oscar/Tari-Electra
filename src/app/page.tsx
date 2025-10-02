@@ -19,10 +19,8 @@ export default function HomePage() {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
               <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight text-foreground mt-8">
-                Buy Prepaid Meters Online Today
-                <br />
+                  Your Online Store for Prepaid Water & Electricity Meters.
               </h1>
-
               <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed mb-12">
                 Tari provides innovative submetering solutions for property owners, empowering you with 
                 <span className="font-semibold text-primary"> real-time consumption data</span>, 
